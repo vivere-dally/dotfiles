@@ -78,6 +78,14 @@ brew install composer
 
 
 #--------------------------------------------------------------------------
-# Go
+# go
 #--------------------------------------------------------------------------
 echo "To install Golang goto https://go.dev/doc/install"
+
+#--------------------------------------------------------------------------
+# karabiner, skhd, yabai
+#--------------------------------------------------------------------------
+
+brew install --cask karabiner-elements
+brew install koekeishiya/formulae/yabai && yabai --start-service
+brew install koekeishiya/formulae/skhd && skhd --start-service

@@ -58,5 +58,5 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:/usr/local/android-studio/bin
 export PATH=$PATH:/usr/local/go/bin
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+source <(fzf --zsh)
 

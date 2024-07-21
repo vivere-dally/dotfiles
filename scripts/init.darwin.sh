@@ -26,7 +26,7 @@ brew install fzf # https://github.com/junegunn/fzf
 #--------------------------------------------------------------------------
 # zsh https://github.com/ohmyzsh/ohmyzsh
 #--------------------------------------------------------------------------
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --keep-zshrc
+RUNZSH='no' KEEP_ZSHRC='yes' sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 source ~/.zshrc
@@ -42,7 +42,6 @@ nvm install --lts
 # pyenv https://github.com/pyenv/pyenv
 #--------------------------------------------------------------------------
 brew install pyenv
-zsh
 pyenv install 3.12
 pyenv global 3.12
 

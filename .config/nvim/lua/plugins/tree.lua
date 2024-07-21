@@ -23,10 +23,17 @@ return {
           },
         },
       },
+      filters = {
+        custom = { '.DS_Store' },
+      },
+      git = {
+        ignore = false,
+      },
     })
 
     vim.keymap.set('n', '<leader>ee', '<cmd>NvimTreeToggle<CR>', { desc = 'toggle explorer' })
     vim.keymap.set('n', '<leader>ef', '<cmd>NvimTreeFindFileToggle<CR>', { desc = 'toggle explorer on current file' })
     vim.keymap.set('n', '<leader>ec', '<cmd>NvimTreeCollapse<CR>', { desc = 'collapse explorer' })
+    vim.keymap.set('n', '<leader>er', '<cmd>NvimTreeRefresh<CR>', { desc = 'refresh file explorer' })
   end,
 }

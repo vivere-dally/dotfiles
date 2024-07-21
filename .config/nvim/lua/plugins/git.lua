@@ -1,6 +1,7 @@
 return {
   {
     'tpope/vim-fugitive',
+    lazy = false,
     event = { 'BufReadPre', 'BufNewFile' },
     config = function()
       vim.keymap.set('n', '<leader>gg', vim.cmd.Git, { desc = 'git show' })
@@ -22,10 +23,10 @@ return {
           -- vim.keymap.set('n', '<leader>gt', function()
           --   vim.cmd.Git({ 'push', '-u', 'origin' })
           -- end, { buffer = bufnr, remap = false, desc = 'git push ' })
-          --
-          -- vim.keymap.set('n', '<leader>gP', function()
-          --   vim.cmd.Git({ 'pull', '--rebase' })
-          -- end, { buffer = bufnr, remap = false, desc = 'git pull w/ rebase' })
+
+          vim.keymap.set('n', '<leader>gP', function()
+            vim.cmd.Git({ 'pull', '--rebase' })
+          end, { buffer = bufnr, remap = false, desc = 'git pull w/ rebase' })
         end,
       })
     end,

@@ -1,3 +1,6 @@
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OSX
     export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
@@ -5,8 +8,7 @@ fi
 
 export EDITOR=nvim
 export GIT_EDITOR=nvim
-export FZF_BASE=~/setup_packages/fzf
-export TERM=screen-256color
+# export TERM=screen-256color
 
 #--------------------------------------------------------------------------
 # oh-my-zsh
@@ -25,8 +27,6 @@ zstyle ':completion:*:descriptions' format %B%d%b
 zstyle ':completion:*:complete:(cd|pushd):*' tag-order \
     'local-directories named-directories'
 
-plugins=(git fzf zsh-autosuggestions zsh-syntax-highlighting)
-
 source $ZSH/oh-my-zsh.sh
 
 #--------------------------------------------------------------------------
@@ -40,25 +40,11 @@ alias vim="nvim"
 alias copy="xclip -selection clipboard"
 alias paste="xclip -o -selection clipboard"
 
-#--------------------------------------------------------------------------
-# Tools
-#--------------------------------------------------------------------------
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+## PHP
+alias sail='[ -f sail ] && sail || vendor/bin/sail'
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:/usr/local/android-studio/bin
-export PATH=$PATH:/usr/local/go/bin
-
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+. "$HOME/.cargo/env"
 
+source <(fzf --zsh)

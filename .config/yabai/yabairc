@@ -18,3 +18,4 @@ yabai -m config mouse_action1 move # alt + left click = drag
 yabai -m config mouse_action2 resize # alt + right click = resize
 
 yabai -m mouse_drop_action swap
+

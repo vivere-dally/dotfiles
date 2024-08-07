@@ -8,13 +8,11 @@
 #
 # All imports must either be absolute paths starting with `/`, or paths relative
 # to the user's home directory starting with `~/`.
-import = [
-    "~/.config/alacritty/themes/gruvbox_material_medium_dark.toml"
-]
+import = ["~/.config/alacritty/themes/gruvbox_material_medium_dark.toml"]
 
 # Font configuration
 [font]
-size = 18
+size = 15
 
 [font.normal]
 family = "JetBrainsMonoNL Nerd Font"
@@ -22,7 +20,7 @@ style = "Medium"
 
 [font.bold]
 family = "JetBrainsMonoNL Nerd Font"
-style = "Bol"
+style = "Bold"
 
 [font.italic]
 family = "JetBrainsMonoNL Nerd Font"

@@ -54,3 +54,4 @@ bind('n', '<leader>s', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], {
 bind('n', '<leader>x', '<cmd>!chmod +x %<CR>', { desc = 'make file executable', silent = true })
 
 bind('n', '<leader><F3>', [[:%s/\r//g]], { desc = 'remove carriage return' })
+

@@ -29,7 +29,6 @@ opt.isfname:append('@-@')
 
 -- cursor line
 opt.cursorline = true
--- vim.o.guicursor = "n-v-c-sm:block,i-ci-ve:ver25-Cursor,r-cr-o:hor20"
 
 -- appearence
 opt.background = 'dark'

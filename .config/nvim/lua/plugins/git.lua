@@ -2,7 +2,6 @@ return {
   {
     'tpope/vim-fugitive',
     lazy = false,
-    event = { 'BufReadPre', 'BufNewFile' },
     config = function()
       vim.keymap.set('n', '<leader>gg', vim.cmd.Git, { desc = 'git show' })
 
@@ -23,20 +22,20 @@ return {
           -- vim.keymap.set('n', '<leader>gt', function()
           --   vim.cmd.Git({ 'push', '-u', 'origin' })
           -- end, { buffer = bufnr, remap = false, desc = 'git push ' })
-
-          vim.keymap.set('n', '<leader>gP', function()
-            vim.cmd.Git({ 'pull', '--rebase' })
-          end, { buffer = bufnr, remap = false, desc = 'git pull w/ rebase' })
+          --
+          -- vim.keymap.set('n', '<leader>gP', function()
+          --   vim.cmd.Git({ 'pull', '--rebase' })
+          -- end, { buffer = bufnr, remap = false, desc = 'git pull w/ rebase' })
         end,
       })
     end,
   },
   {
     'lewis6991/gitsigns.nvim',
-    event = { 'BufReadPre', 'BufNewFile' },
+    lazy = false,
     keys = {
-      { ']h', ':Gitsigns next_hunk<CR>', { desc = 'next hunk' } },
-      { '[h', ':Gitsigns prev_hunk<CR>', { desc = 'prev hunk' } },
+      { '<leader>gj', ':Gitsigns next_hunk<CR>', { desc = 'next hunk' } },
+      { '<leader>gh', ':Gitsigns prev_hunk<CR>', { desc = 'prev hunk' } },
       { '<leader>gs', ':Gitsigns stage_hunk<CR>', { desc = 'stage hunk' } },
       { '<leader>gu', ':Gitsigns undo_stage_hunk<CR>', { desc = 'undo stage hunk' } },
       { '<leader>gp', ':Gitsigns preview_hunk<CR>', { desc = 'preview hunk' } },

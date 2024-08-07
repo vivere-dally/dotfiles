@@ -20,17 +20,20 @@ return {
           anchor = 'N',
           prompt_position = 'top',
         },
-        preview = { timeout = 200 },
+        preview = {
+          timeout = 200,
+          filesize_limit = 5
+        },
         mappings = {
           i = {
             ['<C-k>'] = ta.preview_scrolling_up,
             ['<C-j>'] = ta.preview_scrolling_down,
-            ["<C-q>"] = ta.smart_send_to_qflist + ta.open_qflist,
+            ['<C-q>'] = ta.smart_send_to_qflist + ta.open_qflist,
           },
           n = {
             ['<C-k>'] = ta.preview_scrolling_up,
             ['<C-j>'] = ta.preview_scrolling_down,
-            ["<C-q>"] = ta.smart_send_to_qflist + ta.open_qflist,
+            ['<C-q>'] = ta.smart_send_to_qflist + ta.open_qflist,
           },
         },
       },
@@ -41,6 +44,14 @@ return {
           override_file_sorter = true, -- override the file sorter
           case_mode = 'smart_case', -- or "ignore_case" or "respect_case"
           -- the default case_mode is "smart_case"
+        },
+        live_grep_args = {
+          mappings = {
+            i = {
+              ['<C-g>'] = require('telescope-live-grep-args.actions').quote_prompt(),
+              ['<C-i>'] = require('telescope-live-grep-args.actions').quote_prompt({ postfix = ' --iglob ' }),
+            },
+          },
         },
       },
       pickers = {

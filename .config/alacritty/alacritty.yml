@@ -3,7 +3,7 @@ import:
   - ~/.config/alacritty/themes/gruvbox_material_medium_dark.yml
   
 font:
-  size: 15
+  size: 18
   normal:
     family: JetBrainsMonoNL Nerd Font
     style: Medium
@@ -16,3 +16,6 @@ font:
   bold_italic:
     family: JetBrainsMonoNL Nerd Font
     style: BoldItalic
+
+window:
+  decorations: none

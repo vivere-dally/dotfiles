@@ -14,7 +14,7 @@ import = [
 
 # Font configuration
 [font]
-size = 15
+size = 18
 
 [font.normal]
 family = "JetBrainsMonoNL Nerd Font"
@@ -31,3 +31,6 @@ style = "MediumItalic"
 [font.bold_italic]
 family = "JetBrainsMonoNL Nerd Font"
 style = "BoldItalic"
+
+[window]
+decorations = "none"

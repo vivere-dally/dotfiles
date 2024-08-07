@@ -5,7 +5,6 @@ fi
 
 export EDITOR=nvim
 export GIT_EDITOR=nvim
-export FZF_BASE=~/setup_packages/fzf
 export TERM=screen-256color
 
 #--------------------------------------------------------------------------
@@ -57,6 +56,7 @@ export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:/usr/local/android-studio/bin
 export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:~/go/bin
 
 source <(fzf --zsh)
 

@@ -93,7 +93,8 @@ require('mason-lspconfig').setup({
     'yamlls',
     'vimls',
     'diagnosticls',
-    'rust_analyzer'
+    'rust_analyzer',
+    'gopls'
   },
   handlers = {
     lsp_zero.default_setup,

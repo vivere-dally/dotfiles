@@ -12,6 +12,7 @@ lint.linters_by_ft = {
   svelte = { 'eslint_d' },
   python = { 'pylint' },
   php = { 'phpstan', 'php' },
+  go = { 'golangcilint' },
 }
 
 vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost' }, {

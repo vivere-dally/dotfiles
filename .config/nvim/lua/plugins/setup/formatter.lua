@@ -20,5 +20,6 @@ conform.setup({
     lua = { 'stylua' },
     python = { 'black' },
     php = { 'php_cs_fixer' },
+    sql = { 'sqlfluff' },
   },
 })

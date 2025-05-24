@@ -1,7 +1,7 @@
 ---
 import:
   - ~/.config/alacritty/themes/gruvbox_material_medium_dark.yml
-  
+
 font:
   size: 18
   normal:
@@ -19,3 +19,7 @@ font:
 
 window:
   decorations: none
+
+key_bindings:
+  - { key: Right, mods: Alt, chars: "\x1BF" }
+  - { key: Left, mods: Alt, chars: "\x1BB" }

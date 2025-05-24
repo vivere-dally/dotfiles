@@ -67,6 +67,7 @@ return {
         'vimdoc',
         'xml',
         'yaml',
+        'go',
       },
       highlight = {
         enable = true,
@@ -78,16 +79,13 @@ return {
       rainbow = {
         enable = true,
       },
-      textobjects = {
-        select = {
-          enable = true,
-          lookahead = true,
-          keymaps = {
-            ['if'] = '@function.inner',
-            ['af'] = '@function.outer',
-            ['ia'] = '@parameter.inner',
-            ['aa'] = '@parameter.outer',
-          },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = '<C-space>',
+          node_incremental = '<C-space>',
+          node_decremental = '<bs>',
+          scope_incremental = false,
         },
       },
       -- autotag = {

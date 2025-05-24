@@ -94,12 +94,21 @@ require('mason-lspconfig').setup({
     'vimls',
     'diagnosticls',
     'rust_analyzer',
-    'gopls'
+    'gopls',
   },
   handlers = {
     lsp_zero.default_setup,
     lua_ls = function()
       require('lspconfig').lua_ls.setup(lsp_zero.nvim_lua_ls())
+    end,
+    gopls = function()
+      require('lspconfig').gopls.setup({
+        settings = {
+          gopls = {
+            buildFlags = { '-tags=dev' },
+          },
+        },
+      })
     end,
     -- TODO: not sure if this helps at all
     -- intelephense = function()
@@ -126,8 +135,9 @@ cmp.setup({
     { name = 'buffer' }, -- text in buffer
     { name = 'luasnip' }, -- snippets
     { name = 'path' }, -- file system path
+    { name = 'vim-dadbod-completion' }, -- sql completion
   },
-  formatting = lsp_zero.cmp_format(),
+  formatting = lsp_zero.cmp_format({}),
   mapping = cmp.mapping.preset.insert({
     -- Move between suggested completion
     ['<C-k>'] = cmp.mapping.select_prev_item(cmp_select),

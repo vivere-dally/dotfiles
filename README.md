@@ -11,3 +11,5 @@
   - TLDR:
     - download the alacritty/extra/ folder and copy it into the alacritty/ you just create, then:
     - `sudo tic -xe alacritty,alacritty-direct extra/alacritty.info`
+
+TODO - automate poetry install

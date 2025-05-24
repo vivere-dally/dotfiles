@@ -54,6 +54,8 @@ return {
         'prettier',
         'stylua',
         'black',
+        'sqlfluff',
+        'golangci-lint'
       },
     })
 

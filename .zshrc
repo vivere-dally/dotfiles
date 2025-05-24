@@ -1,6 +1,10 @@
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OSX
     export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+
+    bindkey -e
+    bindkey '\e\e[C' forward-word
+    bindkey '\e\e[D' backward-word
 fi
 
 export EDITOR=nvim
@@ -24,7 +28,7 @@ zstyle ':completion:*:descriptions' format %B%d%b
 zstyle ':completion:*:complete:(cd|pushd):*' tag-order \
     'local-directories named-directories'
 
-plugins=(git fzf zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(git fzf poetry zsh-autosuggestions zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -59,4 +63,9 @@ export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:~/go/bin
 
 source <(fzf --zsh)
+
+# Poetry https://python-poetry.org/docs/#installing-manually
+export POETRY_VENV_PATH="$HOME/.local/lib/poetry-home"
+export PATH=$PATH:~/.local/lib/bin
+export POETRY_VIRTUALENVS_IN_PROJECT=true
 

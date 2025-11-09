@@ -55,7 +55,10 @@ return {
         'stylua',
         'black',
         'sqlfluff',
-        'golangci-lint'
+        'golangci-lint',
+
+        -- dap
+        'debugpy',
       },
     })
 

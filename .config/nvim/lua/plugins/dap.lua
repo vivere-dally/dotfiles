@@ -7,7 +7,15 @@ return {
       'theHamsta/nvim-dap-virtual-text',
       'nvim-neotest/nvim-nio',
       'williamboman/mason.nvim',
-      'mfussenegger/nvim-dap-python',
+      {
+        'mfussenegger/nvim-dap-python',
+        ft = 'python',
+        -- config = function()
+        -- Use this if uv not working
+        --   local path = '~/.local/share/nvim/mason/packages/debugpy/venv/bin/python3'
+        --   require('dap-python').setup(path)
+        -- end,
+      },
     },
     config = function()
       local dap = require('dap')
@@ -97,6 +105,7 @@ return {
       --     args = { "dap", "-l", "127.0.0.1:${port}" },
       --   },
       -- }
+      require('dap-python').setup('uv')
 
       vim.keymap.set('n', '<leader>b', dap.toggle_breakpoint, { desc = 'dap breakpoint' })
       vim.keymap.set('n', '<leader>gb', dap.run_to_cursor, { desc = 'dap run to cursor' })

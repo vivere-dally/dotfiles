@@ -19,6 +19,7 @@ return {
       },
       { 'nvim-treesitter/nvim-treesitter-textobjects' },
       { 'windwp/nvim-ts-autotag' },
+      { 'OXY2DEV/markview.nvim' },
     },
     event = { 'BufReadPre', 'BufNewFile' },
     build = ':TSUpdate',

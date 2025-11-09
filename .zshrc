@@ -69,3 +69,7 @@ export POETRY_VENV_PATH="$HOME/.local/lib/poetry-home"
 export PATH=$PATH:~/.local/lib/bin
 export POETRY_VIRTUALENVS_IN_PROJECT=true
 
+
+. "$HOME/.local/bin/env"
+export PATH=$PATH:$HOME/.local/bin
+

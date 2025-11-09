@@ -110,6 +110,11 @@ require('mason-lspconfig').setup({
         },
       })
     end,
+    -- clangd = function()
+    --   require('lspconfig').clangd.setup({
+    --     cmd = { 'clangd', '--completion-style=detailed' },
+    --   })
+    -- end,
     -- TODO: not sure if this helps at all
     -- intelephense = function()
     --     return require("lspconfig").intelephense.setup({

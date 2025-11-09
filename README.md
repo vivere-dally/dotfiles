@@ -13,3 +13,7 @@
     - `sudo tic -xe alacritty,alacritty-direct extra/alacritty.info`
 
 TODO - automate poetry install
+
+
+useful:
+- https://github.com/wez/wezterm/discussions/4680

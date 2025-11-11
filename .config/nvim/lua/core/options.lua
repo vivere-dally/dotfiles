@@ -44,3 +44,5 @@ opt.splitbelow = true
 
 -- use system clipboard as default register
 opt.clipboard:append('unnamedplus')
+
+vim.o.winborder = 'single'

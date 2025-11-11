@@ -1,68 +1,211 @@
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+  callback = function(ev)
+    local bufnr = ev.buf
+
+    vim.keymap.set('n', 'K', function()
+      vim.lsp.buf.hover()
+    end, { desc = 'display hover', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', 'gd', function()
+      vim.lsp.buf.definition()
+    end, { desc = 'goto definition', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', 'gD', function()
+      vim.lsp.buf.declaration()
+    end, { desc = 'goto declaration', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', 'gi', function()
+      vim.lsp.buf.implementation()
+    end, { desc = 'list implementations', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', 'go', function()
+      vim.lsp.buf.type_definition()
+    end, { desc = 'goto type', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', 'gr', function()
+      vim.lsp.buf.references()
+    end, { desc = 'list references', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', 'gs', function()
+      vim.lsp.buf.signature_help()
+    end, { desc = 'display signature', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', '<F2>', function()
+      vim.lsp.buf.rename()
+    end, { desc = 'rename', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', '<F3>', function()
+      -- if hasConform then
+      --   conform.format({
+      --     lsp_fallback = true,
+      --     async = false,
+      --     timeout_ms = 1000,
+      --   })
+      --
+      --   return
+      -- end
+
+      vim.lsp.buf.format()
+    end, { desc = 'format', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', '<F4>', function()
+      vim.lsp.buf.code_action()
+    end, { desc = 'code action', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', 'gl', function()
+      vim.diagnostic.open_float()
+    end, { desc = 'list diagnostics', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', '[d', function()
+      vim.diagnostic.goto_next()
+    end, { desc = 'previous diagnostic', buffer = bufnr, remap = false })
+
+    vim.keymap.set('n', ']d', function()
+      vim.diagnostic.goto_prev()
+    end, { desc = 'next diagnostic', buffer = bufnr, remap = false })
+  end,
+})
+
 return {
-  'VonHeikemen/lsp-zero.nvim',
-  branch = 'v3.x',
-  dependencies = {
-    -- LSP & Support
-    { 'neovim/nvim-lspconfig' },
-    { 'williamboman/mason.nvim' },
-    { 'williamboman/mason-lspconfig.nvim' },
-    { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
-    { 'folke/neodev.nvim' },
 
-    -- Autocompletion
-    { 'hrsh7th/nvim-cmp' },
-    { 'hrsh7th/cmp-buffer' },
-    { 'hrsh7th/cmp-path' },
-    { 'hrsh7th/cmp-cmdline' },
-    { 'saadparwaiz1/cmp_luasnip' },
-    { 'hrsh7th/cmp-nvim-lsp' },
-    { 'hrsh7th/cmp-nvim-lua' },
-    { 'windwp/nvim-autopairs' },
-    { 'jsongerber/nvim-px-to-rem', config = true },
+  {
+    'mason-org/mason-lspconfig.nvim',
+    opts = {
+      ensure_installed = {
+        'bashls',
+        'lua_ls',
+        'typos_lsp',
+        'docker_language_server',
+        'sqlls', -- https://github.com/joe-re/sql-language-server?tab=readme-ov-file#configuration
 
-    -- Snippets
-    { 'L3MON4D3/LuaSnip' },
-    { 'rafamadriz/friendly-snippets' },
+        -- C/C++
+        'clangd',
 
-    -- Linter
-    {
-      'mfussenegger/nvim-lint',
-      lazy = true,
-      event = { 'BufReadPre', 'BufNewFile' },
+        -- Javascript ecosystem
+        'ts_ls',
+        'biome',
+        'tailwindcss',
+        'eslint',
+
+        -- Structured file formats
+        'superhtml',
+        'taplo',
+        'yamlls',
+        'lemminx',
+
+        -- Golang
+        'gopls',
+        'golangci_lint_ls',
+        'templ',
+
+        -- Python
+        'ruff',
+        -- "pyright", -- maybe?
+      },
     },
-
-    -- Formatter
-    {
-      'stevearc/conform.nvim',
-      lazy = true,
-      event = { 'BufReadPre', 'BufNewFile' },
+    dependencies = {
+      { 'mason-org/mason.nvim', opts = {} },
+      'neovim/nvim-lspconfig',
     },
   },
-  config = function()
-    require('plugins.setup.lsp')
 
-    require('mason-tool-installer').setup({
+  -- installer for non-LSP tools
+  {
+    'WhoIsSethDaniel/mason-tool-installer.nvim',
+    dependencies = { 'mason-org/mason.nvim' },
+    opts = {
       ensure_installed = {
-        -- linters
-        'codespell',
-        'phpstan',
-        'eslint_d',
-        'pylint',
-
-        -- formatters
-        'php-cs-fixer',
-        'prettier',
+        'shfmt',
         'stylua',
-        'black',
-        'sqlfluff',
+        'sqruff',
+
+        -- C/C++
+        'cpplint',
+
+        -- Golang
         'golangci-lint',
+        'golines',
+        'gomodifytags',
+        'gotests',
 
-        -- dap
-        'debugpy',
+        -- Python
+        'bandit',
       },
-    })
+      run_on_start = true,
+      auto_update = false,
+    },
+    config = function(_, opts)
+      require('mason-tool-installer').setup(opts)
+    end,
+  },
 
-    require('plugins.setup.formatter')
-    require('plugins.setup.linter')
-  end,
+  {
+    'nvim-treesitter/nvim-treesitter',
+    dependencies = {
+      'windwp/nvim-ts-autotag',
+    },
+    branch = 'master',
+    lazy = false,
+    build = ':TSUpdate',
+    event = { 'BufReadPre', 'BufNewFile' },
+    opts = {
+      auto_install = true,
+      ensure_installed = {
+        'bash',
+        'c',
+        'comment',
+        'cpp',
+        'css',
+        'csv',
+        'diff',
+        'dockerfile',
+        'git_config',
+        'git_rebase',
+        'gitattributes',
+        'gitcommit',
+        'gitignore',
+        'html',
+        'ini',
+        'javascript',
+        'jsdoc',
+        'json',
+        'json5',
+        'jsonc',
+        'lua',
+        'luadoc',
+        'luap',
+        'markdown',
+        'markdown_inline',
+        'php',
+        'phpdoc',
+        'python',
+        'regex',
+        'scss',
+        'sql',
+        'svelte',
+        'toml',
+        'tsx',
+        'typescript',
+        'vim',
+        'vimdoc',
+        'xml',
+        'yaml',
+        'go',
+      },
+      highlight = { enable = true, },
+      indent = { enable = true, },
+      autotag = { enable = true, },
+      rainbow = { enable = true, },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = '<C-space>', -- set to `false` to disable one of the mappings
+          node_incremental = '<C-space>',
+          scope_incremental = false,
+          node_decremental = '<bs>',
+        },
+      },
+    },
+  },
 }

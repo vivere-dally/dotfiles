@@ -50,7 +50,7 @@ bind('n', '<C-k>', '<cmd>cprev<CR>zz', { desc = 'quickfix prev' })
 bind('n', '<leader>j', '<cmd>lnext<CR>zz', { desc = 'quickfix next' })
 bind('n', '<leader>k', '<cmd>lprev<CR>zz', { desc = 'quickfix prev' })
 
-bind('n', '<leader>s', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = 'replace current word' })
 bind('n', '<leader>x', '<cmd>!chmod +x %<CR>', { desc = 'make file executable', silent = true })
 
+bind('n', '<leader><F2>', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = 'replace current word' })
 bind('n', '<leader><F3>', [[:%s/\r//g]], { desc = 'remove carriage return' })

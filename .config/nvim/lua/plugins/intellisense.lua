@@ -8,6 +8,8 @@ return {
 
         'folke/lazydev.nvim',
         ft = 'lua', -- only load on lua files
+        ---@module 'lazydev'
+        ---@type lazydev.Config
         opts = {
           library = {
             'lazy.nvim',
@@ -60,7 +62,7 @@ return {
           border = 'single',
           draw = {
             columns = {
-              { 'label', 'label_description', gap = 1 },
+              { 'label',      'label_description', gap = 1 },
               { 'source_name' },
             },
           },

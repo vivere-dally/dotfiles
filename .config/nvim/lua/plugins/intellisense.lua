@@ -57,13 +57,13 @@ return {
 
       -- (Default) Only show the documentation popup when manually triggered
       completion = {
+        accept = { auto_brackets = { enabled = true } },
         documentation = { auto_show = false, window = { border = 'single' } },
         menu = {
           border = 'single',
           draw = {
             columns = {
-              { 'label',      'label_description', gap = 1 },
-              { 'source_name' },
+              { 'label', 'label_description', 'source_name', 'kind', gap = 1 },
             },
           },
         },

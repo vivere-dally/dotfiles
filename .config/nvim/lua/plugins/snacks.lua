@@ -95,6 +95,13 @@ return {
 
       -- git
       {
+        '<leader>lg',
+        function()
+          Snacks.lazygit()
+        end,
+        desc = 'Git Branches',
+      },
+      {
         '<leader>gb',
         function()
           Snacks.picker.git_branches()
@@ -644,6 +651,12 @@ return {
     },
     opts = {
       use_default_keymaps = false,
+    },
+  },
+  {
+    'szw/vim-maximizer',
+    keys = {
+      { '<leader>wm', '<cmd>MaximizerToggle<CR>', desc = 'Maximize/minimize a split' },
     },
   },
 }

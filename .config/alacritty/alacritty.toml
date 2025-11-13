@@ -8,7 +8,9 @@
 #
 # All imports must either be absolute paths starting with `/`, or paths relative
 # to the user's home directory starting with `~/`.
-import = ["~/.config/alacritty/themes/gruvbox_material_medium_dark.toml"]
+general.import = [
+    "~/.config/alacritty/themes/gruvbox_material_medium_dark.toml",
+]
 
 # Font configuration
 [font]
@@ -37,4 +39,6 @@ decorations = "none"
 bindings = [
     { key = "Right", mods = "Alt", chars = "\u001BF" },
     { key = "Left", mods = "Alt", chars = "\u001BB" },
+    { key = "B", mods = "Control|Shift", action = "ReceiveChar" },
+    { key = "B", mods = "Command", action = "ReceiveChar" },
 ]

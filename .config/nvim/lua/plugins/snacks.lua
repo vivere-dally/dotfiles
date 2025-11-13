@@ -14,7 +14,7 @@ return {
       explorer = { enabled = true },
       indent = { enabled = true, animate = { enabled = false } },
       lazygit = { configure = true },
-      picker = { enabled = true },
+      picker = { enabled = true }, -- https://github.com/folke/snacks.nvim/blob/main/docs/picker.md#%EF%B8%8F-config
       scope = { enabled = true },
       statuscolumn = { enabled = true },
     },
@@ -60,7 +60,7 @@ return {
       {
         '<leader>ff',
         function()
-          Snacks.picker.files()
+          Snacks.picker.files({ hidden = true })
         end,
         desc = 'Find Files',
       },
@@ -572,5 +572,78 @@ return {
       -- Now don't forget to initialize lualine
       lualine.setup(config)
     end,
+  },
+
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      local h = require('harpoon')
+      h.setup()
+
+      vim.keymap.set('n', '<leader>ha', function()
+        h:list():add()
+      end)
+      vim.keymap.set('n', '<leader>hh', function()
+        h.ui:toggle_quick_menu(h:list())
+      end)
+
+      vim.keymap.set('n', '<leader>h1', function()
+        h:list():select(1)
+      end)
+      vim.keymap.set('n', '<leader>h2', function()
+        h:list():select(2)
+      end)
+      vim.keymap.set('n', '<leader>h3', function()
+        h:list():select(3)
+      end)
+      vim.keymap.set('n', '<leader>h4', function()
+        h:list():select(4)
+      end)
+    end,
+  },
+
+  {
+    'nvim-mini/mini.surround',
+    version = '*',
+    opts = {
+      mappings = {
+        add = 'ca',        -- Add surrounding in Normal and Visual modes
+        delete = 'cd',     -- Delete surrounding
+        find = 'cf',       -- Find surrounding (to the right)
+        find_left = 'cF',  -- Find surrounding (to the left)
+        highlight = 'ch',  -- Highlight surrounding
+        replace = 'cr',    -- Replace surrounding
+
+        suffix_last = 'l', -- Suffix to search with "prev" method
+        suffix_next = 'n', -- Suffix to search with "next" method
+      },
+    },
+  },
+
+  {
+
+    'Wansmer/treesj',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    keys = {
+      {
+        '<leader>bj',
+        function()
+          require('treesj').join()
+        end,
+        { desc = 'code block join' },
+      },
+      {
+        '<leader>bs',
+        function()
+          require('treesj').split()
+        end,
+        { desc = 'code block split' },
+      },
+    },
+    opts = {
+      use_default_keymaps = false,
+    },
   },
 }

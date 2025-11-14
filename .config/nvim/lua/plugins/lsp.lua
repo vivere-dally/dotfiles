@@ -199,12 +199,12 @@ return {
   {
     'nvim-treesitter/nvim-treesitter',
     dependencies = {
-      'windwp/nvim-ts-autotag',
+      { 'nvim-treesitter/nvim-treesitter-textobjects' },
+      { 'windwp/nvim-ts-autotag' },
     },
     branch = 'master',
     lazy = false,
     build = ':TSUpdate',
-    event = { 'BufReadPre', 'BufNewFile' },
     opts = {
       auto_install = true,
       ensure_installed = {
@@ -248,6 +248,9 @@ return {
         'xml',
         'yaml',
         'go',
+        'gomod',
+        'gosum',
+        'gotmpl',
       },
       highlight = { enable = true },
       indent = { enable = true },
@@ -263,6 +266,10 @@ return {
         },
       },
     },
+    config = function(_, opts)
+      require('nvim-ts-autotag').setup()
+      require('nvim-treesitter.configs').setup(opts)
+    end,
   },
 
   {

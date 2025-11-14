@@ -102,18 +102,21 @@ return {
     config = function()
       require('conform').setup({
         formatters_by_ft = {
-          javascript = { 'biome', lsp_format = 'fallback' },
-          typescript = { 'biome', lsp_format = 'fallback' },
-          javascriptreact = { 'biome', lsp_format = 'fallback' },
-          typescriptreact = { 'biome', lsp_format = 'fallback' },
-          svelte = { 'biome', lsp_format = 'fallback' },
-          css = { 'biome', lsp_format = 'fallback' },
-          html = { 'biome', lsp_format = 'fallback' },
-          json = { 'biome', lsp_format = 'fallback' },
-          yaml = { 'yamlfmt', lsp_format = 'fallback' },
-          lua = { 'stylua', lsp_format = 'fallback' },
-          python = { 'ruff', lsp_format = 'fallback' },
-          sql = { 'sqruff', lsp_format = 'fallback' },
+          javascript = { 'biome' },
+          typescript = { 'biome' },
+          javascriptreact = { 'biome' },
+          typescriptreact = { 'biome' },
+          svelte = { 'biome' },
+          css = { 'biome' },
+          html = { 'biome' },
+          json = { 'biome' },
+          yaml = { 'yamlfmt' },
+          lua = { 'stylua' },
+          python = { 'ruff' },
+          sql = { 'sqruff' },
+        },
+        default_format_opts = {
+          lsp_format = 'fallback',
         },
       })
     end,

@@ -2,6 +2,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('UserLspConfig', {}),
   callback = function(ev)
     local bufnr = ev.buf
+    local hasConform, conform = pcall(require, 'conform')
 
     vim.keymap.set('n', 'K', function()
       vim.lsp.buf.hover()
@@ -36,15 +37,10 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end, { desc = 'rename', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', '<F3>', function()
-      -- if hasConform then
-      --   conform.format({
-      --     lsp_fallback = true,
-      --     async = false,
-      --     timeout_ms = 1000,
-      --   })
-      --
-      --   return
-      -- end
+      if hasConform then
+        conform.format({ lsp_fallback = true, async = false, timeout_ms = 1000 })
+        return
+      end
 
       vim.lsp.buf.format()
     end, { desc = 'format', buffer = bufnr, remap = false })
@@ -58,16 +54,70 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end, { desc = 'list diagnostics', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', '[d', function()
-      vim.diagnostic.goto_next()
+      vim.diagnostic.jump({ count = -1, float = true })
     end, { desc = 'previous diagnostic', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', ']d', function()
-      vim.diagnostic.goto_prev()
+      vim.diagnostic.jump({ count = 1, float = true })
     end, { desc = 'next diagnostic', buffer = bufnr, remap = false })
   end,
 })
 
 return {
+  -- Linter
+  {
+    'mfussenegger/nvim-lint',
+    lazy = true,
+    event = { 'BufReadPre', 'BufNewFile' },
+    config = function()
+      local lint = require('lint')
+
+      lint.linters_by_ft = {
+        javascript = { 'biome' },
+        typescript = { 'biome' },
+        javascriptreact = { 'biome' },
+        typescriptreact = { 'biome' },
+        python = { 'ruff', 'bandit' },
+        go = { 'golangcilint' },
+        sql = { 'sqruff' },
+      }
+
+      vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost' }, {
+        callback = function()
+          lint.try_lint()
+        end,
+      })
+
+      vim.keymap.set('n', '<leader><F3>', function()
+        lint.try_lint()
+      end, { desc = 'lint' })
+    end,
+  },
+
+  -- Formatter
+  {
+    'stevearc/conform.nvim',
+    lazy = true,
+    event = { 'BufReadPre', 'BufNewFile' },
+    config = function()
+      require('conform').setup({
+        formatters_by_ft = {
+          javascript = { 'biome', lsp_format = 'fallback' },
+          typescript = { 'biome', lsp_format = 'fallback' },
+          javascriptreact = { 'biome', lsp_format = 'fallback' },
+          typescriptreact = { 'biome', lsp_format = 'fallback' },
+          svelte = { 'biome', lsp_format = 'fallback' },
+          css = { 'biome', lsp_format = 'fallback' },
+          html = { 'biome', lsp_format = 'fallback' },
+          json = { 'biome', lsp_format = 'fallback' },
+          yaml = { 'yamlfmt', lsp_format = 'fallback' },
+          lua = { 'stylua', lsp_format = 'fallback' },
+          python = { 'ruff', lsp_format = 'fallback' },
+          sql = { 'sqruff', lsp_format = 'fallback' },
+        },
+      })
+    end,
+  },
 
   {
     'mason-org/mason-lspconfig.nvim',
@@ -100,8 +150,8 @@ return {
         'templ',
 
         -- Python
+        'pyright',
         'ruff',
-        -- "pyright", -- maybe?
       },
     },
     dependencies = {
@@ -119,6 +169,9 @@ return {
         'shfmt',
         'stylua',
         'sqruff',
+
+        -- Structured file formats
+        'yamlfmt',
 
         -- C/C++
         'cpplint',

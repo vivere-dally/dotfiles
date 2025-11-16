@@ -61,6 +61,7 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:/usr/local/android-studio/bin
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:~/go/bin
+export PATH=$PATH:~/.composer/vendor/bin
 
 source <(fzf --zsh)
 

@@ -325,7 +325,7 @@ return {
     opts = {},
     keys = {
       {
-        '<leader>?',
+        '<leader><F1>',
         function()
           require('which-key').show({ global = false })
         end,

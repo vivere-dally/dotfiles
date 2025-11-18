@@ -336,14 +336,20 @@ return {
 
   {
     'numToStr/Comment.nvim',
+    dependencies = {
+      'JoosepAlviste/nvim-ts-context-commentstring',
+      config = function()
+        require('ts_context_commentstring').setup({
+          enable_autocmd = false,
+        })
+      end,
+    },
     opts = {},
-    -- Not sure if this is needed
-    -- dependencies = { 'JoosepAlviste/nvim-ts-context-commentstring' },
-    -- config = function()
-    --   require('Comment').setup({
-    --     pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
-    --   })
-    -- end,
+    config = function()
+      require('Comment').setup({
+        pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
+      })
+    end,
   },
 
   {
@@ -513,21 +519,15 @@ return {
           local msg = 'No Active Lsp'
           local buf_ft = vim.api.nvim_get_option_value('filetype', { buf = 0 })
           local clients = vim.lsp.get_clients()
-          if next(clients) == nil then
-            return msg
-          end
+          if next(clients) == nil then return msg end
 
           local matched = {}
           for _, client in ipairs(clients) do
             local filetypes = client.config.filetypes
-            if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
-              table.insert(matched, client.name)
-            end
+            if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then table.insert(matched, client.name) end
           end
 
-          if #matched == 0 then
-            return msg
-          end
+          if #matched == 0 then return msg end
 
           return table.concat(matched, ', ')
         end,

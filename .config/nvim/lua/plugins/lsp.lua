@@ -73,10 +73,14 @@ return {
       local lint = require('lint')
 
       lint.linters_by_ft = {
-        javascript = { 'biome' },
-        typescript = { 'biome' },
-        javascriptreact = { 'biome' },
-        typescriptreact = { 'biome' },
+        -- javascript = { 'biome' },
+        -- typescript = { 'biome' },
+        -- javascriptreact = { 'biome' },
+        -- typescriptreact = { 'biome' },
+        javascript = { 'eslint_d' },
+        typescript = { 'eslint_d' },
+        javascriptreact = { 'eslint_d' },
+        typescriptreact = { 'eslint_d' },
         python = { 'ruff', 'bandit' },
         go = { 'golangcilint' },
         sql = { 'sqruff' },
@@ -103,14 +107,22 @@ return {
     config = function()
       require('conform').setup({
         formatters_by_ft = {
-          javascript = { 'biome' },
-          typescript = { 'biome' },
-          javascriptreact = { 'biome' },
-          typescriptreact = { 'biome' },
-          svelte = { 'biome' },
-          css = { 'biome' },
-          html = { 'biome' },
-          json = { 'biome' },
+          -- javascript = { 'biome' },
+          -- typescript = { 'biome' },
+          -- javascriptreact = { 'biome' },
+          -- typescriptreact = { 'biome' },
+          -- svelte = { 'biome' },
+          -- css = { 'biome' },
+          -- html = { 'biome' },
+          -- json = { 'biome' },
+          javascript = { 'prettier' },
+          typescript = { 'prettier' },
+          javascriptreact = { 'prettier' },
+          typescriptreact = { 'prettier' },
+          svelte = { 'prettier' },
+          css = { 'prettier' },
+          html = { 'prettier' },
+          json = { 'prettier' },
           yaml = { 'yamlfmt' },
           lua = { 'stylua' },
           python = { 'ruff' },
@@ -139,7 +151,7 @@ return {
 
         -- Javascript ecosystem
         'ts_ls',
-        'biome',
+        -- 'biome', -- Does not currently work for me since I am working on projects with eslint/prettier. Maybe in the future
         'tailwindcss',
         'eslint',
 
@@ -181,6 +193,10 @@ return {
 
         -- Structured file formats
         'yamlfmt',
+
+        -- JS/TS
+        'prettier',
+        'eslint_d',
 
         -- C/C++
         'cpplint',

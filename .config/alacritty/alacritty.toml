@@ -17,20 +17,28 @@ general.import = [
 size = 18
 
 [font.normal]
-family = "JetBrainsMonoNL Nerd Font"
-style = "Medium"
+# family = "JetBrainsMonoNL Nerd Font"
+# style = "Medium"
+family = "Iosevka Nerd Font Mono"
+style = "Regular"
 
 [font.bold]
-family = "JetBrainsMonoNL Nerd Font"
-style = "Bol"
+# family = "JetBrainsMonoNL Nerd Font"
+# style = "Bol"
+family = "Iosevka Nerd Font Mono"
+style = "Medium"
 
 [font.italic]
-family = "JetBrainsMonoNL Nerd Font"
-style = "MediumItalic"
+# family = "JetBrainsMonoNL Nerd Font"
+# style = "MediumItalic"
+family = "Iosevka Nerd Font Mono"
+style = "Regular"
 
 [font.bold_italic]
-family = "JetBrainsMonoNL Nerd Font"
-style = "BoldItalic"
+# family = "JetBrainsMonoNL Nerd Font"
+# style = "BoldItalic"
+family = "Iosevka Nerd Font Mono"
+style = "Medium Italic"
 
 [window]
 decorations = "none"

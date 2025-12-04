@@ -47,6 +47,16 @@ return {
         ['<C-j>'] = { 'select_next', 'fallback_to_mappings' },
         ['<C-b>'] = { 'scroll_documentation_up', 'fallback' },
         ['<C-n>'] = { 'scroll_documentation_down', 'fallback' },
+        ['<Tab>'] = {
+          'snippet_forward',
+          function()
+            return require('sidekick').nes_jump_or_apply()
+          end,
+          function()
+            return vim.lsp.inline_completion.get()
+          end,
+          'fallback',
+        },
       },
 
       appearance = {

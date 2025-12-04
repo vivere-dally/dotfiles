@@ -145,6 +145,7 @@ return {
         'typos_lsp',
         'docker_language_server',
         'sqlls', -- https://github.com/joe-re/sql-language-server?tab=readme-ov-file#configuration
+        'copilot',
 
         -- C/C++
         'clangd',

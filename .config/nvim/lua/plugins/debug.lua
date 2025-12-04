@@ -32,7 +32,7 @@ return {
             -- Must be "go" or it will be ignored by the plugin
             type = 'go',
             name = 'Panomics Webserver',
-            -- mode = 'remote',
+            outputMode = 'remote',
             request = 'launch',
             program = '${workspaceFolder}',
             -- program = '${file}',

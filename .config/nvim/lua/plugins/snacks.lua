@@ -622,6 +622,7 @@ return {
         find_left = 'cF', -- Find surrounding (to the left)
         highlight = 'ch', -- Highlight surrounding
         replace = 'cr', -- Replace surrounding
+        update_n_lines = '', -- Update `n_lines`
 
         suffix_last = 'l', -- Suffix to search with "prev" method
         suffix_next = 'n', -- Suffix to search with "next" method

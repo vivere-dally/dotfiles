@@ -17,6 +17,7 @@ return {
           },
         },
       },
+      'milanglacier/minuet-ai.nvim',
     },
 
     -- use a release tag to download pre-built binaries
@@ -47,16 +48,16 @@ return {
         ['<C-j>'] = { 'select_next', 'fallback_to_mappings' },
         ['<C-b>'] = { 'scroll_documentation_up', 'fallback' },
         ['<C-n>'] = { 'scroll_documentation_down', 'fallback' },
-        ['<Tab>'] = {
-          'snippet_forward',
-          function()
-            return require('sidekick').nes_jump_or_apply()
-          end,
-          function()
-            return vim.lsp.inline_completion.get()
-          end,
-          'fallback',
-        },
+        -- ['<Tab>'] = {
+        --   'snippet_forward',
+        --   function()
+        --     return require('sidekick').nes_jump_or_apply()
+        --   end,
+        --   function()
+        --     return vim.lsp.inline_completion.get()
+        --   end,
+        --   'fallback',
+        -- },
       },
 
       appearance = {
@@ -77,6 +78,7 @@ return {
             },
           },
         },
+        trigger = { prefetch_on_insert = false },
       },
 
       signature = { window = { border = 'single' } },
@@ -84,7 +86,14 @@ return {
       -- Default list of enabled providers defined so that you can extend it
       -- elsewhere in your config, without redefining it, due to `opts_extend`
       sources = {
-        default = { 'lazydev', 'lsp', 'path', 'snippets', 'buffer' },
+        default = {
+          'lazydev',
+          'lsp',
+          'path',
+          'snippets',
+          'buffer',
+          -- 'minuet',
+        },
         providers = {
           lazydev = {
             name = 'LazyDev',
@@ -92,6 +101,15 @@ return {
             -- make lazydev completions top priority (see `:h blink.cmp`)
             score_offset = 100,
           },
+          -- minuet = {
+          --   name = 'minuet',
+          --   module = 'minuet.blink',
+          --   async = true,
+          --   -- Should match minuet.config.request_timeout * 1000,
+          --   -- since minuet.config.request_timeout is in seconds
+          --   timeout_ms = 3000,
+          --   score_offset = 50, -- Gives minuet higher priority among suggestions
+          -- },
         },
       },
 

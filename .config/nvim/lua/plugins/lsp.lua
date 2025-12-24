@@ -164,7 +164,6 @@ return {
 
         -- Golang
         'gopls',
-        'golangci_lint_ls',
         'templ',
 
         -- Python

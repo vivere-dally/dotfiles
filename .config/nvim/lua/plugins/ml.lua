@@ -1,5 +1,34 @@
 return {
   {
+    'supermaven-inc/supermaven-nvim',
+    config = function()
+      -- Add comment here explaining how we can set the config
+      -- https://github.com/supermaven-inc/supermaven-nvim/blob/main/README.md#configuration
+      require('supermaven-nvim').setup({})
+    end,
+  },
+
+  -- {
+  --   'milanglacier/minuet-ai.nvim',
+  --   config = function()
+  --     require('minuet').setup({
+  --       blink = { enable_auto_complete = true },
+  --       provider = 'claude',
+  --       provider_options = {
+  --         claude = {
+  --           max_tokens = 256,
+  --           model = 'claude-haiku-4-5-20251001',
+  --           stream = true,
+  --           api_key = 'ANTHROPIC_API_KEY',
+  --           end_point = 'https://api.anthropic.com/v1/messages',
+  --           optional = {},
+  --         },
+  --       },
+  --     })
+  --   end,
+  -- },
+
+  {
 
     'folke/sidekick.nvim',
     ---@class sidekick.Config

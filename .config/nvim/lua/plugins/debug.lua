@@ -38,6 +38,16 @@ return {
             -- program = '${file}',
             buildFlags = { '-tags=dev' },
           },
+          {
+            -- Must be "go" or it will be ignored by the plugin
+            type = 'go',
+            name = 'Nexus',
+            outputMode = 'remote',
+            request = 'launch',
+            program = '${workspaceFolder}/cmd/nexus',
+            -- program = '${file}',
+            -- buildFlags = { '-tags=dev' },
+          },
         },
         -- delve configurations
         -- delve = {
@@ -106,6 +116,109 @@ return {
       --   },
       -- }
       require('dap-python').setup('uv')
+
+      -- C/C++ debugging via codelldb (installed by Mason)
+      local codelldb_path = vim.fn.stdpath('data') .. '/mason/packages/codelldb/extension/adapter/codelldb'
+
+      dap.adapters.codelldb = {
+        type = 'server',
+        port = '${port}',
+        executable = {
+          command = codelldb_path,
+          args = { '--port', '${port}' },
+        },
+      }
+
+      dap.configurations.c = {
+        {
+          name = 'Launch',
+          type = 'codelldb',
+          request = 'launch',
+          program = function()
+            return coroutine.create(function(dap_run_co)
+              vim.ui.input({ prompt = 'Path to executable: ', default = vim.fn.getcwd() .. '/' }, function(input)
+                coroutine.resume(dap_run_co, input)
+              end)
+            end)
+          end,
+          cwd = '${workspaceFolder}',
+          stopOnEntry = false,
+        },
+        {
+          name = 'Attach to process',
+          type = 'codelldb',
+          request = 'attach',
+          pid = require('dap.utils').pick_process,
+          cwd = '${workspaceFolder}',
+        },
+      }
+      dap.configurations.cpp = dap.configurations.c
+
+      local function zig_build_and_pick()
+        vim.notify('Running zig build...', vim.log.levels.INFO)
+        local output = vim.fn.system('zig build 2>&1')
+        if vim.v.shell_error ~= 0 then
+          vim.notify('zig build failed:\n' .. output, vim.log.levels.ERROR)
+          return nil
+        end
+        local bin_dir = vim.fn.getcwd() .. '/zig-out/bin'
+        local bins = vim.fn.globpath(bin_dir, '*', false, true)
+        bins = vim.tbl_filter(function(f)
+          return vim.fn.executable(f) == 1
+        end, bins)
+        if #bins == 0 then
+          vim.notify('No executables found in zig-out/bin/', vim.log.levels.ERROR)
+          return nil
+        end
+        if #bins == 1 then
+          return bins[1]
+        end
+        return coroutine.create(function(co)
+          vim.ui.select(bins, { prompt = 'Select executable:' }, function(choice)
+            coroutine.resume(co, choice)
+          end)
+        end)
+      end
+
+      local function zig_build_test()
+        local file = vim.fn.expand('%:p')
+        local bin_path = vim.fn.getcwd() .. '/zig-test-debug'
+        vim.notify('Building test binary...', vim.log.levels.INFO)
+        local output = vim.fn.system(
+          'zig test --test-no-exec -femit-bin=' .. vim.fn.shellescape(bin_path) .. ' ' .. vim.fn.shellescape(file) .. ' 2>&1'
+        )
+        if vim.v.shell_error ~= 0 then
+          vim.notify('Test build failed:\n' .. output, vim.log.levels.ERROR)
+          return nil
+        end
+        return bin_path
+      end
+
+      dap.configurations.zig = {
+        {
+          name = 'Build & debug project',
+          type = 'codelldb',
+          request = 'launch',
+          program = zig_build_and_pick,
+          cwd = '${workspaceFolder}',
+          stopOnEntry = false,
+        },
+        {
+          name = 'Debug test (current file)',
+          type = 'codelldb',
+          request = 'launch',
+          program = zig_build_test,
+          cwd = '${workspaceFolder}',
+          stopOnEntry = false,
+        },
+        {
+          name = 'Attach to process',
+          type = 'codelldb',
+          request = 'attach',
+          pid = require('dap.utils').pick_process,
+          cwd = '${workspaceFolder}',
+        },
+      }
 
       vim.keymap.set('n', '<leader>b', dap.toggle_breakpoint, { desc = 'dap breakpoint' })
       vim.keymap.set('n', '<leader>gb', dap.run_to_cursor, { desc = 'dap run to cursor' })

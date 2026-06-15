@@ -14,7 +14,31 @@ return {
       explorer = { enabled = true },
       indent = { enabled = true, animate = { enabled = false } },
       lazygit = { configure = true },
-      picker = { enabled = true }, -- https://github.com/folke/snacks.nvim/blob/main/docs/picker.md#%EF%B8%8F-config
+      picker = {
+        enabled = true, -- https://github.com/folke/snacks.nvim/blob/main/docs/picker.md#%EF%B8%8F-config
+        sources = {
+          files = {
+            hidden = true,
+            ignored = true,
+            exclude = { "openspec", "node_modules", ".git", ".claude" },
+          },
+          smart = {
+            hidden = true,
+            ignored = true,
+            exclude = { "openspec", "node_modules", ".git", ".claude" },
+          },
+          grep = {
+            hidden = true,
+            ignored = true,
+            exclude = { "openspec", "node_modules", ".git", ".claude" },
+          },
+          grep_word = {
+            hidden = true,
+            ignored = true,
+            exclude = { "openspec", "node_modules", ".git", ".claude" },
+          },
+        },
+      },
       scope = { enabled = true },
       statuscolumn = { enabled = true },
     },
@@ -60,7 +84,7 @@ return {
       {
         '<leader>ff',
         function()
-          Snacks.picker.files({ hidden = true })
+          Snacks.picker.files()
         end,
         desc = 'Find Files',
       },
@@ -616,13 +640,13 @@ return {
     version = '*',
     opts = {
       mappings = {
-        add = 'ca', -- Add surrounding in Normal and Visual modes
-        delete = 'cd', -- Delete surrounding
-        find = 'cf', -- Find surrounding (to the right)
-        find_left = 'cF', -- Find surrounding (to the left)
-        highlight = 'ch', -- Highlight surrounding
-        replace = 'cr', -- Replace surrounding
-        update_n_lines = '', -- Update `n_lines`
+        add = 'sa', -- Add surrounding in Normal and Visual modes
+        delete = 'sd', -- Delete surrounding
+        find = 'sf', -- Find surrounding (to the right)
+        find_left = 'sF', -- Find surrounding (to the left)
+        highlight = 'sh', -- Highlight surrounding
+        replace = 'sr', -- Replace surrounding
+        update_n_lines = 'sn', -- Update `n_lines`
 
         suffix_last = 'l', -- Suffix to search with "prev" method
         suffix_next = 'n', -- Suffix to search with "next" method
@@ -631,23 +655,22 @@ return {
   },
 
   {
-
     'Wansmer/treesj',
     dependencies = { 'nvim-treesitter/nvim-treesitter' },
     keys = {
       {
-        '<leader>bj',
+        '<leader>cj',
         function()
           require('treesj').join()
         end,
-        { desc = 'code block join' },
+        desc = 'Code join (collapse block)',
       },
       {
-        '<leader>bs',
+        '<leader>cs',
         function()
           require('treesj').split()
         end,
-        { desc = 'code block split' },
+        desc = 'Code split (expand block)',
       },
     },
     opts = {
@@ -767,13 +790,14 @@ return {
       set({ 'n', 'x' }, '<leader>n', function()
         mc.matchAddCursor(1)
       end)
-      set({ 'n', 'x' }, '<leader>s', function()
-        mc.matchSkipCursor(1)
-      end)
       set({ 'n', 'x' }, '<leader>N', function()
         mc.matchAddCursor(-1)
       end)
+      -- Skip uses Shift: S for skip forward, P for skip backward (avoids <leader>s* search conflict)
       set({ 'n', 'x' }, '<leader>S', function()
+        mc.matchSkipCursor(1)
+      end)
+      set({ 'n', 'x' }, '<leader>P', function()
         mc.matchSkipCursor(-1)
       end)
 

@@ -1,56 +1,103 @@
 local bind = vim.keymap.set
 
-bind('n', '<leader>\\', ':nohl<CR>', { desc = 'clear search' })
-bind('n', 'x', '"_x', { desc = 'x without copy' })
+-- ============================================================================
+-- ESCAPE & CLEAR
+-- ============================================================================
+-- Quick escape from insert mode
+bind('i', 'jk', '<Esc>', { desc = 'Exit insert mode' })
+bind('i', 'jj', '<Esc>', { desc = 'Exit insert mode (alt)' })
 
-bind('n', '<leader>+', '<C-a>', { desc = 'increment' })
-bind('n', '<leader>-', '<C-x>', { desc = 'decrement' })
+-- Escape clears search highlighting AND closes floating windows
+bind('n', '<Esc>', function()
+  vim.cmd('nohlsearch')
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_config(win).relative ~= '' then pcall(vim.api.nvim_win_close, win, false) end
+  end
+end, { desc = 'Clear search and close floats' })
 
--- windows
-bind('n', '<leader>we', '<C-w>v', { desc = 'split window veritcally' })
-bind('n', '<leader>wq', '<C-w>s', { desc = 'split window horizontally' })
-bind('n', '<leader>wr', '<C-w>=', { desc = 'make windows equal' })
-bind('n', '<leader>ww', ':close<CR>', { desc = 'close current window' })
-bind('n', '<leader>wj', '<C-w>j', { desc = 'move to down window' })
-bind('n', '<leader>wk', '<C-w>k', { desc = 'move to up window' })
-bind('n', '<leader>wh', '<C-w>h', { desc = 'move to left window' })
-bind('n', '<leader>wl', '<C-w>l', { desc = 'move to right window' })
+-- ============================================================================
+-- LINE NAVIGATION (faster than ^/$)
+-- ============================================================================
+bind({ 'n', 'x', 'o' }, 'H', '^', { desc = 'Start of line (first char)' })
+bind({ 'n', 'x', 'o' }, 'L', '$', { desc = 'End of line' })
 
--- tabs
-bind('n', '<leader>to', ':tabnew<CR>', { desc = 'new tab' })
-bind('n', '<leader>tc', ':tabclose<CR>', { desc = 'close tab' })
-bind('n', '<leader>tj', ':tabn<CR>', { desc = 'tab next' })
-bind('n', '<leader>tk', ':tabp<CR>', { desc = 'tab prev' })
+-- ============================================================================
+-- FILE OPERATIONS
+-- ============================================================================
+-- Quick save
+bind('n', '<C-s>', '<cmd>w<CR>', { desc = 'Save file' })
+bind('i', '<C-s>', '<Esc><cmd>w<CR>', { desc = 'Save file' })
+bind('x', '<C-s>', '<Esc><cmd>w<CR>', { desc = 'Save file' })
+bind('n', '<leader>W', '<cmd>w<CR>', { desc = 'Save file' })
 
--- move selection
-bind('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'move selection down' })
-bind('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'move selection up' })
+-- Quick close
+bind('n', '<leader>q', '<cmd>bdelete<CR>', { desc = 'Close buffer' })
+bind('n', '<leader>Q', '<cmd>qa<CR>', { desc = 'Quit all' })
 
--- cursor behavior
-bind('n', 'J', 'mzJ`z', { desc = 'append to current line' })
-bind('n', '<C-d>', '<C-d>zz', { desc = 'hpage jump down cursor middle' })
-bind('n', '<C-u>', '<C-u>zz', { desc = 'hpage jump up cursor middle' })
-bind('n', 'n', 'nzzzv', { desc = 'next match cursor middle' })
-bind('n', 'N', 'Nzzzv', { desc = 'prev match cursor middle' })
+-- Make file executable
+bind('n', '<leader>X', '<cmd>!chmod +x %<CR>', { desc = 'Make file executable', silent = true })
 
-bind('x', '<leader>p', '"_dP', { desc = 'paste without losing selection' })
+-- ============================================================================
+-- WINDOWS
+-- ============================================================================
+-- Splits
+bind('n', '<leader>we', '<C-w>v', { desc = 'Split window vertically' })
+bind('n', '<leader>wq', '<C-w>s', { desc = 'Split window horizontally' })
+bind('n', '<leader>wr', '<C-w>=', { desc = 'Make windows equal' })
+bind('n', '<leader>ww', '<cmd>close<CR>', { desc = 'Close current window' })
 
--- yanking
--- still prefer to use the system clipboard always
--- TODO: check options
--- bind("n", "<leader>y", "\"+y", { desc = "yank into system clipboard" })
--- bind("v", "<leader>y", "\"+y", { desc = "yank into system clipboard" })
--- bind("n", "<leader>Y", "\"+Y", { desc = "yank into system clipboard" })
+-- Window navigation
+bind('n', '<leader>wj', '<C-w>j', { desc = 'Move to down window' })
+bind('n', '<leader>wk', '<C-w>k', { desc = 'Move to up window' })
+bind('n', '<leader>wh', '<C-w>h', { desc = 'Move to left window' })
+bind('n', '<leader>wl', '<C-w>l', { desc = 'Move to right window' })
 
-bind('n', '<leader>d', '"_d', { desc = 'delete to void register' })
-bind('v', '<leader>d', '"_d', { desc = 'delete to void register' })
+-- ============================================================================
+-- TABS
+-- ============================================================================
+bind('n', '<leader>to', '<cmd>tabnew<CR>', { desc = 'New tab' })
+bind('n', '<leader>tc', '<cmd>tabclose<CR>', { desc = 'Close tab' })
+bind('n', '<leader>tj', '<cmd>tabn<CR>', { desc = 'Tab next' })
+bind('n', '<leader>tk', '<cmd>tabp<CR>', { desc = 'Tab prev' })
 
-bind('n', '<C-j>', '<cmd>cnext<CR>zz', { desc = 'quickfix next' })
-bind('n', '<C-k>', '<cmd>cprev<CR>zz', { desc = 'quickfix prev' })
-bind('n', '<leader>j', '<cmd>lnext<CR>zz', { desc = 'quickfix next' })
-bind('n', '<leader>k', '<cmd>lprev<CR>zz', { desc = 'quickfix prev' })
+-- ============================================================================
+-- SELECTION & CURSOR MOVEMENT
+-- ============================================================================
+-- Move selection up/down
+bind('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
+bind('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
 
-bind('n', '<leader>x', '<cmd>!chmod +x %<CR>', { desc = 'make file executable', silent = true })
+-- Cursor behavior - keep centered
+bind('n', 'J', 'mzJ`z', { desc = 'Append to current line' })
+bind('n', '<C-d>', '<C-d>zz', { desc = 'Half-page jump down (centered)' })
+bind('n', '<C-u>', '<C-u>zz', { desc = 'Half-page jump up (centered)' })
+bind('n', 'n', 'nzzzv', { desc = 'Next match (centered)' })
+bind('n', 'N', 'Nzzzv', { desc = 'Prev match (centered)' })
 
-bind('n', '<leader><F2>', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = 'replace current word' })
-bind('n', '<leader><F9>', [[:%s/\r//g]], { desc = 'remove carriage return' })
+-- ============================================================================
+-- REGISTERS & CLIPBOARD
+-- ============================================================================
+-- Paste without losing selection
+bind('x', '<leader>p', '"_dP', { desc = 'Paste without losing selection' })
+
+-- Delete to void register (don't copy)
+bind('n', '<leader>d', '"_d', { desc = 'Delete to void register' })
+bind('v', '<leader>d', '"_d', { desc = 'Delete to void register' })
+
+-- Delete char to void (use leader prefix to preserve default x behavior)
+bind({ 'n', 'x' }, '<leader>x', '"_x', { desc = 'Delete char to void' })
+
+-- ============================================================================
+-- QUICKFIX & LOCATION LIST
+-- ============================================================================
+bind('n', '<C-j>', '<cmd>cnext<CR>zz', { desc = 'Quickfix next' })
+bind('n', '<C-k>', '<cmd>cprev<CR>zz', { desc = 'Quickfix prev' })
+bind('n', '<leader>j', '<cmd>lnext<CR>zz', { desc = 'Location list next' })
+bind('n', '<leader>k', '<cmd>lprev<CR>zz', { desc = 'Location list prev' })
+
+-- ============================================================================
+-- SEARCH & REPLACE
+-- ============================================================================
+bind('n', '<leader>rw', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = 'Replace word under cursor' })
+bind('n', '<leader>rr', [[:%s///gI<Left><Left><Left><Left>]], { desc = 'Replace text in buffer' })
+bind('n', '<leader>rc', [[:%s/\r//g<CR>]], { desc = 'Remove carriage returns' })

@@ -32,22 +32,32 @@ vim.api.nvim_create_autocmd('LspAttach', {
       vim.lsp.buf.signature_help()
     end, { desc = 'display signature', buffer = bufnr, remap = false })
 
+    -- Rename: F2 and leader alternative
     vim.keymap.set('n', '<F2>', function()
       vim.lsp.buf.rename()
-    end, { desc = 'rename', buffer = bufnr, remap = false })
+    end, { desc = 'Rename symbol', buffer = bufnr, remap = false })
+    vim.keymap.set('n', '<leader>cr', function()
+      vim.lsp.buf.rename()
+    end, { desc = 'Code rename', buffer = bufnr, remap = false })
 
-    vim.keymap.set('n', '<F3>', function()
+    -- Format: F3 and leader alternative
+    local format_fn = function()
       if hasConform then
         conform.format({ lsp_fallback = true, async = false, timeout_ms = 1000 })
         return
       end
-
       vim.lsp.buf.format()
-    end, { desc = 'format', buffer = bufnr, remap = false })
+    end
+    vim.keymap.set('n', '<F3>', format_fn, { desc = 'Format', buffer = bufnr, remap = false })
+    vim.keymap.set({ 'n', 'x' }, '<leader>cf', format_fn, { desc = 'Code format', buffer = bufnr, remap = false })
 
-    vim.keymap.set('n', '<F4>', function()
+    -- Code action: F4 and leader alternative
+    vim.keymap.set({ 'n', 'x' }, '<F4>', function()
       vim.lsp.buf.code_action()
-    end, { desc = 'code action', buffer = bufnr, remap = false })
+    end, { desc = 'Code action', buffer = bufnr, remap = false })
+    vim.keymap.set({ 'n', 'x' }, '<leader>ca', function()
+      vim.lsp.buf.code_action()
+    end, { desc = 'Code action', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', 'gl', function()
       vim.diagnostic.open_float()
@@ -62,6 +72,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end, { desc = 'next diagnostic', buffer = bufnr, remap = false })
   end,
 })
+
+vim.lsp.enable('zls')
 
 return {
   -- Linter
@@ -87,15 +99,15 @@ return {
         php = { 'psalm', 'phpstan' },
       }
 
-      vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost' }, {
+      vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost' }, {
         callback = function()
           lint.try_lint()
         end,
       })
 
-      vim.keymap.set('n', '<leader><F3>', function()
+      vim.keymap.set('n', '<leader>cl', function()
         lint.try_lint()
-      end, { desc = 'lint' })
+      end, { desc = 'Code lint' })
     end,
   },
 
@@ -125,6 +137,8 @@ return {
           json = { 'prettier' },
           yaml = { 'yamlfmt' },
           lua = { 'stylua' },
+          go = { 'goimports' },
+          zig = { 'zigfmt' },
           python = { 'ruff' },
           sql = { 'sqruff' },
           php = { 'pint' },
@@ -173,6 +187,9 @@ return {
         -- PHP
         'phpactor',
         'laravel_ls',
+
+        -- Kotlin
+        'kotlin_language_server',
       },
     },
     dependencies = {
@@ -200,12 +217,14 @@ return {
 
         -- C/C++
         'cpplint',
+        'codelldb',
 
-        -- Golang
-        'golangci-lint',
+        -- Golang (golangci-lint installed via brew — Mason build may lag behind Go versions)
+        'goimports',
         'golines',
         'gomodifytags',
         'gotests',
+        'iferr',
 
         -- Python
         'bandit',
@@ -279,10 +298,10 @@ return {
         'gomod',
         'gosum',
         'gotmpl',
+        'zig',
       },
       highlight = { enable = true },
       indent = { enable = true },
-      autotag = { enable = true },
       rainbow = { enable = true },
       incremental_selection = {
         enable = true,
@@ -295,7 +314,7 @@ return {
       },
     },
     config = function(_, opts)
-      -- require('nvim-ts-autotag').setup()
+      require('nvim-ts-autotag').setup()
       require('nvim-treesitter.configs').setup(opts)
     end,
   },

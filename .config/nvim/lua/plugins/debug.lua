@@ -182,11 +182,51 @@ return {
 
       local function zig_build_test()
         local file = vim.fn.expand('%:p')
+        if not file:match('%.zig$') then
+          vim.notify('Current file is not a .zig file', vim.log.levels.ERROR)
+          return nil
+        end
+
+        -- Zig forbids @import("../..") from escaping the module's root
+        -- directory. Compiling a leaf file directly (e.g. src/heap/heap.zig)
+        -- makes that file's directory the module root, so sibling imports like
+        -- @import("../array/array.zig") fail with "import of file outside
+        -- module path". Instead we always compile the package's real root
+        -- module and use --test-filter to scope the emitted binary to just the
+        -- current file's tests.
+        local project_root = vim.fs.root(file, { 'build.zig', 'build.zig.zon' })
+        if not project_root then
+          vim.notify('No build.zig found; not inside a Zig package', vim.log.levels.ERROR)
+          return nil
+        end
+
+        -- Find the package's root source file (what `zig build test` compiles).
+        local root_src
+        for _, c in ipairs({ '/src/root.zig', '/src/main.zig', '/root.zig', '/main.zig' }) do
+          if vim.fn.filereadable(project_root .. c) == 1 then
+            root_src = project_root .. c
+            break
+          end
+        end
+        if not root_src then
+          vim.notify('Could not locate a Zig root source file (src/root.zig)', vim.log.levels.ERROR)
+          return nil
+        end
+
+        -- Derive the test-name namespace from the current file's path relative
+        -- to the root module's directory: src/heap/heap.zig -> "heap.heap".
+        local root_dir = vim.fn.fnamemodify(root_src, ':h')
+        local filter = nil
+        if file ~= root_src and file:sub(1, #root_dir + 1) == root_dir .. '/' then
+          filter = file:sub(#root_dir + 2):gsub('%.zig$', ''):gsub('/', '.')
+        end
+
         local bin_path = vim.fn.getcwd() .. '/zig-test-debug'
-        vim.notify('Building test binary...', vim.log.levels.INFO)
-        local output = vim.fn.system(
-          'zig test --test-no-exec -femit-bin=' .. vim.fn.shellescape(bin_path) .. ' ' .. vim.fn.shellescape(file) .. ' 2>&1'
-        )
+        vim.notify('Building test binary' .. (filter and (' (filter: ' .. filter .. ')') or '') .. '...', vim.log.levels.INFO)
+        local cmd = 'zig test --test-no-exec '
+          .. (filter and ('--test-filter ' .. vim.fn.shellescape(filter) .. ' ') or '')
+          .. '-femit-bin=' .. vim.fn.shellescape(bin_path) .. ' ' .. vim.fn.shellescape(root_src) .. ' 2>&1'
+        local output = vim.fn.system(cmd)
         if vim.v.shell_error ~= 0 then
           vim.notify('Test build failed:\n' .. output, vim.log.levels.ERROR)
           return nil

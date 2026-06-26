@@ -40,6 +40,25 @@ return {
           backend = 'tmux',
           enabled = true,
         },
+        tools = {
+          -- Recent Claude Code defaults to "fullscreen rendering": it draws on the
+          -- terminal's *alternate screen* (like vim/htop) and captures the mouse.
+          -- That breaks scrolling inside sidekick's tmux pane two ways:
+          --   1. alt-screen output never lands in tmux's pane history, so sidekick's
+          --      `tmux capture-pane -S -` scrollback dump has nothing to show; and
+          --   2. mouse capture eats the wheel before Neovim's scrollback handler.
+          -- Forcing Claude's classic renderer restores native tmux scrollback (which
+          -- sidekick can dump and page through), and disabling mouse capture keeps the
+          -- wheel flowing to Neovim. Trade-off: lose in-app click/select inside Claude.
+          -- Full write-up: SIDEKICK_SCROLL_FIX.md at the nvim config root.
+          claude = {
+            cmd = { 'claude' },
+            env = {
+              CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN = '1',
+              CLAUDE_CODE_DISABLE_MOUSE = '1',
+            },
+          },
+        },
       },
     },
     keys = {

@@ -1,4 +1,4 @@
-# chaning window focus
+# chaining window focus
 
 # changing desktop window focus
 
@@ -14,7 +14,7 @@ alt - s : yabai -m display --focus south
 alt - a : yabai -m display --focus west
 alt - d : yabai -m display --focus east
 
-# modify the layout 
+# modify the layout
 
 # rotate the layout clockwise
 

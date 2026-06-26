@@ -1,0 +1,4 @@
+# Normalize all text files to LF on checkout and commit.
+# These dotfiles are consumed by macOS/Linux tools (yabai, skhd, shells)
+# that choke on Windows CRLF line endings.
+* text=auto eol=lf

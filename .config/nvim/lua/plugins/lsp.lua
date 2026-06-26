@@ -96,7 +96,7 @@ return {
         python = { 'ruff', 'bandit' },
         go = { 'golangcilint' },
         sql = { 'sqruff' },
-        php = { 'psalm', 'phpstan' },
+        -- php = { 'psalm', 'phpstan' },
       }
 
       vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost' }, {
@@ -141,7 +141,7 @@ return {
           zig = { 'zigfmt' },
           python = { 'ruff' },
           sql = { 'sqruff' },
-          php = { 'pint' },
+          -- php = { 'pint' },
         },
         default_format_opts = {
           lsp_format = 'fallback',
@@ -230,9 +230,9 @@ return {
         'bandit',
 
         -- PHP
-        'psalm',
-        'pint',
-        'phpstan',
+        -- 'psalm',
+        -- 'pint',
+        -- 'phpstan',
       },
       run_on_start = true,
       auto_update = false,

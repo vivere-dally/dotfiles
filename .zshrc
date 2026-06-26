@@ -94,3 +94,5 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 my-oc() {
     ANTHROPIC_API_KEY=x ANTHROPIC_BASE_URL=http://localhost:8182/anthropic/v1 opencode "$@"
 }
+
+export OLLAMA_CONTEXT_LENGTH=32768

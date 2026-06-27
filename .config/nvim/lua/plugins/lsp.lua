@@ -243,79 +243,126 @@ return {
   },
 
   {
+    -- nvim-treesitter `main` branch (the rewrite). The old `master` branch is
+    -- archived and incompatible with Neovim 0.12, which ships its own markdown
+    -- parsers/queries; the two disagree and crash the highlighter on injections
+    -- (treesitter.lua:197 "attempt to call method 'range' (a nil value)").
     'nvim-treesitter/nvim-treesitter',
-    dependencies = {
-      { 'nvim-treesitter/nvim-treesitter-textobjects' },
-      { 'windwp/nvim-ts-autotag' },
-    },
-    branch = 'master',
+    branch = 'main',
     lazy = false,
     build = ':TSUpdate',
-    opts = {
-      auto_install = true,
-      ensure_installed = {
-        'bash',
-        'c',
-        'comment',
-        'cpp',
-        'css',
-        'csv',
-        'diff',
-        'dockerfile',
-        'git_config',
-        'git_rebase',
-        'gitattributes',
-        'gitcommit',
-        'gitignore',
-        'html',
-        'ini',
-        'javascript',
-        'jsdoc',
-        'json',
-        'json5',
-        'jsonc',
-        'lua',
-        'luadoc',
-        'luap',
-        'markdown',
-        'markdown_inline',
-        'php',
-        'phpdoc',
-        'blade',
-        'python',
-        'regex',
-        'scss',
-        'sql',
-        'svelte',
-        'toml',
-        'tsx',
-        'typescript',
-        'vim',
-        'vimdoc',
-        'xml',
-        'yaml',
-        'go',
-        'gomod',
-        'gosum',
-        'gotmpl',
-        'zig',
-      },
-      highlight = { enable = true },
-      indent = { enable = true },
-      rainbow = { enable = true },
-      incremental_selection = {
-        enable = true,
-        keymaps = {
-          init_selection = '<C-space>', -- set to `false` to disable one of the mappings
-          node_incremental = '<C-space>',
-          scope_incremental = false,
-          node_decremental = '<bs>',
-        },
-      },
+    dependencies = {
+      { 'nvim-treesitter/nvim-treesitter-textobjects', branch = 'main' },
+      { 'windwp/nvim-ts-autotag' },
     },
-    config = function(_, opts)
+    config = function()
       require('nvim-ts-autotag').setup()
-      require('nvim-treesitter.configs').setup(opts)
+
+      local nts = require('nvim-treesitter')
+      nts.setup()
+      -- textobjects is loaded and available; add select/move/swap keymaps here
+      -- if you want them (none were configured on the old branch).
+      require('nvim-treesitter-textobjects').setup({})
+
+      -- Parsers to keep installed (replaces the old `ensure_installed`).
+      -- `install()` only compiles parsers that are missing, so this is a cheap
+      -- no-op on subsequent startups. ('blade' was dropped: not in the registry.)
+      local ensure = {
+        'bash', 'c', 'comment', 'cpp', 'css', 'csv', 'diff', 'dockerfile',
+        'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore',
+        'html', 'ini', 'javascript', 'jsdoc', 'json', 'json5', 'lua',
+        'luadoc', 'luap', 'markdown', 'markdown_inline', 'php', 'phpdoc',
+        'python', 'regex', 'scss', 'sql', 'svelte', 'toml', 'tsx', 'typescript',
+        'vim', 'vimdoc', 'xml', 'yaml', 'go', 'gomod', 'gosum', 'gotmpl', 'zig',
+      }
+      pcall(function() nts.install(ensure) end)
+
+      -- Enable highlighting + (experimental) indentation per buffer. The `main`
+      -- branch replaces the `highlight`/`indent` modules with vim.treesitter.start()
+      -- and indentexpr, wired up on FileType. Also replaces `auto_install`.
+      -- Set of parsers nvim-treesitter actually knows how to install. We gate on
+      -- this so we never try to fetch a parser for pseudo-filetypes like `oil` or
+      -- `fugitive` (get_lang() echoes the filetype back, which would otherwise log
+      -- "[nvim-treesitter] warning: skipping unsupported language: oil").
+      local available = {}
+      for _, l in ipairs(nts.get_available()) do available[l] = true end
+
+      local pending = {}
+      vim.api.nvim_create_autocmd('FileType', {
+        group = vim.api.nvim_create_augroup('user.treesitter', { clear = true }),
+        callback = function(args)
+          local buf = args.buf
+          local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype)
+          -- skip filetypes without a real tree-sitter parser (oil, fugitive, ...)
+          if not lang or not available[lang] then return end
+
+          local function start()
+            if pcall(vim.treesitter.start, buf, lang) then
+              vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+            end
+          end
+
+          local ok, added = pcall(vim.treesitter.language.add, lang)
+          if ok and added then
+            start()
+          elseif not pending[lang] then
+            -- auto-install a missing parser, then start (replaces `auto_install`)
+            pending[lang] = true
+            pcall(function() nts.install({ lang }):await(vim.schedule_wrap(start)) end)
+          end
+        end,
+      })
+
+      -- Incremental selection: the `main` branch dropped this module, so we
+      -- reimplement the old <C-space> (expand) / <BS> (shrink) behaviour with a
+      -- node stack over the tree-sitter node under the cursor.
+      do
+        local stack = {}
+
+        local function select_node(node)
+          local srow, scol, erow, ecol = node:range()
+          if ecol == 0 then
+            erow = erow - 1
+            ecol = #(vim.api.nvim_buf_get_lines(0, erow, erow + 1, true)[1] or '')
+          end
+          vim.fn.setpos("'<", { 0, srow + 1, scol + 1, 0 })
+          vim.fn.setpos("'>", { 0, erow + 1, ecol, 0 })
+          vim.cmd('normal! gv')
+        end
+
+        local function init_selection()
+          local node = vim.treesitter.get_node()
+          if not node then return end
+          stack = { node }
+          select_node(node)
+        end
+
+        local function node_incremental()
+          local node = stack[#stack]
+          if not node then return init_selection() end
+          local s1, c1, e1, x1 = node:range()
+          local parent = node:parent()
+          -- climb past parents that span the same range as the current node
+          while parent do
+            local s2, c2, e2, x2 = parent:range()
+            if s2 ~= s1 or c2 ~= c1 or e2 ~= e1 or x2 ~= x1 then break end
+            parent = parent:parent()
+          end
+          if not parent then return end
+          stack[#stack + 1] = parent
+          select_node(parent)
+        end
+
+        local function node_decremental()
+          if #stack > 1 then stack[#stack] = nil end
+          local node = stack[#stack]
+          if node then select_node(node) end
+        end
+
+        vim.keymap.set('n', '<C-space>', init_selection, { desc = 'TS: init selection' })
+        vim.keymap.set('x', '<C-space>', node_incremental, { desc = 'TS: expand selection' })
+        vim.keymap.set('x', '<BS>', node_decremental, { desc = 'TS: shrink selection' })
+      end
     end,
   },
 

@@ -96,6 +96,17 @@ bind('n', '<leader>j', '<cmd>lnext<CR>zz', { desc = 'Location list next' })
 bind('n', '<leader>k', '<cmd>lprev<CR>zz', { desc = 'Location list prev' })
 
 -- ============================================================================
+-- TOGGLES
+-- ============================================================================
+-- Toggle word wrapping (off for coding, on for reading long markdown lines)
+bind('n', '<leader>tw', function()
+  local wrap = not vim.wo.wrap
+  vim.wo.wrap = wrap
+  vim.wo.linebreak = wrap -- break at word boundaries, not mid-word
+  vim.notify('Wrap ' .. (wrap and 'on' or 'off'))
+end, { desc = 'Toggle word wrap' })
+
+-- ============================================================================
 -- SEARCH & REPLACE
 -- ============================================================================
 bind('n', '<leader>rw', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = 'Replace word under cursor' })

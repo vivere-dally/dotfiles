@@ -129,18 +129,40 @@ return {
         },
       }
 
-      dap.configurations.c = {
+      local function prompt_executable()
+        return coroutine.create(function(dap_run_co)
+          vim.ui.input({ prompt = 'Path to executable: ', default = vim.fn.getcwd() .. '/' }, function(input)
+            coroutine.resume(dap_run_co, input)
+          end)
+        end)
+      end
+
+      -- DAP wants argv as a list, so split the single input line on whitespace.
+      local function prompt_args(default)
+        return function()
+          return coroutine.create(function(dap_run_co)
+            vim.ui.input({ prompt = 'Args: ', default = default or '' }, function(input)
+              coroutine.resume(dap_run_co, vim.split(input or '', '%s+', { trimempty = true }))
+            end)
+          end)
+        end
+      end
+
+      local c_configurations = {
         {
           name = 'Launch',
           type = 'codelldb',
           request = 'launch',
-          program = function()
-            return coroutine.create(function(dap_run_co)
-              vim.ui.input({ prompt = 'Path to executable: ', default = vim.fn.getcwd() .. '/' }, function(input)
-                coroutine.resume(dap_run_co, input)
-              end)
-            end)
-          end,
+          program = prompt_executable,
+          cwd = '${workspaceFolder}',
+          stopOnEntry = false,
+        },
+        {
+          name = 'Launch (with args)',
+          type = 'codelldb',
+          request = 'launch',
+          program = prompt_executable,
+          args = prompt_args(),
           cwd = '${workspaceFolder}',
           stopOnEntry = false,
         },
@@ -152,7 +174,95 @@ return {
           cwd = '${workspaceFolder}',
         },
       }
-      dap.configurations.cpp = dap.configurations.c
+
+      -- Debugging the Odin compiler (github.com/odin-lang/Odin, a C++ codebase).
+      --
+      -- build_odin.sh is a unity build: only src/main.cpp and src/libtommath.cpp
+      -- are translation units, every other .cpp is #included into them. DWARF
+      -- still records the included files, so file:line breakpoints in
+      -- checker.cpp, check_expr.cpp etc. bind normally despite that.
+      local function odin_repo_root()
+        return vim.fs.root(vim.fn.getcwd(), { 'build_odin.sh' })
+      end
+
+      -- Rebuild only when a source file is newer than the binary. The unity
+      -- build is a single ~6s compile with no object-file caching, which is too
+      -- slow to pay on every F5 when only a breakpoint moved.
+      local function odin_build()
+        local root = odin_repo_root()
+        if not root then
+          vim.notify('Not inside the Odin compiler repo (no build_odin.sh found)', vim.log.levels.ERROR)
+          return nil
+        end
+
+        local binary = root .. '/odin'
+        local bin_time = vim.fn.getftime(binary)
+        local newest_src = -1
+        for _, pattern in ipairs({ '**/*.cpp', '**/*.hpp' }) do
+          for _, src in ipairs(vim.fn.globpath(root .. '/src', pattern, false, true)) do
+            newest_src = math.max(newest_src, vim.fn.getftime(src))
+          end
+        end
+
+        if bin_time > 0 and bin_time >= newest_src then
+          return binary
+        end
+
+        vim.notify('Building Odin compiler (debug)...', vim.log.levels.INFO)
+        local output = vim.fn.system({ 'sh', '-c', 'cd ' .. vim.fn.shellescape(root) .. ' && ./build_odin.sh debug' })
+
+        -- build_odin.sh runs examples/demo after a successful debug build, so a
+        -- non-zero exit can just mean the demo tripped over a work-in-progress
+        -- compiler change. A refreshed binary is the real success signal.
+        if vim.fn.getftime(binary) <= bin_time then
+          vim.notify('Odin build failed:\n' .. output, vim.log.levels.ERROR)
+          return nil
+        end
+        return binary
+      end
+
+      -- -no-threaded-checker makes check_procedure_bodies run each body inline on
+      -- the calling thread instead of farming them out to the thread pool, and
+      -- -thread-count:1 does the same for parsing. Without both, breakpoints in
+      -- check_expr/check_stmt fire on arbitrary worker threads mid-step.
+      local odin_debug_flags = '-file -no-threaded-checker -thread-count:1'
+
+      local function odin_default_args()
+        local root = odin_repo_root() or vim.fn.getcwd()
+        return 'check ' .. root .. '/scratch/hello.odin ' .. odin_debug_flags
+      end
+
+      local odin_configurations = {
+        {
+          name = 'Odin compiler: check scratch/hello.odin',
+          type = 'codelldb',
+          request = 'launch',
+          program = odin_build,
+          args = function()
+            return vim.split(odin_default_args(), '%s+', { trimempty = true })
+          end,
+          cwd = '${workspaceFolder}',
+          stopOnEntry = false,
+        },
+        {
+          name = 'Odin compiler: run with args...',
+          type = 'codelldb',
+          request = 'launch',
+          program = odin_build,
+          args = function()
+            return prompt_args(odin_default_args())()
+          end,
+          cwd = '${workspaceFolder}',
+          stopOnEntry = false,
+        },
+      }
+
+      dap.configurations.c = c_configurations
+      -- Odin entries lead the cpp list so they're the obvious pick in that repo;
+      -- .cpp/.hpp are cpp filetype, so plain C projects never see them.
+      dap.configurations.cpp = {}
+      vim.list_extend(dap.configurations.cpp, odin_configurations)
+      vim.list_extend(dap.configurations.cpp, c_configurations)
 
       local function zig_build_and_pick()
         vim.notify('Running zig build...', vim.log.levels.INFO)

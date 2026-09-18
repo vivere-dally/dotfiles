@@ -96,3 +96,16 @@ my-oc() {
 }
 
 export OLLAMA_CONTEXT_LENGTH=32768
+
+# export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-8[1m]"
+export ANTHROPIC_CUSTOM_MODEL_OPTION="claude-opus-4-8[1m]"
+
+# LLVM
+export PATH="/Users/s-ved/homebrew/opt/llvm@22/bin:$PATH"
+
+## For compilers to find llvm@22 you may need to set
+export LDFLAGS="-L/Users/s-ved/homebrew/opt/llvm@22/lib"
+export CPPFLAGS="-I/Users/s-ved/homebrew/opt/llvm@22/include"
+
+## For cmake to find llvm@22 you may need to set:
+export CMAKE_PREFIX_PATH="/Users/s-ved/homebrew/opt/llvm@22"

@@ -7,7 +7,7 @@ fi
 
 apt update -y && apt upgrade -y
 apt install stow -y
-cd ~/dotfiles/ && stow . && cd
+~/dotfiles/scripts/stow.sh
 
 #--------------------------------------------------------------------------
 # utilities

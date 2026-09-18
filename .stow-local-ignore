@@ -25,3 +25,5 @@ _darcs
 .DS_Store
 scripts
 
+# Separate stow package for ~/.claude, linked by scripts/stow.sh
+^/claude

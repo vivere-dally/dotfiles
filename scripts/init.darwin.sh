@@ -13,7 +13,7 @@ echo 'eval "$($HOME/homebrew/bin/brew shellenv)"' >> ~/.zprofile
 source ~/.zprofile
 brew update
 brew install stow
-cd ~/dotfiles/ && stow . && cd
+~/dotfiles/scripts/stow.sh
 
 #--------------------------------------------------------------------------
 # utilities
@@ -83,6 +83,13 @@ echo "To install Golang goto https://go.dev/doc/install"
 # golangci-lint is installed via brew (not Mason) so its build tracks the
 # current Go toolchain — see .config/nvim/lua/plugins/lsp.lua
 brew install golangci-lint
+
+#--------------------------------------------------------------------------
+# claude code
+#--------------------------------------------------------------------------
+curl -fsSL https://claude.ai/install.sh | bash
+# ~/.claude/statusline-command.sh formats the status line with jq
+brew install jq
 
 #--------------------------------------------------------------------------
 # karabiner, skhd, yabai

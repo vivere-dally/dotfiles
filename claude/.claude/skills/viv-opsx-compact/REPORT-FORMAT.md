@@ -45,7 +45,7 @@ Verdict: <one verdict line, verbatim from below>
 - `<source>` and `<owner>` are real `module/capability:line` locators. Never a bare filename.
   Multiple sources are joined with `;` on the header line — never filed as separate findings.
 - `Found:` is a quoted string, or a paraphrase tagged `(paraphrase)`. No mixed prose.
-- `Why:` and `Preserves:` are one sentence each. Hard caps as shown; rewrite rather than wrap.
+- `Why:` and `Preserves:` are one sentence each. The caps are hard, as shown. Rewrite rather than wrap.
 - `Ref:` is the first 8 chars of a stable hash over `op + sorted(sources) + owner`. It lets
   the user diff this month's report against last month's — IDs renumber, `Ref` does not.
 - Every finding is exactly the five lines shown, separated by one blank line.

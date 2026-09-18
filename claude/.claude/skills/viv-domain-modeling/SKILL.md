@@ -5,7 +5,7 @@ description: Build and sharpen a project's domain model. Use when discussing cod
 
 # Domain Modeling
 
-Actively build and sharpen the project's domain model as you design. This is the *active* discipline: challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallise. (Merely *reading* `CONTEXT.md` for vocabulary is not this skill: that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+Actively build and sharpen the project's domain model as you design. This is the *active* discipline: challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallize. (Merely *reading* `CONTEXT.md` for vocabulary is not this skill: that is a one-line habit that any skill can do. This skill is for when you change the model, not just consume it.)
 
 ## File structure
 
@@ -39,7 +39,7 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 
 A repo with a package layout follows the same rule as a multi-context repo, even with one `CONTEXT.md`: a decision of one package goes to `packages/<name>/docs/adr/`, and a decision that crosses a package goes to the root `docs/adr/`. The glossary stays at the root.
 
-Create files lazily: only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Make files lazily: only when you have something to write. If no `CONTEXT.md` exists, make one when the first term is resolved. If no `docs/adr/` exists, make it when you write the first ADR.
 
 ## During the session
 
@@ -49,7 +49,7 @@ When the user uses a term that conflicts with the existing language in `CONTEXT.
 
 ### Sharpen fuzzy language
 
-When the user uses vague or overloaded terms, propose a precise canonical term. "You're saying 'account': do you mean the Customer or the User? Those are different things."
+When the user uses vague or overloaded terms, propose a precise canonical term. "You say 'account': do you mean the Customer or the User? Those are different things."
 
 ### Discuss concrete scenarios
 
@@ -61,13 +61,13 @@ When the user states how something works, check whether the code agrees. If you 
 
 ### Update CONTEXT.md inline
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up: capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
+When a term is resolved, update `CONTEXT.md` right there. Do not batch these up: capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
 
-`CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
+`CONTEXT.md` must be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
 
 ### Offer ADRs sparingly
 
-Only offer to create an ADR when all three are true:
+Only offer to write an ADR when all three are true:
 
 1. **Hard to reverse**: the cost of changing your mind later is meaningful
 2. **Surprising without context**: a future reader will wonder "why did they do it this way?"

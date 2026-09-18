@@ -5,17 +5,17 @@ description: Load deep context about a topic, module, or subsystem before high-s
 
 # Load Context
 
-Pre-flight mode for risky tasks. The goal is not to research and report — it's to absorb a subsystem deeply enough that the *next* action runs from understanding, not guesses. The user invokes this when the cost of misunderstanding is high (production-breaking changes, refactors across service boundaries, edits in areas that have burned the project before).
+Pre-flight mode for risky tasks. The goal is not to research and report — it is to absorb a subsystem deeply enough that the *next* action runs from understanding, not guesses. The user invokes this when the cost of misunderstanding is high (production-breaking changes, refactors across service boundaries, edits in areas that have burned the project before).
 
 ## Workflow
 
-1. **Identify the topic.** Extract the noun phrase from the request ("the auth system", "billing", "the picker component"). If genuinely ambiguous between two subsystems, ask which — but don't ask if the topic is clear.
+1. **Identify the topic.** Extract the noun phrase from the request ("the auth system", "billing", "the picker component"). If genuinely ambiguous between two subsystems, ask which — but do not ask if the topic is clear.
 2. **Anchor on CLAUDE.md first.** Read the repo's `CLAUDE.md` (and any nested `CLAUDE.md` files in relevant subdirectories) before anything else. It encodes the repo-specific conventions, landmines, and pointers — including where this repo keeps specs, postmortems, sibling repos, and other context sources. Let it guide the rest of the sweep.
 3. **Map the surface area.** Use the Explore subagent for breadth if the topic touches many directories — but Explore returns excerpts, not full reads, so it cannot finish the job.
-4. **Read canonical files end-to-end.** Use `Read` on the primary types, modules, hooks, configs, and specs. Default to the full file; don't pass `limit` unless the file exceeds 2000 lines.
-5. **Trace one or two representative flows.** Pick a real entry point and follow it end-to-end (e.g., user action → handler → storage, or CLI input → core logic → output). Naming a flow you traced is proof you loaded it; naming a file you opened is not.
+4. **Read canonical files end-to-end.** Use `Read` on the primary types, modules, hooks, configs, and specs. Default to the full file. Do not pass `limit` unless the file exceeds 2000 lines.
+5. **Trace one or two representative flows.** Pick a real entry point and follow it end-to-end (for example, user action → handler → storage, or CLI input → core logic → output). Naming a flow that you traced is proof that you loaded it. Naming a file that you opened is not.
 6. **Check for prior pain.** Look for postmortems, archived design docs, and persistent memory referencing the topic. Loading the *what* without the *why* is how regressions happen. CLAUDE.md usually points to where these live in this repo.
-7. **Report what's loaded** in the format below. Then **stop** and wait for the user to confirm or correct before acting on the actual task.
+7. **Report what is loaded** in the format below. Then **stop** and wait for the user to confirm or correct before acting on the actual task.
 
 ## Where to look
 
@@ -23,7 +23,7 @@ CLAUDE.md is the index — it tells you where this repo keeps specs, postmortems
 
 - **Source code** matching the topic keyword across module, library, component, hook, type, and provider directories
 - **Specs / design docs** in whatever directory the repo uses (CLAUDE.md will say — common names: `openspec/`, `docs/`, `design/`, `rfcs/`, `adr/`)
-- **Postmortems and notes** at the repo root or wherever CLAUDE.md points (e.g., a `HORRIBLE_BUG_FIXES.md`, `POSTMORTEMS/`, `INCIDENTS/`)
+- **Postmortems and notes** at the repo root or wherever CLAUDE.md points (for example, a `HORRIBLE_BUG_FIXES.md`, `POSTMORTEMS/`, `INCIDENTS/`)
 - **Sibling repos** if the topic spans services (CLAUDE.md typically names them and their relative paths)
 - **Persistent memory** for this project, if any (the harness exposes a memory directory per project — grep it for topic terms)
 - **Git history:** `git log --oneline -- <paths>` for recent activity, `git log --grep="<topic>" --oneline` for commit-mentioned context
@@ -31,8 +31,8 @@ CLAUDE.md is the index — it tells you where this repo keeps specs, postmortems
 ## Reading discipline
 
 - **Full reads beat excerpts.** A subagent's summary cannot substitute for `Read` on the canonical files — your context window is what carries the next action.
-- **Don't skip the postmortem step** when the topic is one the repo has been burned on. CLAUDE.md and persistent memory are the strongest signal for which areas those are.
-- **Don't act in the same turn as the load.** The user's instruction is to load first; the actionable task comes after they confirm.
+- **Do not skip the postmortem step** when the topic is one the repo has been burned on. CLAUDE.md and persistent memory are the strongest signal for which areas those are.
+- **Do not act in the same turn as the load.** The user's instruction is to load first. The actionable task comes after they confirm.
 
 ## Report format
 
@@ -60,8 +60,8 @@ Keep it tight — 8 to 15 lines. The user reads this to decide whether to correc
 ## Anti-patterns
 
 - **Reading directory listings instead of files.** Mapping is not loading.
-- **Summarizing without opening files.** If you didn't `Read` it, you haven't loaded it.
+- **Summarizing without opening files.** If you did not `Read` it, you did not load it.
 - **Acting on the task in the same turn.** Defeats the point — the user invoked this skill *to get a checkpoint* before changes.
-- **Treating "ultrathink" alone as the trigger.** "ultrathink" is a thinking directive that often accompanies this skill but doesn't invoke it on its own. The trigger is the user asking to load context.
+- **Treating "ultrathink" alone as the trigger.** "ultrathink" is a thinking directive that often accompanies this skill but does not invoke it on its own. The trigger is the user asking to load context.
 - **Skipping CLAUDE.md.** It is the highest-signal-per-token document in the repo and the only one guaranteed to be current. Read it first.
 - **Skipping postmortems on risky areas.** Loading code without history misses the constraints that shape it.

@@ -29,14 +29,14 @@ git ls-files -u                         # list every unmerged path with stage nu
 ```
 
 Read the `git status` header carefully:
-- "You have unmerged paths" → merge in progress; `MERGE_HEAD` exists; ours = HEAD, theirs = MERGE_HEAD.
-- "interactive rebase in progress" / "rebase in progress" → `REBASE_HEAD` exists; **ours and theirs are SWAPPED**: ours = upstream, theirs = your commit being replayed.
-- "cherry-pick in progress" → `CHERRY_PICK_HEAD`; same swap as rebase.
-- "revert in progress" → `REVERT_HEAD`; ours = HEAD, theirs = the inverted commit.
+- "You have unmerged paths" → merge in progress. `MERGE_HEAD` exists. Ours = HEAD, theirs = MERGE_HEAD.
+- "interactive rebase in progress" / "rebase in progress" → `REBASE_HEAD` exists. **Ours and theirs are SWAPPED**: ours = upstream, theirs = your commit that git replays.
+- "cherry-pick in progress" → `CHERRY_PICK_HEAD`. Same swap as rebase.
+- "revert in progress" → `REVERT_HEAD`. Ours = HEAD, theirs = the inverted commit.
 
-**Why the swap matters:** `git checkout --ours` during rebase keeps the upstream version, not yours. Always verify orientation from `git status` before using `--ours`/`--theirs`.
+**Why the swap matters:** `git checkout --ours` during rebase keeps the upstream version, not yours. Always make sure of the orientation from `git status` before you use `--ours`/`--theirs`.
 
-If `merge.conflictStyle` is not `zdiff3` or `diff3`, set it now — it adds the merge-base content between `|||||||` and `=======`, which is essential for understanding what each side changed:
+If `merge.conflictStyle` is not `zdiff3` or `diff3`, set it now. It adds the merge-base content between `|||||||` and `=======`, which is essential to understand what each side changed:
 
 ```
 git config merge.conflictStyle zdiff3        # Git 2.35+; fall back to diff3 on older
@@ -66,8 +66,8 @@ For **every** unmerged path, work through these steps in order:
 
 ### 1. Categorize the file
 
-- **Binary** (images, compiled artifacts, sqlite, etc.) → go to Special Cases.
-- **Lockfile** (`package-lock.json`, `yarn.lock`, `Cargo.lock`, etc.) → go to Special Cases.
+- **Binary** (images, compiled artifacts, sqlite, and so on) → go to Special Cases.
+- **Lockfile** (`package-lock.json`, `yarn.lock`, `Cargo.lock`, and so on) → go to Special Cases.
 - **Generated file** (header says `// Code generated`, `// @generated`, or lives in `generated/`, `dist/`, `__generated__/`) → go to Special Cases.
 - **Submodule** (mode `160000`) → go to Special Cases.
 - **Normal text** → continue below.
@@ -91,7 +91,7 @@ git log -p $BASE..MERGE_HEAD -- <path>          # commits on their side
 git log --merge -p -- <path>                    # shorthand: only commits touching conflicted paths
 ```
 
-Read full commit messages (bodies + footers like `Fixes #123`, `BREAKING CHANGE:`). The subject tells you *what*; the body tells you *why*.
+Read full commit messages (bodies + footers like `Fixes #123`, `BREAKING CHANGE:`). The subject tells you *what*. The body tells you *why*.
 
 ### 4. Classify resolution difficulty
 
@@ -100,9 +100,9 @@ Read full commit messages (bodies + footers like `Fixes #123`, `BREAKING CHANGE:
 - Both sides added non-overlapping code in the same region: stitch together.
 - Identical changes on both sides (cherry-pick/backport): take either.
 - Pure whitespace/formatting: re-run the project formatter.
-- Comment-only changes that don't affect code logic.
+- Comment-only changes that do not affect code logic.
 
-**Tractable — resolve then verify carefully:**
+**Tractable — resolve, then make sure of the result carefully:**
 - Both sides modified different parts of the same function: combine, but check for cross-references to variables one side added or removed.
 - Both sides added entries to the same list/array/enum/dict: union, but watch for order-sensitive structures (middleware chains, protobuf field numbers — number collisions are fatal, escalate).
 - Rename on one side + edit on the other: apply the edit to the renamed path.
@@ -114,7 +114,7 @@ Read full commit messages (bodies + footers like `Fixes #123`, `BREAKING CHANGE:
 - API/signature changes with ripple effects through the codebase.
 - Conflicting refactors (same module reorganized differently on each side).
 - Conflicting business logic (validation rules, pricing, permissions).
-- Commit messages reveal contradictory goals (e.g., "tighten rate limits" vs. "relax rate limits for X tier").
+- Commit messages reveal contradictory goals (for example, "tighten rate limits" against "relax rate limits for X tier").
 
 ### 5. Resolve
 
@@ -177,7 +177,7 @@ Present this information, in order:
 1. **Each side's intent** in plain English, derived from commit messages and PR descriptions.
 2. **The base version** of the conflicting region (the `|||||||` section in zdiff3, or `git show :1:<path>`).
 3. **Options you see** — at minimum: take ours, take theirs, union, a specific composition — with code snippets for each.
-4. **Your recommendation and confidence** — e.g., "Leans toward union (70%) because both additions are independent, but lower confidence because A's commit message mentions deprecating the path B extends."
+4. **Your recommendation and confidence** — for example, "Leans toward union (70%) because both additions are independent, but lower confidence because A's commit message mentions deprecating the path B extends."
 5. **Downstream implications** — affected call sites, tests, configs.
 
 Ask **one focused question at a time** with two or three concrete labeled options. Do not dump walls of text.
@@ -213,7 +213,7 @@ Resolve the **source** first, then regenerate the artifact. Do not merge generat
 
 ### Binary files
 
-Git writes no conflict markers for binaries — working tree keeps ours. Resolution: `git checkout --ours <path>` or `git checkout --theirs <path>`, then `git add`. **Always escalate** — ask the user which version to keep. If the binary is a compiled artifact that shouldn't be in the repo, flag the `.gitignore` gap.
+Git writes no conflict markers for binaries — working tree keeps ours. Resolution: `git checkout --ours <path>` or `git checkout --theirs <path>`, then `git add`. **Always escalate** — ask the user which version to keep. If the binary is a compiled artifact that must not be in the repo, flag the `.gitignore` gap.
 
 ### Submodules
 
@@ -238,22 +238,22 @@ Check `.gitattributes` for `merge=union`, `merge=binary`, or custom drivers. If 
 
 ### `rerere` replays
 
-If `rerere.enabled` is true, Git may auto-apply a previously recorded resolution. **Always verify replayed resolutions** with `git diff` and tests before `git add` — if surrounding code has shifted since the recording, the replay may be silently wrong. Use `git rerere diff` to inspect what was replayed.
+If `rerere.enabled` is true, Git can auto-apply a previously recorded resolution. **Always make sure that a replayed resolution is correct** with `git diff` and tests before `git add`. If the surrounding code changed after the recording, the replay can be silently wrong. Use `git rerere diff` to inspect what was replayed.
 
 ## Anti-patterns — do NOT do these
 
 1. **`git checkout --ours .` or `--theirs .` over the whole tree** — silently discards an entire side of every conflict. Especially dangerous in rebase where ours/theirs are swapped.
-2. **`git add .` while unmerged paths exist** — stages files that may still contain markers or dropped changes.
-3. **Picking the side with more lines** — line count is not a quality signal. A two-line bug fix may be more important than a fifty-line refactor.
+2. **`git add .` while unmerged paths exist** — stages files that can still contain markers or dropped changes.
+3. **Picking the side with more lines** — line count is not a quality signal. A two-line bug fix can be more important than a fifty-line refactor.
 4. **Treating clean `git status` as success** — textual resolution is necessary but not sufficient. Semantic conflicts pass `git status` but break the program.
-5. **`git add` before verifying** — once staged, markers are gone and the merge can be committed with broken content.
+5. **`git add` before you make sure of the result** — once staged, markers are gone and the merge can be committed with broken content.
 6. **Hand-editing lockfiles** to remove markers — produces invalid integrity hashes. Regenerate instead.
 7. **Deleting a submodule directory** to resolve a submodule conflict.
 8. **`git push --force` to fix a botched public merge** — use `git revert -m 1 <sha>` instead.
 9. **Auto-resolving when commit messages disagree** — if side A says "remove deprecated API" and side B says "add usage of API," a clean textual merge keeping both is almost certainly wrong.
-10. **Trusting `rerere` replays blindly** — surrounding code may have shifted since the recording.
+10. **Trusting `rerere` replays blindly** — the surrounding code can change after the recording.
 11. **Ignoring markers in config files** — `<<<<<<<` in YAML/JSON/TOML breaks parsers silently. Run the config's validator (`jq -e .`, `python -c "import yaml; yaml.safe_load(open(f))"`, `yq`).
-12. **Squash-merging a conflict resolution** — destroys dual-parent history and makes forensic review via `git log --cc` impossible.
+12. **Squash-merging a conflict resolution** — destroys dual-parent history and makes forensic review with `git log --cc` impossible.
 
 ## Detecting semantic conflicts after a clean merge
 
@@ -275,7 +275,7 @@ git revert -m 1 <merge-sha>            # undo a public merge safely (no force-pu
 git reflog                              # find any prior state to recover
 ```
 
-`git merge --abort` may not perfectly restore the working tree if there were uncommitted changes before the merge. Always commit or stash before starting a merge.
+`git merge --abort` does not always restore the working tree perfectly if there were uncommitted changes before the merge. Always commit or stash before starting a merge.
 
 To re-merge a branch after reverting a merge: revert the revert first (`git revert <revert-sha>`), then merge again.
 

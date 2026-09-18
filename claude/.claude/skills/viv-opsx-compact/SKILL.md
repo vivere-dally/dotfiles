@@ -5,14 +5,14 @@ description: Compact an OpenSpec corpus that has grown redundant — merge overl
 
 # OPSX Spec Compaction
 
-Specs accumulate. Every change adds requirements; almost none remove them. After a few
-months the corpus describes the product **plus** its own history — duplicate capabilities,
-requirements pinned to files that moved, scenarios enumerating variants of one behavior.
+Specs accumulate. Every change adds requirements. Almost none remove them. After a few
+months the corpus describes the product **plus** its own history: duplicate capabilities,
+requirements pinned to files that moved, scenarios that enumerate variants of one behavior.
 
 This skill finds that residue and removes it **without losing behavioral coverage**.
 
-Distinct from the neighbouring skills: `/opsx:verify` compares artifacts to code after
-implementation; `viv-opsx-artifact-check` compares artifacts to user intent before it.
+Distinct from the neighboring skills: `/opsx:verify` compares artifacts to code after
+implementation. `viv-opsx-artifact-check` compares artifacts to user intent before it.
 This one compares the **spec corpus to itself**.
 
 ## When to use
@@ -54,8 +54,8 @@ Record `git rev-parse HEAD` and confirm a clean working tree. Compaction must be
 
 ### Phase 1 — Fan out over clusters
 
-Clusters are connected components of the capability-overlap graph seeded by name prefixes,
-so every spec that might merge with another lands in the same agent's context. Splitting a
+Clusters are connected components of the capability-overlap graph, seeded by name prefixes.
+Thus every spec that can merge with another lands in the context of the same agent. Splitting a
 family across agents produces contradictory merge proposals.
 
 Call **Workflow** with one agent per cluster from `clusters[]`. Each agent receives its
@@ -63,7 +63,7 @@ cluster's `paths[]` and the signal rows scoped to its members, and returns findi
 it must not edit anything. Give every agent `CANDIDATES.md` as its rubric.
 
 Each finding must carry: operation, source location(s), the **surviving owner**, a
-behavior-preservation note, and a confidence. Force structured output via the workflow
+behavior-preservation note, and a confidence. Force structured output with the workflow
 `schema` option so synthesis never has to parse prose.
 
 ### Phase 2 — Synthesize one ranked plan
@@ -84,13 +84,13 @@ Only on explicit approval, and only for the IDs the user named. See `APPLY.md`.
 
 ## Guardrails
 
-- **Behavior coverage is conserved.** A requirement may be merged, reworded, or relocated.
-  It may only be *deleted* when either an owning spec already states the same contract, or
+- **Behavior coverage is conserved.** A requirement can be merged, reworded, or relocated.
+  It can only be *deleted* when either an owning spec already states the same contract, or
   the user confirms the behavior no longer exists. Never delete to hit a reduction target.
 - **Name the owner.** Every merge finding names the surviving spec and requirement. A merge
   without a named owner is not a finding.
-- **`dead` refs are questions, not deletions.** A reference to a deleted file may mean the
-  spec is stale *or* that the feature was dropped without its spec. Ask; do not assume.
+- **`dead` refs are questions, not deletions.** A reference to a deleted file can mean the
+  spec is stale *or* that the feature was dropped without its spec. Ask. Do not assume.
 - **Never touch `openspec/changes/archive/**`.**
 - **No silent caps.** If the fan-out truncates candidates, say so in the report footer.
 - **Report first, always.** Phase 3 never runs in the same turn as Phase 2.

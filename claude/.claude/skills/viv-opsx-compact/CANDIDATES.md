@@ -1,6 +1,6 @@
 # Candidate Rubric
 
-Given to each Phase 1 agent. Judge only the specs in your cluster. Return findings; edit nothing.
+Given to each Phase 1 agent. Judge only the specs in your cluster. Return findings. Edit nothing.
 
 The scan already counted everything countable. Your job is the part arithmetic cannot do:
 deciding whether an overlap is **redundancy** or **legitimate layering**. Most overlap is
@@ -10,10 +10,10 @@ legitimate. Two specs sharing a name or a vocabulary is not evidence — read bo
 
 ### FOLD — hollow wiring requirement into the spec that owns the behavior
 
-The most common real win. One spec registers a feature; another specifies it. The
+The most common real win. One spec registers a feature. Another spec specifies it. The
 registering spec accrues requirements whose scenarios assert only that wiring exists.
 
-**Signal:** `wiring_scenarios` rows; `duplicate_requirement_pairs` with `cross_capability: true`.
+**Signal:** `wiring_scenarios` rows, and `duplicate_requirement_pairs` with `cross_capability: true`.
 
 **Test:** strip the requirement. Is any *behavioral* contract lost — an error path, a state
 transition, an output shape? If the only loss is "the subcommand appears in `--help`", fold it.
@@ -36,11 +36,11 @@ capability. Hollow means the scenarios assert nothing but presence.
 
 **Signal:** `broken_code_refs`, already classified.
 
-- `status: moved` with a `likely_new_path` — mechanical. Verify the file really is the same
+- `status: moved` with a `likely_new_path` — mechanical. Make sure that the file really is the same
   subject, then update the path. High confidence, near-zero risk.
 - `status: dead` — **a question, never an automatic deletion.** Either the spec is stale, or
   the feature was deleted and its spec outlived it. Those need opposite fixes. Grep for the
-  described behavior before proposing anything; report as a question if unresolved.
+  described behavior before you propose anything. If it stays unresolved, report it as a question.
 
 Separately, `path_pinned_requirements` counts requirements citing a source path at all. A
 spec pinned to a filename re-breaks on every refactor. Where the path is incidental to the
@@ -85,13 +85,13 @@ capability is genuinely small but real (a feature flag, a compatibility guarante
 ### TRIM — enumerated scenarios
 
 **Signal:** `enumeration_heavy_specs` (scenario:requirement ratio ≥ `--ratio-outlier`,
-default 4.5; weigh it against the scan's `corpus_scenario_ratio`).
+default 4.5). Weigh it against the scan's `corpus_scenario_ratio`.
 
 A high ratio is a hint, not a verdict. Some requirements legitimately need many scenarios —
 a parser, a state machine, an auth matrix.
 
-**Trim only scenarios that differ by a value rather than by behavior**, and only by
-rewriting them as one scenario with a table or a parameter list, never by deleting coverage:
+**Trim only scenarios that differ by a value rather than by behavior.** Rewrite them as one
+scenario with a table or a parameter list, and never delete coverage:
 
 ```
 "renders red"  "renders blue"  "renders green"   ->  one scenario over a themed-color set
@@ -131,4 +131,4 @@ One entry per finding:
 - `preserves` — where the removed coverage survives (the conservation answer)
 - `tokens_saved` — rough integer
 - `confidence` — `high` | `medium` | `low`
-- `question` — set when the user must decide; the plan surfaces it instead of acting
+- `question` — set when the user must decide. The plan surfaces it instead of acting

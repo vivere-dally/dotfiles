@@ -53,13 +53,13 @@ Rules verified against the parser and applier:
 
 - **`MODIFIED` carries the complete replacement body**, not a diff. The block replaces the
   original wholesale, so an omitted scenario is a deleted scenario.
-- **`REMOVED` needs only the header line.** It matches on exact header text. A header
-  differing only in case or interior whitespace is treated as a typo and **hard-aborts** with
-  the near-miss named (`specs-apply.ts:404-420`) — copy headers, never retype them.
+- **`REMOVED` needs only the header line.** It matches on exact header text. If a header
+  differs only in case or interior whitespace, apply treats it as a typo and **hard-aborts**
+  with the near-miss named (`specs-apply.ts:404-420`). Copy headers, never retype them.
 - **`RENAMED` requires the `FROM:`/`TO:` pair**, each wrapping a full
   `### Requirement: <name>` in backticks. Order matters: `TO:` closes the pair.
-- **A requirement may not appear in both `RENAMED` and `REMOVED`** (`specs-apply.ts:271`),
-  and **`ADDED` may not collide with a `RENAMED` TO** (`specs-apply.ts:283`).
+- **A requirement must not appear in both `RENAMED` and `REMOVED`** (`specs-apply.ts:271`),
+  and **`ADDED` must not collide with a `RENAMED` TO** (`specs-apply.ts:283`).
 - **`MODIFIED` and `RENAMED` are illegal on a spec that does not exist yet**
   (`specs-apply.ts:328`) — a brand-new merged capability takes `ADDED` only.
 
@@ -106,7 +106,7 @@ accounted for, **stop and report it** — do not rationalize the difference.
 ## 5. Hand off
 
 Do not run `/opsx:apply`, `/opsx:sync`, or `/opsx:archive` yourself. Compaction produces the
-change; the user drives their own pipeline — `/opsx:sync` is agent-driven for a reason, and
+change. The user drives their own pipeline. `/opsx:sync` is agent-driven for a reason, and
 its intelligent merge is exactly what a partial delta needs.
 
 Report: change name, files written, the conservation ledger, and the suggested next command.

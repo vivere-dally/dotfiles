@@ -9,11 +9,11 @@ description: Create new agent skills with proper structure, progressive disclosu
 
 1. **Gather requirements** - ask user about:
    - What task/domain does the skill cover?
-   - What specific use cases should it handle?
+   - What specific use cases must it cover?
    - Does it need executable scripts or just instructions?
    - Any reference materials to include?
 
-2. **Draft the skill** - create:
+2. **Draft the skill** - make:
    - SKILL.md with concise instructions
    - Additional reference files if content exceeds 500 lines
    - Utility scripts if deterministic operations needed
@@ -21,7 +21,7 @@ description: Create new agent skills with proper structure, progressive disclosu
 3. **Review with user** - present draft and ask:
    - Does this cover your use cases?
    - Anything missing or unclear?
-   - Should any section be more/less detailed?
+   - Must any section be more/less detailed?
 
 ## Skill Structure
 
@@ -59,7 +59,7 @@ description: Brief description of capability. Use when [specific triggers].
 
 ## Description Requirements
 
-The description is **the only thing your agent sees** when deciding which skill to load. It's surfaced in the system prompt alongside all other installed skills. Your agent reads these descriptions and picks the relevant skill based on the user's request.
+The description is **the only thing your agent sees** when deciding which skill to load. It is surfaced in the system prompt alongside all other installed skills. Your agent reads these descriptions and picks the relevant skill based on the user's request.
 
 **Goal**: Give your agent just enough info to know:
 
@@ -107,7 +107,7 @@ Split into separate files when:
 
 ## Review Checklist
 
-After drafting, verify:
+After drafting, make sure of these:
 
 - [ ] Description includes triggers ("Use when...")
 - [ ] SKILL.md under 100 lines

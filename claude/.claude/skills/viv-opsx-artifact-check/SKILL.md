@@ -13,7 +13,7 @@ This is distinct from `/opsx:verify` — that compares artifacts to code after i
 
 - Immediately after `/opsx:ff` (most common case)
 - After `/opsx:continue` if the user wants to sanity-check a single artifact
-- When the user asks to "check", "review", "audit" OPSX artifacts, or says things like "did I miss anything?" / "is this clear enough to implement?"
+- When the user asks to "check", "review", "audit" OPSX artifacts, or says things like `did I miss anything?` / `is this clear enough to implement?`
 
 Do NOT use:
 - During or after `/opsx:apply` — use `/opsx:verify` instead
@@ -23,7 +23,7 @@ Do NOT use:
 
 ### 1. Identify the change
 
-If the user named one, use it. Otherwise infer from conversation context. If still ambiguous, run `openspec list --json` and ask via **AskUserQuestion**.
+If the user named one, use it. Otherwise infer from conversation context. If still ambiguous, run `openspec list --json` and ask with **AskUserQuestion**.
 
 Announce: `Auditing change: <name>`.
 
@@ -40,7 +40,7 @@ The conversation is the source of truth for **what the user wanted**. The artifa
 For each category, scan and produce findings. Be conservative — false positives erode trust.
 
 **A. Unconsulted or under-consulted decisions** (CRITICAL)
-Decisions committed in artifacts where the user either did not weigh in at all, OR gave a brief answer that the agent then extrapolated far beyond:
+Decisions in the artifacts that the user never weighed in on. This includes a brief answer that the agent then extrapolated far beyond:
 - Technology / library / pattern choices ("use Redis", "JWT in cookies", "Postgres JSONB")
 - Architectural shape (sync vs async, monolith vs split, push vs pull, in-process vs queue)
 - Scope boundaries (in/out-of-scope lists, features cut without discussion)
@@ -69,7 +69,7 @@ For each finding, quote the phrase, name the alternative interpretations, and su
 **C. Scope drift** (WARNING)
 Content not requested or that exceeds the request:
 - Bonus features the user did not ask for
-- Generalizations beyond the stated use case ("while we're at it…")
+- Generalizations beyond the stated use case (`while we're at it…`)
 - Premature extensibility / abstraction layers
 - Tests, docs, migrations, telemetry the user did not scope
 
@@ -82,8 +82,8 @@ Content not requested or that exceeds the request:
 
 **E. Deferred / placeholder content** (WARNING)
 - "TBD", "TODO", "FIXME", "to be decided"
-- "We'll figure this out later" phrasing
-- Empty sections or one-line placeholders that should have substance
+- `We'll figure this out later` phrasing
+- Empty sections or one-line placeholders that must have substance
 - Unfilled template fragments
 
 **F. Missing edge cases** (WARNING)
@@ -99,7 +99,7 @@ Flag when contextually relevant — missing edge cases is a frequent root cause 
 
 Output the report and **nothing else** in this turn. No preamble ("Here are the findings..."), no trailer ("Let me know..."), no emojis, no decorative separators, no horizontal rules, no bold prose paragraphs between findings. The report is the entire response.
 
-**Strict format — follow exactly.** Use this template verbatim, including section headers and the `(none)` placeholder when a section is empty. IDs are stable within a single report: `C1, C2, ...` numbered in the order findings appear under CRITICAL; same for `W#` under WARNING and `S#` under SUGGESTION. Numbering restarts per severity. Do not skip numbers.
+**Strict format — follow exactly.** Use this template verbatim, including section headers and the `(none)` placeholder when a section is empty. IDs are stable within a single report: `C1, C2, ...` numbered in the order findings appear under CRITICAL. The same applies to `W#` under WARNING and `S#` under SUGGESTION. Numbering restarts per severity. Do not skip numbers.
 
 ````
 Change: <change-name>
@@ -150,14 +150,14 @@ Pick `BLOCK` iff `CRITICAL > 0`. Pick `CLEAR` iff `CRITICAL = 0` and `WARNING = 
 
 ### 5. Offer to resolve
 
-After the report, in a **separate** message, ask which findings to resolve. Reference findings by ID only — e.g. "Resolve C1, C3, W2?". Do not restate the finding text. For each chosen ID, use **AskUserQuestion** to gather the clarification, then edit the relevant artifact directly. Do not auto-edit without confirmation.
+After the report, in a **separate** message, ask which findings to resolve. Reference findings by ID only — for example "Resolve C1, C3, W2?". Do not restate the finding text. For each chosen ID, use **AskUserQuestion** to gather the clarification, then edit the relevant artifact directly. Do not auto-edit without confirmation.
 
 ## Heuristics
 
 - **Read the conversation, not just the artifacts.** This is what makes the skill different from `/opsx:verify`.
-- **Quote, don't paraphrase.** Findings must cite exact wording so the user can judge severity. If you must paraphrase (artifact text too long), tag it `(paraphrase)`.
-- **Conservative bias.** CRITICAL means "implementation will be wrong"; SUGGESTION means "nice to tighten". When unsure, downgrade.
-- **Don't re-flag confirmed decisions.** If the conversation shows the user agreed — even briefly — it is not unconsulted.
+- **Quote, do not paraphrase.** Findings must cite exact wording so the user can judge severity. If you must paraphrase (artifact text too long), tag it `(paraphrase)`.
+- **Conservative bias.** CRITICAL means "implementation will be wrong". SUGGESTION means "nice to tighten". When unsure, downgrade.
+- **Do not flag confirmed decisions again.** If the conversation shows the user agreed — even briefly — it is not unconsulted.
 - **Aggregate.** If five tasks share the same ambiguity, file one finding and list all five locations on the header line separated by `;`. Do not file five near-duplicate findings.
 
 ## Output discipline

@@ -97,9 +97,6 @@ my-oc() {
 export OLLAMA_CONTEXT_LENGTH=32768
 export OPENSPEC_TELEMETRY=0
 
-# export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-8[1m]"
-export ANTHROPIC_CUSTOM_MODEL_OPTION="claude-opus-4-8[1m]"
-
 # Added by MTPLX.app — terminal command
 export PATH="$HOME/.mtplx/bin:$PATH"
 

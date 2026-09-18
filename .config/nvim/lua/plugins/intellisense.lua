@@ -73,8 +73,15 @@ return {
         menu = {
           border = 'single',
           draw = {
+            -- Two column *groups*: the first (label + description) has a
+            -- fill component (`label`), so it expands to the menu width and
+            -- pushes the second group flush to the right edge. Keeping
+            -- source_name + kind in the *same* group as label instead splits
+            -- the fill between `label` and `kind`, which is why the kind used
+            -- to float mid-line next to the label instead of flexing to `end`.
             columns = {
-              { 'label', 'label_description', 'source_name', 'kind', gap = 1 },
+              { 'label', 'label_description', gap = 1 },
+              { 'source_name', 'kind', gap = 1 },
             },
           },
         },

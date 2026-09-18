@@ -1,3 +1,27 @@
+-- Shared picker filtering: show dotfiles, respect .gitignore, and hard-exclude
+-- heavy dirs that aren't always gitignored (e.g. .venv in a fresh checkout).
+local picker_exclude = {
+  '.git',
+  '.claude',
+  'openspec',
+  'node_modules',
+  '.venv',
+  'venv',
+  '__pycache__',
+  '.mypy_cache',
+  '.pytest_cache',
+  '.ruff_cache',
+  '.ipynb_checkpoints',
+}
+
+local function picker_filter()
+  return {
+    hidden = true,
+    ignored = true,
+    exclude = picker_exclude,
+  }
+end
+
 return {
   {
     'folke/snacks.nvim',
@@ -17,26 +41,10 @@ return {
       picker = {
         enabled = true, -- https://github.com/folke/snacks.nvim/blob/main/docs/picker.md#%EF%B8%8F-config
         sources = {
-          files = {
-            hidden = true,
-            ignored = true,
-            exclude = { "openspec", "node_modules", ".git", ".claude" },
-          },
-          smart = {
-            hidden = true,
-            ignored = true,
-            exclude = { "openspec", "node_modules", ".git", ".claude" },
-          },
-          grep = {
-            hidden = true,
-            ignored = true,
-            exclude = { "openspec", "node_modules", ".git", ".claude" },
-          },
-          grep_word = {
-            hidden = true,
-            ignored = true,
-            exclude = { "openspec", "node_modules", ".git", ".claude" },
-          },
+          files = picker_filter(),
+          smart = picker_filter(),
+          grep = picker_filter(),
+          grep_word = picker_filter(),
         },
       },
       scope = { enabled = true },

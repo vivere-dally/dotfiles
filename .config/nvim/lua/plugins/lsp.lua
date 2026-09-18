@@ -181,7 +181,7 @@ return {
         'templ',
 
         -- Python
-        'pyright',
+        'basedpyright',
         'ruff',
 
         -- PHP

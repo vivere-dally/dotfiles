@@ -80,6 +80,9 @@ brew install composer
 # go
 #--------------------------------------------------------------------------
 echo "To install Golang goto https://go.dev/doc/install"
+# golangci-lint is installed via brew (not Mason) so its build tracks the
+# current Go toolchain — see .config/nvim/lua/plugins/lsp.lua
+brew install golangci-lint
 
 #--------------------------------------------------------------------------
 # karabiner, skhd, yabai

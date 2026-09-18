@@ -23,7 +23,7 @@ Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give
 
 ### Ways to construct one, in roughly this order
 
-1. **Failing test** at whatever seam reaches the bug: unit, integration, e2e.
+1. **Failing test** at whatever level reaches the bug: unit, integration, e2e.
 2. **Curl / HTTP script** against a running dev server.
 3. **CLI invocation** with a fixture input, diffing stdout against a known-good snapshot.
 4. **Headless browser script** (Playwright / Puppeteer) that drives the UI and asserts on DOM/console/network.
@@ -113,15 +113,15 @@ Tool preference:
 
 ## Phase 5: Fix + regression test
 
-Write the regression test **before the fix**, but only if there is a **correct seam** for it.
+Write the regression test **before the fix**, but only if there is a **correct entry point** for it.
 
-A correct seam is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow (single-caller test when the bug needs multiple callers, unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
+A correct entry point is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available entry point is too shallow (single-caller test when the bug needs multiple callers, unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
 
-**If no correct seam exists, that itself is the finding.** Note it. The codebase architecture is preventing the bug from being locked down. Flag this for the next phase.
+**If no correct entry point exists, that itself is the finding.** Note it. The codebase architecture is preventing the bug from being locked down. Flag this for the next phase.
 
-If a correct seam exists:
+If a correct entry point exists:
 
-1. Turn the minimised repro into a failing test at that seam.
+1. Turn the minimised repro into a failing test at that entry point.
 2. Watch it fail.
 3. Apply the fix.
 4. Watch it pass.
@@ -132,7 +132,7 @@ If a correct seam exists:
 Required before declaring done:
 
 - [ ] Original repro no longer reproduces (re-run the Phase 1 loop)
-- [ ] Regression test passes (or absence of seam is documented)
+- [ ] Regression test passes (or the absence of an entry point is documented)
 - [ ] All `[DEBUG-...]` instrumentation removed (`grep` the prefix)
 - [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message, so the next debugger learns

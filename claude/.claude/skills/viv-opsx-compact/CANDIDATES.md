@@ -67,9 +67,9 @@ Same subject, ambiguous ownership → MERGE, naming one owner.
 
 ```
 app/structured-logging  file rotation, retention, PII redaction at the logger root
-lib/structured-logging  the injected Logger seam, namespace binding, error normalization
+lib/structured-logging  the injected Logger interface, namespace binding, error normalization
 ```
-Same name, same vocabulary, **different subjects** — one is a sink, one is a seam. DO NOT
+Same name, same vocabulary, **different subjects** — one is a sink, one is an injected interface. DO NOT
 MERGE. Cross-module pairs are usually this: a producer and its consumer.
 
 ### ABSORB — one- or two-requirement spec into its parent
@@ -79,7 +79,7 @@ MERGE. Cross-module pairs are usually this: a producer and its consumer.
 A spec carrying a single requirement usually documents a decision that belongs inside a
 larger capability. Absorb it, preserving the requirement verbatim, and name the parent.
 
-Keep it standalone when it is a deliberate seam other specs reference by name, or when the
+Keep it standalone when it is a deliberate boundary other specs reference by name, or when the
 capability is genuinely small but real (a feature flag, a compatibility guarantee).
 
 ### TRIM — enumerated scenarios

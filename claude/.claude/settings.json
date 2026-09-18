@@ -28,6 +28,34 @@
   "enableWorkflows": false,
   "workflowKeywordTriggerEnabled": false,
   "skipWorkflowUsageWarning": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun ~/.claude/hooks/ste-check.ts",
+            "timeout": 15,
+            "statusMessage": "STE check"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun ~/.claude/hooks/ste-check.ts",
+            "timeout": 15,
+            "statusMessage": "STE check"
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh",

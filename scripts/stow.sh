@@ -4,7 +4,7 @@
 #
 # Two stow packages:
 #   .       the repo root: shell, nvim, tmux, ... (claude/ excluded via .stow-local-ignore)
-#   claude  ~/.claude settings, CLAUDE.md and skills; a package of its own so the
+#   claude  ~/.claude settings, rules and skills; a package of its own so the
 #           repo root never has a .claude/ that Claude Code would load as this
 #           repo's project settings
 set -euo pipefail

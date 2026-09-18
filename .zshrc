@@ -65,7 +65,6 @@ eval "$(pyenv init -)"
 export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:/usr/local/android-studio/bin
-export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:~/go/bin
 export PATH=$PATH:~/.composer/vendor/bin
 
@@ -96,16 +95,30 @@ my-oc() {
 }
 
 export OLLAMA_CONTEXT_LENGTH=32768
+export OPENSPEC_TELEMETRY=0
 
 # export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-8[1m]"
 export ANTHROPIC_CUSTOM_MODEL_OPTION="claude-opus-4-8[1m]"
 
-# LLVM
-export PATH="/Users/s-ved/homebrew/opt/llvm@22/bin:$PATH"
+# Added by MTPLX.app — terminal command
+export PATH="$HOME/.mtplx/bin:$PATH"
 
-## For compilers to find llvm@22 you may need to set
-export LDFLAGS="-L/Users/s-ved/homebrew/opt/llvm@22/lib"
-export CPPFLAGS="-I/Users/s-ved/homebrew/opt/llvm@22/include"
+# The Homebrew prefix differs per machine (~/homebrew from init.darwin.sh vs
+# the stock /opt/homebrew), so never hardcode it. ~/.zprofile's
+# `brew shellenv` exports it; asking brew covers shells that skipped that.
+: ${HOMEBREW_PREFIX:=$(brew --prefix 2>/dev/null)}
 
-## For cmake to find llvm@22 you may need to set:
-export CMAKE_PREFIX_PATH="/Users/s-ved/homebrew/opt/llvm@22"
+export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/icu4c/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+# LLVM: machines carry either the pinned llvm@22 or the floating `llvm`
+# formula. Use the first one installed, pinned first, so compilers and cmake
+# agree on a single toolchain.
+for _llvm in "$HOMEBREW_PREFIX/opt/llvm@22" "$HOMEBREW_PREFIX/opt/llvm"; do
+    [[ -d $_llvm ]] || continue
+    export PATH="$_llvm/bin:$PATH"
+    export LDFLAGS="-L$_llvm/lib"
+    export CPPFLAGS="-I$_llvm/include"
+    export CMAKE_PREFIX_PATH="$_llvm"
+    break
+done
+unset _llvm

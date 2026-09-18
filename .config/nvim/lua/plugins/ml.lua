@@ -82,7 +82,7 @@ return {
         mode = { 'n', 't', 'i', 'x' },
       },
       {
-        '<leader>aa',
+        '<leader>al',
         function()
           require('sidekick.cli').toggle()
         end,
@@ -142,6 +142,13 @@ return {
           require('sidekick.cli').toggle({ name = 'claude', focus = true })
         end,
         desc = 'Sidekick Toggle Claude',
+      },
+      {
+        '<leader>aa',
+        function()
+          require('sidekick.cli').toggle({ name = 'opencode', focus = true })
+        end,
+        desc = 'Sidekick Toggle OpenCode',
       },
     },
   },

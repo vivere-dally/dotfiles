@@ -8,7 +8,8 @@ NPM="$(command -v npm || true)"
 mkdir -p "$HOME/.local/bin"
 export PATH="$HOME/.local/bin:$PATH"
 
-case "$(uname -s)" in
+PLATFORM="$(uname -s)"
+case "$PLATFORM" in
     Darwin) DOTFILES_BOOTSTRAP_PLATFORM_HELPER=1 "$DOTFILES/scripts/init.darwin.sh" ;;
     Linux) DOTFILES_BOOTSTRAP_PLATFORM_HELPER=1 "$DOTFILES/scripts/init.linux.sh" ;;
     *)
@@ -66,6 +67,15 @@ command -v tic >/dev/null 2>&1 || formulae+=(ncurses)
 
 "$BREW" install "${formulae[@]}"
 "$BREW" upgrade "${formulae[@]}"
+
+if [[ $PLATFORM == Darwin ]]; then
+    if "$BREW" list --cask alacritty >/dev/null 2>&1; then
+        "$BREW" upgrade --cask alacritty
+    else
+        # Adopt an existing manually installed app when necessary.
+        "$BREW" install --cask --force alacritty
+    fi
+fi
 hash -r
 
 if [[ -z $NPM ]]; then NPM="$(command -v npm || true)"; fi
@@ -121,6 +131,7 @@ eval "$(pyenv init --path)"
 python_version=$(pyenv latest --known 3)
 pyenv install -s "$python_version"
 pyenv global "$python_version"
+uv pip install --python "$(pyenv which python)" --upgrade libtmux
 
 # The previous macOS installer wrote this one line directly. Move only that
 # known file so Stow can replace it with the portable profile from this repo.
@@ -130,6 +141,33 @@ if [[ -f $HOME/.zprofile && ! -L $HOME/.zprofile ]] && \
 fi
 
 "$DOTFILES/scripts/stow.sh"
+
+TPM_ROOT="$HOME/.tmux/plugins"
+TPM_DIR="$TPM_ROOT/tpm"
+if [[ -d $TPM_DIR/.git ]]; then
+    git -C "$TPM_DIR" pull --ff-only
+elif [[ ! -e $TPM_DIR ]]; then
+    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+else
+    echo "bootstrap: $TPM_DIR exists but is not a TPM checkout" >&2
+    exit 1
+fi
+if tmux list-sessions >/dev/null 2>&1; then
+    tmux set-environment -g TMUX_PLUGIN_MANAGER_PATH "$TPM_ROOT/"
+fi
+"$TPM_DIR/bin/install_plugins"
+
+for tmux_plugin in \
+    tmux-sensible \
+    tmux-window-name \
+    tmux-fzf \
+    tmux-resurrect \
+    tmux-continuum; do
+    if [[ ! -d $TPM_ROOT/$tmux_plugin ]]; then
+        echo "bootstrap: tmux plugin installation did not create $tmux_plugin" >&2
+        exit 1
+    fi
+done
 
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 if [[ ! -r $ZSH/oh-my-zsh.sh ]]; then

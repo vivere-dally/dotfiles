@@ -11,12 +11,13 @@ scripts/bootstrap.sh
 The script works on macOS and Linux. It installs the system packages needed to build Python, installs Homebrew when needed, and then installs or updates these tools:
 
 - Stow, Neovim, Tree-sitter, jq, pyenv, uv, Zsh, fzf, ripgrep, fd, lazygit, tmux, and golangci-lint
+- Alacritty on macOS
 - nvm with the latest Node.js LTS release
 - The latest stable CPython release through pyenv. Python does not have an LTS channel.
 - The latest Bun release in the nvm-managed Node.js installation
 - Oh My Zsh, zsh-autosuggestions, and zsh-syntax-highlighting
 
-Linux installations also get wl-clipboard. The script removes the unsupported npm Tree-sitter CLI when it is present. It compiles the Alacritty terminfo entries into `~/.terminfo`, links the dotfiles, restores the locked Neovim plugin revisions, and verifies the configured parsers and Mason tools. You can run it again after a pull.
+Linux installations also get wl-clipboard. The script removes the unsupported npm Tree-sitter CLI when it is present. It compiles the Alacritty terminfo entries into `~/.terminfo` and links the dotfiles. It installs TPM and the configured tmux plugins. It also restores the locked Neovim plugin revisions and verifies the configured parsers and Mason tools. You can run it again after a pull.
 
 ## Neovim
 

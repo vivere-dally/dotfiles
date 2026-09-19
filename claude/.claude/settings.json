@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun ~/.claude/hooks/ste-check.ts",
+            "command": "PATH=\"$HOME/.bun/bin:$PATH\" bun \"$HOME/.local/share/llm-capabilities/src/ste/cli.ts\"",
             "timeout": 15,
             "statusMessage": "STE check"
           }
@@ -48,7 +48,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun ~/.claude/hooks/ste-check.ts",
+            "command": "PATH=\"$HOME/.bun/bin:$PATH\" bun \"$HOME/.local/share/llm-capabilities/src/ste/cli.ts\"",
             "timeout": 15,
             "statusMessage": "STE check"
           }

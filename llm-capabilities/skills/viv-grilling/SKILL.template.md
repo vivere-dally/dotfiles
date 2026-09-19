@@ -23,8 +23,8 @@ Format a round like so:
 
 Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
 
-Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, and so on), dispatch a sub-agent to find it. Do not ask the user for anything that you can look up yourself. Do not block on it: a running exploration is an unsettled prerequisite. Only the questions downstream of it wait for the sub-agent to report. Ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
+Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, and so on), {{start_search_agent}}. Do not ask the user for anything that you can look up yourself. Do not block on it: a running exploration is an unsettled prerequisite. Only the questions downstream of it wait for the search to report. Ask the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
 
-When a term or a decision settles, call the Skill tool with "viv-domain-modeling" and write it down as it happens. A grill that leaves no glossary entry and no ADR behind loses everything the round bought.
+When a term or a decision settles, {{load_skill:viv-domain-modeling}} and write it down as it happens. A grill that leaves no glossary entry and no ADR behind loses everything the round bought.
 
 The session is done when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Do not act on it until the user confirms you have reached a shared understanding.

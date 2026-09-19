@@ -23,7 +23,7 @@ Do NOT use:
 
 ### 1. Identify the change
 
-If the user named one, use it. Otherwise infer from conversation context. If still ambiguous, run `openspec list --json` and ask with **AskUserQuestion**.
+If the user named one, use it. Otherwise infer from conversation context. If still ambiguous, run `openspec list --json` and ask the user with {{ask_user}}.
 
 Announce: `Auditing change: <name>`.
 
@@ -150,7 +150,7 @@ Pick `BLOCK` iff `CRITICAL > 0`. Pick `CLEAR` iff `CRITICAL = 0` and `WARNING = 
 
 ### 5. Offer to resolve
 
-After the report, in a **separate** message, ask which findings to resolve. Reference findings by ID only — for example "Resolve C1, C3, W2?". Do not restate the finding text. For each chosen ID, use **AskUserQuestion** to gather the clarification, then edit the relevant artifact directly. Do not auto-edit without confirmation.
+After the report, in a **separate** message, ask which findings to resolve. Reference findings by ID only — for example "Resolve C1, C3, W2?". Do not restate the finding text. For each chosen ID, ask the user for the clarification with {{ask_user}}, then edit the relevant artifact directly. Do not auto-edit without confirmation.
 
 ## Heuristics
 

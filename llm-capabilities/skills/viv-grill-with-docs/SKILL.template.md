@@ -4,4 +4,4 @@ description: A relentless interview to sharpen a plan or design, which also crea
 disable-model-invocation: true
 ---
 
-Call the Skill tool twice, for "viv-grilling" and "viv-domain-modeling".
+First, {{load_skill:viv-grilling}}. Then {{load_skill:viv-domain-modeling}}. Obey both.

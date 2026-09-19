@@ -97,6 +97,11 @@ my-oc() {
 export OLLAMA_CONTEXT_LENGTH=32768
 export OPENSPEC_TELEMETRY=0
 
+# opencode also reads ~/.claude/skills, which holds the Claude Code build of each
+# skill (scripts/llm-capabilities.sh). Without this, opencode loads each skill two
+# times, one of them with the tool names of Claude Code.
+export OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1
+
 # Added by MTPLX.app — terminal command
 export PATH="$HOME/.mtplx/bin:$PATH"
 

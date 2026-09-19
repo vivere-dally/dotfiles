@@ -27,3 +27,9 @@ scripts
 
 # Separate stow package for ~/.claude, linked by scripts/stow.sh
 ^/claude
+
+# Notes about the repository itself, not files for $HOME
+^/docs
+
+# Agent capabilities, linked by scripts/llm-capabilities.sh
+^/llm-capabilities

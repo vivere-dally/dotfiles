@@ -1,11 +1,14 @@
-#!/usr/bin/env bun
 /**
- * ASD-STE100 Simplified Technical English gate for every repository.
+ * ASD-STE100 Simplified Technical English gate: the checker, shared by every harness.
+ *
+ * This module does no I/O of its own: no stdin, no `process.exit`, and no `Bun.*`
+ * call. Claude Code and Codex reach it through `cli.ts` under Bun, the opencode
+ * plugin loads it in the Bun runtime of opencode, and the pi extension loads it in
+ * Node through jiti. Each caller gives it a `read` function for the files it needs.
  *
  * Part 2 of the standard (the dictionary) is not redistributable, so nothing here
  * embeds it. Every lexical rule is read at runtime from the `### Word traps` table
- * in ~/.claude/rules/ste.md: one source of truth, and no copy of the standard in a
- * public repo.
+ * in `rules/ste.md`: one source of truth, and no copy of the standard in a public repo.
  *
  * Findings carry a confidence class because only the commit surface blocks:
  *   hard — deterministic; no part-of-speech or context judgment is possible to get
@@ -14,20 +17,11 @@
  *          Advice only.
  * A gate that denies on a guess teaches people to route around it, so the blocking
  * set is deliberately the narrow one and grows only if a rule proves deterministic.
- *
- * Two entry points share one checker. As a hook it reads the event on stdin and
- * answers with the hook protocol: a tool event gates the payload of the call,
- * `UserPromptSubmit` injects the reply contract out of the rules, and `Stop` gates
- * the reply itself against the contract budget. As `ste-check.ts --file <path>` it
- * prints a plain report and exits 1 on a hard finding, so a person and a CI job
- * get the same verdict.
  */
 
-import { existsSync, realpathSync } from "node:fs";
+export type Severity = "hard" | "soft";
 
-type Severity = "hard" | "soft";
-
-type Finding = {
+export type Finding = {
   rule: string;
   severity: Severity;
   where: string;
@@ -35,11 +29,14 @@ type Finding = {
   hint: string;
 };
 
-type Trap = { pattern: RegExp; replacement: string; severity: Severity };
+export type Trap = { pattern: RegExp; replacement: string; severity: Severity };
+
+/** Reads a file as text, or gives null when the file does not exist. */
+export type ReadText = (path: string) => string | null;
 
 /** Rule 5.1 (an instruction) and rule 6.3 (a description). */
-const MAX_WORDS_PROCEDURAL = 20;
-const MAX_WORDS_DESCRIPTIVE = 25;
+export const MAX_WORDS_PROCEDURAL = 20;
+export const MAX_WORDS_DESCRIPTIVE = 25;
 /** Rule 6.6. */
 const MAX_SENTENCES_PER_PARAGRAPH = 6;
 
@@ -49,7 +46,7 @@ const MAX_SENTENCES_PER_PARAGRAPH = 6;
  * selection, and only a total budget does that. The numbers are repository
  * policy, not STE.
  */
-const MAX_WORDS_REPLY = 300;
+export const MAX_WORDS_REPLY = 300;
 const MAX_WORDS_GH_PROSE = 300;
 const MAX_WORDS_COMMIT_BODY = 300;
 
@@ -68,28 +65,10 @@ const QUALIFIED = /\s*\(/;
  */
 const FORCED_SOFT = new Set(["main"]);
 
-/**
- * The user-level rules. Claude Code loads the same files as instructions, thus the
- * prose that the model obeys and the table that the gate enforces stay one text.
- */
-function rulesDir(): string {
-  const configDir = process.env.CLAUDE_CONFIG_DIR ?? `${process.env.HOME}/.claude`;
-  return `${configDir}/rules`;
-}
-
-function projectDir(): string {
-  const fromHarness = process.env.CLAUDE_PROJECT_DIR;
-  if (fromHarness) return fromHarness;
-  // .claude/hooks/ste-check.ts -> repository root
-  return new URL("../..", import.meta.url).pathname;
-}
-
-/** Reads the word traps out of ste.md so the table stays the only place they live. */
-async function loadTraps(): Promise<Trap[]> {
-  const path = `${rulesDir()}/ste.md`;
-  const text = await Bun.file(path).text();
-  const section = text.split(/^### Word traps$/m)[1];
-  if (!section) throw new Error(`no "### Word traps" table in ${path}`);
+/** Parses the word traps out of ste.md so the table stays the only place they live. */
+export function parseTraps(steMarkdown: string, source: string): Trap[] {
+  const section = steMarkdown.split(/^### Word traps$/m)[1];
+  if (!section) throw new Error(`no "### Word traps" table in ${source}`);
 
   const traps: Trap[] = [];
   for (const line of section.split("\n")) {
@@ -114,16 +93,14 @@ async function loadTraps(): Promise<Trap[]> {
       });
     }
   }
-  if (traps.length === 0) throw new Error(`empty word-trap table in ${path}`);
+  if (traps.length === 0) throw new Error(`empty word-trap table in ${source}`);
   return traps;
 }
 
 /** Reads one `## <title>` section of a rules file, so the contract text lives in one place. */
-async function rulesSection(file: string, title: string): Promise<string> {
-  const path = `${rulesDir()}/${file}`;
-  const text = await Bun.file(path).text();
-  const section = text.split(new RegExp(`^## ${title}$`, "m"))[1];
-  if (!section) throw new Error(`no "## ${title}" section in ${path}`);
+export function markdownSection(markdown: string, title: string, source: string): string {
+  const section = markdown.split(new RegExp(`^## ${title}$`, "m"))[1];
+  if (!section) throw new Error(`no "## ${title}" section in ${source}`);
   return `## ${title}\n${(section.split(/\n## /)[0] ?? "").trim()}`;
 }
 
@@ -134,7 +111,7 @@ const CHECKBOX = /^[-*+]\s+\[[ xX]\]/;
  * The total budget of one document surface. The blocks come from `markdownProse`,
  * thus code, tables, and headings are already out of the count.
  */
-function budgetFinding(where: string, blocks: string[], cap: number, hint: string): Finding | null {
+export function budgetFinding(where: string, blocks: string[], cap: number, hint: string): Finding | null {
   const words = blocks.reduce((n, b) => n + countWords(b), 0);
   if (words <= cap) return null;
   return { rule: "document-budget", severity: "hard", where, quote: `${words} words`, hint };
@@ -147,10 +124,9 @@ function budgetFinding(where: string, blocks: string[], cap: number, hint: strin
  * of ours, so each line is read as an unknown shape and only the narrow fields
  * are touched.
  */
-async function lastReplyText(path: string): Promise<string> {
-  if (!path) return "";
+export function lastReplyText(transcript: string): string {
   let last = "";
-  for (const line of (await Bun.file(path).text()).split("\n")) {
+  for (const line of transcript.split("\n")) {
     if (!line.trim()) continue;
     let entry: any;
     try {
@@ -199,7 +175,7 @@ const ING_CONNECTIVE =
  * one word. Without this the limits would punish exactly the technical prose the
  * standard exempts.
  */
-function countWords(sentence: string): number {
+export function countWords(sentence: string): number {
   const collapsed = sentence
     .replace(/`[^`]*`/g, " X ")
     .replace(/\([^)]*\)/g, " X ")
@@ -214,9 +190,9 @@ function countWords(sentence: string): number {
 /**
  * Strips everything the standard does not govern. Quoted text (rule 8.6), code, and
  * table cells are exempt — and the exemption is not cosmetic: the trap table of ste.md
- * table and its deliberately non-STE example would otherwise report themselves.
+ * and its deliberately non-STE example would otherwise report themselves.
  */
-function markdownProse(source: string): string[] {
+export function markdownProse(source: string): string[] {
   const body = source.replace(/^---\n[\s\S]*?\n---\n/, "");
   const blocks: string[] = [];
   let current: string[] = [];
@@ -235,6 +211,10 @@ function markdownProse(source: string): string[] {
         // placeholder and a sentence-ending period, and the splitter's lookbehind
         // would then miss the terminator and merge two sentences into one count.
         .replace(/`[^`]*`/g, " `X`")
+        // A template placeholder stands for text that the build writes in later.
+        // It counts as one word, like an identifier, and it can end a sentence.
+        // render.ts checks the text that replaces it.
+        .replace(/\{\{[^{}]*\}\}/g, " `X`")
         .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
         .replace(/https?:\/\/\S+/g, "X")
         // The standard regulates content, not formatting, so emphasis markers are
@@ -273,7 +253,7 @@ function splitSentences(block: string): string[] {
     .filter((s) => s.length > 0);
 }
 
-function checkText(where: string, traps: Trap[], maxWords: number, blocks: string[]): Finding[] {
+export function checkText(where: string, traps: Trap[], maxWords: number, blocks: string[]): Finding[] {
   // Every lexical rule reads the stripped prose, never the raw source. Code, quoted
   // text, and table cells are outside STE, and scanning them would make any document
   // that discusses the rules — ste.md above all — report itself.
@@ -444,7 +424,7 @@ function tokenize(command: string): Word[] {
  * carries it. A source that the gate cannot resolve goes into `unreadable` and becomes
  * a hard finding. A silent skip of an unknown source is a gate in name only.
  */
-async function ghPayload(command: string): Promise<{ texts: string[]; unreadable: string[] }> {
+function ghPayload(command: string, projectDir: string, read: ReadText): { texts: string[]; unreadable: string[] } {
   const { rest, bodies } = takeHeredocs(command);
   const words = tokenize(rest);
   const texts: string[] = [];
@@ -486,14 +466,14 @@ async function ghPayload(command: string): Promise<{ texts: string[]; unreadable
       unreadable.push(`${name} holds a shell expansion`);
       continue;
     }
-    // The path resolves against the directory of the hook, which is not always the
-    // directory of the command. A relative path that misses is reported, not skipped.
-    const file = Bun.file(value.text);
-    if (!(await file.exists())) {
+    // A relative path resolves against the project directory, which is not always the
+    // directory of the command. A path that misses is reported, not skipped.
+    const text = read(resolvePath(projectDir, value.text));
+    if (text === null) {
       unreadable.push(`${name} names ${value.text}, which the gate cannot open`);
       continue;
     }
-    texts.push(await file.text());
+    texts.push(text);
   }
   return { texts, unreadable };
 }
@@ -508,7 +488,7 @@ function ghSubject(kind: string, action: string): string {
   return kind === "issue" ? "the issue text" : "the pull request text";
 }
 
-function report(findings: Finding[], subject: string): string {
+export function report(findings: Finding[], subject: string): string {
   const lines = [`Repository gate — ${subject}:`];
   for (const f of findings) {
     lines.push(`  [${f.severity}] ${f.rule}: "${f.quote}" — ${f.hint}`);
@@ -517,198 +497,173 @@ function report(findings: Finding[], subject: string): string {
 }
 
 /**
- * The command entry point. It gives one checker to the hook, to a person, and to a CI
- * job, and it gives a `gh` body the one payload source that the gate always opens.
- *
- * Exit 0 for a clean file or a soft finding. Exit 1 for a hard finding.
+ * The files that an `apply_patch` edit touches. Codex, and opencode with a GPT model,
+ * edit through a patch instead of a file path, and the headers below are the only
+ * place where the patch names its files. `*** Move to:` names the file that exists
+ * after the edit, thus the gate reads that one too.
  */
-async function checkFile(path: string): Promise<number> {
-  const traps = await loadTraps();
-  const where = path.replace(`${projectDir()}/`, "");
-  const source = await Bun.file(path).text();
-  const findings = checkText(where, traps, MAX_WORDS_DESCRIPTIVE, markdownProse(source));
-  if (findings.length === 0) {
-    console.log(`Repository gate — ${where}: no finding.`);
-    return 0;
+export function patchFiles(patch: string): string[] {
+  const files: string[] = [];
+  for (const line of patch.split("\n")) {
+    const m = /^\*\*\* (?:Add File|Update File|Move to): (.+)$/.exec(line.trimEnd());
+    if (m?.[1]) files.push(m[1].trim());
   }
-  console.log(report(findings, where));
-  return findings.some((f) => f.severity === "hard") ? 1 : 0;
+  return files;
 }
 
-async function main() {
-  // The command entry point answers before any read of standard input. With no hook to
-  // close the stream, a read there waits on a terminal that never sends an end.
-  const flag = process.argv[2] ?? "";
-  if (flag === "--file" || flag.startsWith("--file=")) {
-    const path = flag.startsWith("--file=") ? flag.slice("--file=".length) : process.argv[3];
-    if (!path) {
-      console.error("usage: ste-check.ts --file <path>");
-      process.exit(2);
-    }
-    process.exit(await checkFile(path));
-  }
+export function resolvePath(base: string, path: string): string {
+  if (path.startsWith("/")) return path;
+  return `${base.replace(/\/+$/, "")}/${path.replace(/^\.\//, "")}`;
+}
 
-  // A repository that carries its own copy of the gate owns its rules, and a second
-  // run would only repeat each finding. The path comparison keeps this file from
-  // standing aside for itself when the project directory is the home directory.
-  const project = process.env.CLAUDE_PROJECT_DIR;
-  const projectGate = project ? `${project}/.claude/hooks/ste-check.ts` : "";
-  if (projectGate && existsSync(projectGate) && realpathSync(projectGate) !== realpathSync(import.meta.path)) {
-    process.exit(0);
-  }
+/** The rules that the gate enforces, read one time for each call. */
+export type Rules = { dir: string; traps: Trap[] };
 
-  const input = JSON.parse((await Bun.stdin.text()) || "{}");
-  const tool: string = input.tool_name ?? "";
-  const event: string = input.hook_event_name ?? (input.tool_response ? "PostToolUse" : "PreToolUse");
+export function loadRules(rulesDir: string, read: ReadText): Rules {
+  const path = `${rulesDir}/ste.md`;
+  const text = read(path);
+  if (text === null) throw new Error(`cannot read ${path}`);
+  return { dir: rulesDir, traps: parseTraps(text, path) };
+}
 
-  if (event === "UserPromptSubmit") {
+/**
+ * One event in the terms that every harness shares. Each entry point maps its own
+ * payload to this shape, thus the decisions below exist one time only.
+ */
+export type GateEvent =
+  | { kind: "shell"; command: string }
+  | { kind: "wrote"; paths: string[] }
+  | { kind: "prompt" }
+  | { kind: "reply"; text: string };
+
+export type Verdict =
+  | { action: "none" }
+  | { action: "deny"; reason: string }
+  | { action: "advise"; text: string }
+  | { action: "context"; text: string }
+  | { action: "block-reply"; reason: string };
+
+export type GateContext = { rules: Rules; projectDir: string; read: ReadText };
+
+export function evaluate(event: GateEvent, ctx: GateContext): Verdict {
+  const { traps } = ctx.rules;
+  const shortPath = (path: string) => path.replace(`${ctx.projectDir.replace(/\/+$/, "")}/`, "");
+
+  if (event.kind === "prompt") {
     // The contract beside the prompt is the near instruction, and the model obeys
     // the near instruction before the far rule at the top of the context.
-    console.log(
-      JSON.stringify({
-        hookSpecificOutput: {
-          hookEventName: "UserPromptSubmit",
-          additionalContext: await rulesSection("communication.md", "The shape of a reply"),
-        },
-      }),
-    );
-    process.exit(0);
+    const path = `${ctx.rules.dir}/communication.md`;
+    const text = ctx.read(path);
+    if (text === null) throw new Error(`cannot read ${path}`);
+    return { action: "context", text: markdownSection(text, "The shape of a reply", path) };
   }
 
-  const traps = await loadTraps();
-
-  if (event === "Stop") {
-    // One correction for each turn. When the model already continues because of
-    // this hook, a second block can make a loop with no end.
-    if (input.stop_hook_active) process.exit(0);
-    const blocks = markdownProse(await lastReplyText(input.transcript_path ?? ""));
+  if (event.kind === "reply") {
+    const blocks = markdownProse(event.text);
     const findings = checkText("the reply", traps, MAX_WORDS_DESCRIPTIVE, blocks);
     const budget = budgetFinding(
       "the reply",
       blocks,
       MAX_WORDS_REPLY,
-      `Write a maximum of ${MAX_WORDS_REPLY} words (~/.claude/rules/communication.md, "The shape of a reply")`,
+      `Write a maximum of ${MAX_WORDS_REPLY} words (rules/communication.md, "The shape of a reply")`,
     );
     if (budget) findings.push(budget);
     const hard = findings.filter((f) => f.severity === "hard");
-    if (hard.length === 0) process.exit(0);
-    console.log(
-      JSON.stringify({
-        decision: "block",
-        reason: `${report(hard, "the reply")}\n\nWrite the reply again. Obey "The shape of a reply" in ~/.claude/rules/communication.md.`,
-      }),
-    );
-    process.exit(0);
+    if (hard.length === 0) return { action: "none" };
+    return {
+      action: "block-reply",
+      reason: `${report(hard, "the reply")}\n\nWrite the reply again. Obey "The shape of a reply" in rules/communication.md.`,
+    };
   }
 
+  if (event.kind === "wrote") {
+    // A write only advises: the file is already on disk, and the next edit fixes it.
+    const reports: string[] = [];
+    for (const path of event.paths) {
+      if (!path.endsWith(".md")) continue;
+      const source = ctx.read(path);
+      if (source === null) continue;
+      const where = shortPath(path);
+      const findings = checkText(where, traps, MAX_WORDS_DESCRIPTIVE, markdownProse(source));
+      if (findings.length > 0) reports.push(report(findings, where));
+    }
+    return reports.length > 0 ? { action: "advise", text: reports.join("\n\n") } : { action: "none" };
+  }
+
+  const command = event.command;
   let findings: Finding[] = [];
   let subject = "";
-  let blocking = false;
 
-  if (tool === "Bash") {
-    const command: string = input.tool_input?.command ?? "";
-
-    if (/\bgit\s+commit\b/.test(command)) {
-      const message = flagValues(command, "-m").join("\n\n");
-      subject = "the commit";
-      blocking = true;
-      // No -m means an editor or a file supplies the message; there is nothing to read.
-      // The sign-off is still visible in the command, so that check runs either way.
-      if (message) {
-        findings = checkText(subject, traps, MAX_WORDS_PROCEDURAL, markdownProse(message));
-        // The subject line carries the Conventional Commits form, thus only the
-        // body takes the budget.
-        const body = budgetFinding(
-          subject,
-          markdownProse(message.split("\n").slice(1).join("\n")),
-          MAX_WORDS_COMMIT_BODY,
-          `Write a maximum of ${MAX_WORDS_COMMIT_BODY} words in the body (~/.claude/rules/git.md, "Commit and pull request text")`,
-        );
-        if (body) findings.push(body);
-      }
-      if (!hasSignoff(command, message)) {
-        findings.push({
-          rule: "sign-off",
-          severity: "hard",
-          where: subject,
-          quote: "no Signed-off-by trailer",
-          hint: "Use the `-s` option of `git commit` (~/.claude/rules/git.md)",
-        });
-      }
-    } else {
-      const gh = GH_TEXT_COMMAND.exec(command);
-      if (gh) {
-        subject = ghSubject(gh[1] ?? "", gh[2] ?? "");
-        // A description and a comment go to other people, and neither one comes back.
-        // The commit surface denies for that reason, thus this surface denies too.
-        blocking = true;
-        const { texts, unreadable } = await ghPayload(command);
-        if (texts.length > 0) {
-          const blocks = markdownProse(texts.join("\n\n"));
-          findings = checkText(subject, traps, MAX_WORDS_DESCRIPTIVE, blocks);
-          // A checkbox line belongs to the template, thus it stays out of the budget.
-          const budget = budgetFinding(
-            subject,
-            blocks.filter((b) => !CHECKBOX.test(b)),
-            MAX_WORDS_GH_PROSE,
-            `Write a maximum of ${MAX_WORDS_GH_PROSE} words (~/.claude/rules/git.md, "Commit and pull request text")`,
-          );
-          if (budget) findings.push(budget);
-        }
-        for (const reason of unreadable) {
-          findings.push({
-            rule: "unreadable-payload",
-            severity: "hard",
-            where: subject,
-            quote: reason,
-            hint: "Write the text to a file. Then give `--body-file <absolute path>`",
-          });
-        }
-      }
+  if (/\bgit\s+commit\b/.test(command)) {
+    const message = flagValues(command, "-m").join("\n\n");
+    subject = "the commit";
+    // No -m means an editor or a file supplies the message; there is nothing to read.
+    // The sign-off is still visible in the command, so that check runs either way.
+    if (message) {
+      findings = checkText(subject, traps, MAX_WORDS_PROCEDURAL, markdownProse(message));
+      // The subject line carries the Conventional Commits form, thus only the
+      // body takes the budget.
+      const body = budgetFinding(
+        subject,
+        markdownProse(message.split("\n").slice(1).join("\n")),
+        MAX_WORDS_COMMIT_BODY,
+        `Write a maximum of ${MAX_WORDS_COMMIT_BODY} words in the body (rules/git.md, "Commit and pull request text")`,
+      );
+      if (body) findings.push(body);
     }
-  } else if (tool === "Write" || tool === "Edit" || tool === "MultiEdit") {
-    const file: string = input.tool_input?.file_path ?? "";
-    if (file.endsWith(".md")) {
-      const source = await Bun.file(file).text();
-      subject = file.replace(`${projectDir()}/`, "");
-      findings = checkText(subject, traps, MAX_WORDS_DESCRIPTIVE, markdownProse(source));
+    if (!hasSignoff(command, message)) {
+      findings.push({
+        rule: "sign-off",
+        severity: "hard",
+        where: subject,
+        quote: "no Signed-off-by trailer",
+        hint: "Use the `-s` option of `git commit` (rules/git.md)",
+      });
+    }
+  } else {
+    const gh = GH_TEXT_COMMAND.exec(command);
+    if (!gh) return { action: "none" };
+    subject = ghSubject(gh[1] ?? "", gh[2] ?? "");
+    const { texts, unreadable } = ghPayload(command, ctx.projectDir, ctx.read);
+    if (texts.length > 0) {
+      const blocks = markdownProse(texts.join("\n\n"));
+      findings = checkText(subject, traps, MAX_WORDS_DESCRIPTIVE, blocks);
+      // A checkbox line belongs to the template, thus it stays out of the budget.
+      const budget = budgetFinding(
+        subject,
+        blocks.filter((b) => !CHECKBOX.test(b)),
+        MAX_WORDS_GH_PROSE,
+        `Write a maximum of ${MAX_WORDS_GH_PROSE} words (rules/git.md, "Commit and pull request text")`,
+      );
+      if (budget) findings.push(budget);
+    }
+    for (const reason of unreadable) {
+      findings.push({
+        rule: "unreadable-payload",
+        severity: "hard",
+        where: subject,
+        quote: reason,
+        hint: "Write the text to a file. Then give `--body-file <absolute path>`",
+      });
     }
   }
 
-  if (findings.length === 0) process.exit(0);
+  if (findings.length === 0) return { action: "none" };
 
+  // A commit and a GitHub text go to other people, and neither one comes back, thus
+  // a hard finding denies the command. Soft findings only advise.
   const hard = findings.filter((f) => f.severity === "hard");
-  if (blocking && hard.length > 0) {
-    console.log(
-      JSON.stringify({
-        hookSpecificOutput: {
-          hookEventName: "PreToolUse",
-          permissionDecision: "deny",
-          permissionDecisionReason: `${report(hard, subject)}\n\n~/.claude/rules/ gives these rules. Correct ${subject}, then run the command again.`,
-        },
-      }),
-    );
-    process.exit(0);
+  if (hard.length > 0) {
+    return {
+      action: "deny",
+      reason: `${report(hard, subject)}\n\nThe rules in llm-capabilities/rules/ give these limits. Correct ${subject}, then run the command again.`,
+    };
   }
-
-  console.log(
-    JSON.stringify({
-      hookSpecificOutput: { hookEventName: event, additionalContext: report(findings, subject) },
-      suppressOutput: true,
-    }),
-  );
-  process.exit(0);
+  return { action: "advise", text: report(findings, subject) };
 }
 
-main().catch((err) => {
-  const message = err instanceof Error ? err.message : String(err);
-  // Under the command entry point a broken checker must fail loudly, because a CI job
-  // that reads exit 0 would call the text clean.
-  if (process.argv.includes("--file") || process.argv.some((a) => a.startsWith("--file="))) {
-    console.error(`STE check did not run: ${message}`);
-    process.exit(2);
-  }
-  // As a hook it must never stop work, but a silent one is a fake gate: say so.
-  console.log(JSON.stringify({ systemMessage: `STE hook did not run: ${message}` }));
-  process.exit(0);
-});
+/** The `--file` entry: one document against the descriptive limits. */
+export function checkDocument(path: string, source: string, rules: Rules, projectDir: string): Finding[] {
+  const where = path.replace(`${projectDir.replace(/\/+$/, "")}/`, "");
+  return checkText(where, rules.traps, MAX_WORDS_DESCRIPTIVE, markdownProse(source));
+}

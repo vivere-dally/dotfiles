@@ -31,10 +31,10 @@ Do NOT use:
 ### Phase 0 — Scan (deterministic, ~5s)
 
 ```bash
-python3 "$SKILL_DIR/scripts/scan.py" <repo-root> --agents <N> --out /tmp/opsx-signals.json
+python3 "{{skill_dir}}/scripts/scan.py" <repo-root> --agents <N> --out /tmp/opsx-signals.json
 ```
 
-`$SKILL_DIR` is this skill's base directory, given to you when the skill loads.
+{{skill_dir_note}}
 
 `--agents N` (default 8) sets how many clusters the corpus is packed into — one agent per
 cluster in Phase 1. Raise it for a bigger corpus or a faster pass.
@@ -58,13 +58,13 @@ Clusters are connected components of the capability-overlap graph, seeded by nam
 Thus every spec that can merge with another lands in the context of the same agent. Splitting a
 family across agents produces contradictory merge proposals.
 
-Call **Workflow** with one agent per cluster from `clusters[]`. Each agent receives its
+For the clusters in `clusters[]`, {{start_subagents}}. Each agent receives its
 cluster's `paths[]` and the signal rows scoped to its members, and returns findings only —
 it must not edit anything. Give every agent `CANDIDATES.md` as its rubric.
 
 Each finding must carry: operation, source location(s), the **surviving owner**, a
-behavior-preservation note, and a confidence. Force structured output with the workflow
-`schema` option so synthesis never has to parse prose.
+behavior-preservation note, and a confidence. Ask each agent for one fixed JSON
+shape, so synthesis never has to parse prose.
 
 ### Phase 2 — Synthesize one ranked plan
 

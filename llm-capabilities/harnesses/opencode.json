@@ -1,0 +1,16 @@
+{
+  "arguments": "the text after the skill name, or the request in the conversation",
+  "read_tool": "the `read` tool",
+  "parallel_reads": "make one `read` call for each file, all in the same message",
+  "search_tool": "the `grep` tool",
+  "start_search_agent": "start the `explore` subagent with the `task` tool",
+  "start_subagents": "start one `general` subagent for each with the `task` tool",
+  "delegate": "Give this job to a `general` subagent with the `task` tool, so that you keep working while it reads.",
+  "web_search": "the `websearch` tool",
+  "ask_user": "the `question` tool",
+  "load_skill": "call the `skill` tool with `{0}`",
+  "instruction_file": "`AGENTS.md` (or `CLAUDE.md`)",
+  "skill_dir": "<skill-dir>",
+  "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The `skill` tool gives it when the skill loads.",
+  "worktree_isolation_clause": ""
+}

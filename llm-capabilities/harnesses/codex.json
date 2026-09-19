@@ -1,0 +1,16 @@
+{
+  "arguments": "the text after the skill name, or the request in the conversation",
+  "read_tool": "a shell read of the whole file (`cat` or `sed -n`)",
+  "parallel_reads": "read all of them in one shell command",
+  "search_tool": "one `rg` search over many files",
+  "start_search_agent": "start a subagent with `spawn_agent`",
+  "start_subagents": "start one subagent for each with `spawn_agent`",
+  "delegate": "Give this job to a subagent with `spawn_agent`, so that you keep working while it reads.",
+  "web_search": "the web search of Codex, if it is on",
+  "ask_user": "a question in your reply, and then stop",
+  "load_skill": "read the `SKILL.md` of the `{0}` skill from the skill list",
+  "instruction_file": "`AGENTS.md`",
+  "skill_dir": "<skill-dir>",
+  "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The skill list gives it.",
+  "worktree_isolation_clause": ""
+}

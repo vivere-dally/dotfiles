@@ -1,0 +1,16 @@
+{
+  "arguments": "the text after the skill name, or the request in the conversation",
+  "read_tool": "the `read` tool",
+  "parallel_reads": "make one `read` call for each file, all in the same message",
+  "search_tool": "the `grep` tool",
+  "start_search_agent": "search with the `grep` and `find` tools yourself, because pi has no subagents",
+  "start_subagents": "do them one at a time yourself, because pi has no subagents",
+  "delegate": "Do this job yourself, because pi has no subagents.",
+  "web_search": "a web search tool, if an extension gives one",
+  "ask_user": "a question in your reply, and then stop",
+  "load_skill": "read the `SKILL.md` of the `{0}` skill from the skill list",
+  "instruction_file": "`AGENTS.md` (or `CLAUDE.md`)",
+  "skill_dir": "<skill-dir>",
+  "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The skill block gives it when the skill loads.",
+  "worktree_isolation_clause": ""
+}

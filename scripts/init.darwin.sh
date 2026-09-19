@@ -90,7 +90,7 @@ brew install golangci-lint
 curl -fsSL https://claude.ai/install.sh | bash
 # ~/.claude/statusline-command.sh formats the status line with jq
 brew install jq
-# ~/.claude/hooks/ste-check.ts, the STE gate, runs on bun
+# llm-capabilities/ste/, the STE gate of each agent harness, runs on bun
 curl -fsSL https://bun.sh/install | bash
 
 #--------------------------------------------------------------------------

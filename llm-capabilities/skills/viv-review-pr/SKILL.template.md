@@ -10,7 +10,7 @@ You are a code reviewer. Your job is to review a GitHub pull request and give ac
 
 ---
 
-Input: $ARGUMENTS
+Input: {{arguments}}
 
 ---
 
@@ -45,13 +45,13 @@ PR=<number>; gh pr view $PR --json title,body,baseRefName,headRefName,author,lab
 
 ## Step 2: Read Changed Files for Context
 
-Diffs alone are not enough. Use the **Read tool** (not bash/cat) to read the full contents of modified source files. This gives you surrounding context — code that looks wrong in isolation can be correct given nearby logic.
+Diffs alone are not enough. Use {{read_tool}} to read the full contents of the modified source files. This gives you surrounding context — code that looks wrong in isolation can be correct given nearby logic.
 
 - Only read source code files that were modified, not generated files, lockfiles, or docs
-- Read in parallel — make one Read call per file in the same message
+- Read in parallel — {{parallel_reads}}
 - If there are more than 10 changed source files, prioritize: files with logic changes over files with only import/config changes
 
-Also check for conventions files (CONVENTIONS.md, AGENTS.md, .editorconfig) if they exist — use Read, not bash.
+Also check for conventions files (CONVENTIONS.md, AGENTS.md, .editorconfig) if they exist — read them in full.
 
 ---
 
@@ -100,9 +100,9 @@ Also check for conventions files (CONVENTIONS.md, AGENTS.md, .editorconfig) if t
 
 ## Tools
 
-- **Read tool** — For reading full file contents. Prefer this over bash for file reading (no permission prompt).
-- **Explore agent** — Find how existing code handles similar problems.
-- **Web Search** — Research best practices if you are unsure about a pattern.
+- **File reads** — Use {{read_tool}} for full file contents.
+- **Code search** — To find how existing code handles similar problems, {{start_search_agent}}.
+- **Web search** — If you are unsure about a pattern, research best practices with {{web_search}}.
 
 If you are uncertain about something and cannot make sure of it, say "I am not sure about X" rather than flagging it as a definite issue.
 

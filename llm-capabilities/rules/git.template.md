@@ -25,7 +25,7 @@ Each git action that changes something belongs to the user. Take one only when t
 ## Branches
 
 - Work on the branch that is checked out. Make a new branch only when the user asks for one and names it. This is true even when the work feels separate.
-- Do not make a worktree, and do not use the `isolation: "worktree"` option of the Agent tool. For parallel work, the user keeps sibling clones.
+- Do not make a worktree{{worktree_isolation_clause}}. For parallel work, the user keeps sibling clones.
 
 ## When the user approves a commit
 

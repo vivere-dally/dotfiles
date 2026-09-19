@@ -368,6 +368,6 @@ vim.keymap.set('n', '<F9>', dap.step_out, { desc = 'dap step out' })
 vim.keymap.set('n', '<F10>', dap.step_back, { desc = 'dap step back' })
 vim.keymap.set('n', '<F11>', dap.restart, { desc = 'dap restart' })
 
-vim.keymap.set('n', '<leader>u', function()
+vim.keymap.set('n', '<leader>U', function()
   view.toggle(true)
 end, { desc = 'toggle debugger ui' })

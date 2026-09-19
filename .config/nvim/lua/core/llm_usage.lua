@@ -3,9 +3,16 @@ local M = {}
 local state = {
   args = {},
   buffer = nil,
+  process = nil,
   run = 0,
   window = nil,
 }
+
+local function cancel_process()
+  if not state.process then return end
+  pcall(state.process.kill, state.process, 15)
+  state.process = nil
+end
 
 local function window_config()
   local width = math.max(1, math.min(140, math.floor(vim.o.columns * 0.9)))
@@ -62,10 +69,24 @@ local function open_window()
     M.open(state.args)
   end, { buffer = state.buffer, desc = 'Refresh LLM usage' })
 
+  local buffer = state.buffer
+  vim.api.nvim_create_autocmd('BufWipeout', {
+    buffer = buffer,
+    once = true,
+    callback = function()
+      if state.buffer ~= buffer then return end
+      state.run = state.run + 1
+      cancel_process()
+      state.buffer = nil
+      state.window = nil
+    end,
+  })
+
   return state.buffer
 end
 
 function M.open(args)
+  cancel_process()
   state.args = vim.deepcopy(args or {})
   state.run = state.run + 1
   local run = state.run
@@ -77,8 +98,10 @@ function M.open(args)
   vim.list_extend(command, state.args)
   table.insert(command, '--no-color')
 
-  vim.system(command, { text = true }, function(result)
+  local process
+  process = vim.system(command, { text = true, timeout = 60000 }, function(result)
     vim.schedule(function()
+      if state.process == process then state.process = nil end
       if run ~= state.run or not vim.api.nvim_buf_is_valid(buffer) then return end
 
       local output = result.stdout or ''
@@ -95,6 +118,7 @@ function M.open(args)
       end
     end)
   end)
+  state.process = process
 end
 
 function M.setup()

@@ -32,31 +32,31 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
     vim.keymap.set('n', 'K', function()
       vim.lsp.buf.hover()
-    end, { desc = 'display hover', buf = bufnr, remap = false })
+    end, { desc = 'display hover', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', 'gd', function()
       vim.lsp.buf.definition()
-    end, { desc = 'goto definition', buf = bufnr, remap = false })
+    end, { desc = 'goto definition', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', 'gD', function()
       vim.lsp.buf.declaration()
-    end, { desc = 'goto declaration', buf = bufnr, remap = false })
+    end, { desc = 'goto declaration', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', 'gi', function()
       vim.lsp.buf.implementation()
-    end, { desc = 'list implementations', buf = bufnr, remap = false })
+    end, { desc = 'list implementations', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', 'gs', function()
       vim.lsp.buf.signature_help()
-    end, { desc = 'display signature', buf = bufnr, remap = false })
+    end, { desc = 'display signature', buffer = bufnr, remap = false })
 
     -- Rename: F2 and leader alternative
     vim.keymap.set('n', '<F2>', function()
       vim.lsp.buf.rename()
-    end, { desc = 'Rename symbol', buf = bufnr, remap = false })
+    end, { desc = 'Rename symbol', buffer = bufnr, remap = false })
     vim.keymap.set('n', '<leader>cr', function()
       vim.lsp.buf.rename()
-    end, { desc = 'Code rename', buf = bufnr, remap = false })
+    end, { desc = 'Code rename', buffer = bufnr, remap = false })
 
     -- Format: F3 and leader alternative
     local format_fn = function()
@@ -66,20 +66,20 @@ vim.api.nvim_create_autocmd('LspAttach', {
       end
       vim.lsp.buf.format()
     end
-    vim.keymap.set('n', '<F3>', format_fn, { desc = 'Format', buf = bufnr, remap = false })
-    vim.keymap.set({ 'n', 'x' }, '<leader>cf', format_fn, { desc = 'Code format', buf = bufnr, remap = false })
+    vim.keymap.set('n', '<F3>', format_fn, { desc = 'Format', buffer = bufnr, remap = false })
+    vim.keymap.set({ 'n', 'x' }, '<leader>cf', format_fn, { desc = 'Code format', buffer = bufnr, remap = false })
 
     -- Code action: F4 and leader alternative
     vim.keymap.set({ 'n', 'x' }, '<F4>', function()
       vim.lsp.buf.code_action()
-    end, { desc = 'Code action', buf = bufnr, remap = false })
+    end, { desc = 'Code action', buffer = bufnr, remap = false })
     vim.keymap.set({ 'n', 'x' }, '<leader>ca', function()
       vim.lsp.buf.code_action()
-    end, { desc = 'Code action', buf = bufnr, remap = false })
+    end, { desc = 'Code action', buffer = bufnr, remap = false })
 
     vim.keymap.set('n', 'gl', function()
       vim.diagnostic.open_float()
-    end, { desc = 'list diagnostics', buf = bufnr, remap = false })
+    end, { desc = 'list diagnostics', buffer = bufnr, remap = false })
   end,
 })
 
@@ -106,7 +106,7 @@ lint.linters_by_ft = {
   typescript = { 'eslint_d' },
   javascriptreact = { 'eslint_d' },
   typescriptreact = { 'eslint_d' },
-  python = { 'ruff', 'bandit' },
+  python = { 'bandit' },
   go = { 'golangcilint' },
   sql = { 'sqruff' },
   -- php = { 'psalm', 'phpstan' },
@@ -154,45 +154,79 @@ require('conform').setup({
   },
 })
 
+local lsp_servers = {
+  'bashls',
+  'lua_ls',
+  'typos_lsp',
+  'docker_language_server',
+  'sqlls', -- https://github.com/joe-re/sql-language-server?tab=readme-ov-file#configuration
+
+  -- C/C++
+  'clangd',
+
+  -- Javascript ecosystem
+  'ts_ls',
+  -- 'biome', -- Does not currently work for me since I am working on projects with eslint/prettier. Maybe in the future
+  'tailwindcss',
+  'eslint',
+
+  -- Structured file formats
+  'superhtml',
+  'taplo',
+  'yamlls',
+  'lemminx',
+
+  -- Golang
+  'gopls',
+  'templ',
+
+  -- Python
+  'basedpyright',
+  'ruff',
+
+  -- PHP
+  'phpactor',
+  'laravel_ls',
+
+  -- Kotlin
+  'kotlin_language_server',
+}
+
+local mason_tools = {
+  'shfmt',
+  'stylua',
+  'sqruff',
+
+  -- Structured file formats
+  'yamlfmt',
+
+  -- JS/TS
+  'prettier',
+  'eslint_d',
+
+  -- C/C++
+  'cpplint',
+  'codelldb',
+
+  -- Golang (golangci-lint installed via brew — Mason build may lag behind Go versions)
+  'goimports',
+  'golines',
+  'gomodifytags',
+  'gotests',
+  'iferr',
+
+  -- Python
+  'bandit',
+
+  -- PHP
+  -- 'psalm',
+  -- 'pint',
+  -- 'phpstan',
+}
+
 require('mason').setup()
 require('mason-lspconfig').setup({
-  ensure_installed = {
-    'bashls',
-    'lua_ls',
-    'typos_lsp',
-    'docker_language_server',
-    'sqlls', -- https://github.com/joe-re/sql-language-server?tab=readme-ov-file#configuration
-
-    -- C/C++
-    'clangd',
-
-    -- Javascript ecosystem
-    'ts_ls',
-    -- 'biome', -- Does not currently work for me since I am working on projects with eslint/prettier. Maybe in the future
-    'tailwindcss',
-    'eslint',
-
-    -- Structured file formats
-    'superhtml',
-    'taplo',
-    'yamlls',
-    'lemminx',
-
-    -- Golang
-    'gopls',
-    'templ',
-
-    -- Python
-    'basedpyright',
-    'ruff',
-
-    -- PHP
-    'phpactor',
-    'laravel_ls',
-
-    -- Kotlin
-    'kotlin_language_server',
-  },
+  ensure_installed = lsp_servers,
   -- automatic_enable starts every installed Mason package that maps to a server.
   -- stylua and sqruff are installed as a formatter and a linter (conform and
   -- nvim-lint run them); pyright is superseded by basedpyright; copilot is unused
@@ -204,40 +238,46 @@ require('mason-lspconfig').setup({
 
 -- installer for non-LSP tools
 require('mason-tool-installer').setup({
-  ensure_installed = {
-    'shfmt',
-    'stylua',
-    'sqruff',
-
-    -- Structured file formats
-    'yamlfmt',
-
-    -- JS/TS
-    'prettier',
-    'eslint_d',
-
-    -- C/C++
-    'cpplint',
-    'codelldb',
-
-    -- Golang (golangci-lint installed via brew — Mason build may lag behind Go versions)
-    'goimports',
-    'golines',
-    'gomodifytags',
-    'gotests',
-    'iferr',
-
-    -- Python
-    'bandit',
-
-    -- PHP
-    -- 'psalm',
-    -- 'pint',
-    -- 'phpstan',
-  },
-  run_on_start = true,
+  ensure_installed = mason_tools,
+  -- The bootstrap invokes the synchronous installer after startup. Starting
+  -- the asynchronous VimEnter job too would make both jobs manage one package.
+  run_on_start = vim.env.NVIM_BOOTSTRAP ~= '1',
   auto_update = false,
 })
+
+-- mason-lspconfig skips ensure_installed in headless Neovim. The bootstrap
+-- command starts those installations explicitly, waits for all configured
+-- Mason packages, and reports any package that did not install.
+vim.api.nvim_create_user_command('MasonBootstrap', function()
+  require('mason-tool-installer').check_install(false, true)
+
+  local registry = require('mason-registry')
+  local mapping = require('mason-lspconfig.mappings').get_mason_map().lspconfig_to_package
+  local expected = vim.deepcopy(mason_tools)
+
+  for _, server in ipairs(lsp_servers) do
+    local package = mapping[server]
+    if not package then error(('No Mason package maps to LSP server %q'):format(server)) end
+    table.insert(expected, package)
+  end
+
+  require('mason-lspconfig.features.ensure_installed')()
+  local completed = vim.wait(600000, function()
+    for _, name in ipairs(expected) do
+      local ok, package = pcall(registry.get_package, name)
+      if ok and package:is_installing() then return false end
+    end
+    return true
+  end, 100)
+  if not completed then error('Timed out while installing Mason packages') end
+
+  local missing = {}
+  for _, name in ipairs(expected) do
+    local ok, package = pcall(registry.get_package, name)
+    if not ok or not package:is_installed() then table.insert(missing, name) end
+  end
+  if #missing > 0 then error('Mason packages failed to install: ' .. table.concat(missing, ', ')) end
+end, { desc = 'Install and verify all configured Mason packages' })
 
 require('nvim-ts-autotag').setup()
 
@@ -260,7 +300,18 @@ local ensure = {
 }
 -- Asynchronous: a failed download or build is logged, not raised here.
 local parser_install = nts.install(ensure)
-if vim.env.NVIM_BOOTSTRAP == '1' then parser_install:wait(600000) end
+if vim.env.NVIM_BOOTSTRAP == '1' then
+  if not parser_install:wait(600000) then error('One or more Tree-sitter parsers failed to install') end
+  local installed = {}
+  for _, parser in ipairs(nts.get_installed()) do
+    installed[parser] = true
+  end
+  local missing = {}
+  for _, parser in ipairs(ensure) do
+    if not installed[parser] then table.insert(missing, parser) end
+  end
+  if #missing > 0 then error('Tree-sitter parsers failed to install: ' .. table.concat(missing, ', ')) end
+end
 
 -- Enable highlighting + (experimental) indentation per buffer. The `main`
 -- branch replaces the `highlight`/`indent` modules with vim.treesitter.start()

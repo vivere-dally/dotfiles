@@ -62,7 +62,7 @@ autocmd('FileType', {
   pattern = { 'help', 'qf', 'man', 'notify' },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
-    vim.keymap.set('n', 'q', '<cmd>close<CR>', { buf = event.buf, silent = true })
+    vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = event.buf, silent = true })
   end,
   desc = 'Close help/quickfix/man with q',
 })

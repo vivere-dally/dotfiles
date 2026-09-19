@@ -1,9 +1,26 @@
 # OPENSPEC:START
 # OpenSpec shell completions configuration
-fpath=("/Users/s-ved/.oh-my-zsh/custom/completions" $fpath)
+fpath=("$HOME/.oh-my-zsh/custom/completions" $fpath)
 autoload -Uz compinit
 compinit
 # OPENSPEC:END
+
+# Homebrew uses a different prefix on Apple Silicon, Intel macOS, Linux, and
+# machines with a user-local installation. Make it available before plugins
+# and tools try to use commands that Homebrew installed.
+if ! command -v brew >/dev/null 2>&1; then
+    for _brew in \
+        "$HOME/homebrew/bin/brew" \
+        /opt/homebrew/bin/brew \
+        /usr/local/bin/brew \
+        /home/linuxbrew/.linuxbrew/bin/brew; do
+        if [[ -x $_brew ]]; then
+            eval "$("$_brew" shellenv)"
+            break
+        fi
+    done
+    unset _brew
+fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OSX
@@ -16,7 +33,6 @@ fi
 
 export EDITOR=nvim
 export GIT_EDITOR=nvim
-export TERM=alacritty
 
 #--------------------------------------------------------------------------
 # oh-my-zsh
@@ -37,7 +53,7 @@ zstyle ':completion:*:complete:(cd|pushd):*' tag-order \
 
 plugins=(git fzf zsh-autosuggestions zsh-syntax-highlighting)
 
-source $ZSH/oh-my-zsh.sh
+[[ -r $ZSH/oh-my-zsh.sh ]] && source "$ZSH/oh-my-zsh.sh"
 
 #--------------------------------------------------------------------------
 # Aliases
@@ -46,8 +62,16 @@ source $ZSH/oh-my-zsh.sh
 alias ll="ls -alF"
 alias la="ls -A"
 alias l="ls -CF"
-alias copy="xclip -selection clipboard"
-alias paste="xclip -o -selection clipboard"
+if command -v pbcopy >/dev/null 2>&1; then
+    alias copy=pbcopy
+    alias paste=pbpaste
+elif command -v wl-copy >/dev/null 2>&1; then
+    alias copy=wl-copy
+    alias paste=wl-paste
+elif command -v xclip >/dev/null 2>&1; then
+    alias copy="xclip -selection clipboard"
+    alias paste="xclip -o -selection clipboard"
+fi
 
 #--------------------------------------------------------------------------
 # Tools
@@ -62,20 +86,22 @@ export PYENV_ROOT="${PYENV_ROOT:-$HOME/.pyenv}"
 command -v pyenv >/dev/null 2>&1 && eval "$(pyenv init -)"
 # eval "$(goenv init -)"
 
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:/usr/local/android-studio/bin
+if [[ $OSTYPE == darwin* ]]; then
+    export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+else
+    export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+fi
+[[ -d $ANDROID_HOME/emulator ]] && export PATH="$PATH:$ANDROID_HOME/emulator"
+[[ -d $ANDROID_HOME/platform-tools ]] && export PATH="$PATH:$ANDROID_HOME/platform-tools"
+[[ -d /usr/local/android-studio/bin ]] && export PATH="$PATH:/usr/local/android-studio/bin"
 export PATH=$PATH:~/go/bin
 export PATH=$PATH:~/.composer/vendor/bin
 
-source <(fzf --zsh)
+if command -v fzf >/dev/null 2>&1; then
+    source <(fzf --zsh)
+fi
 
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$ANDROID_HOME/platform-tools:$PATH
-export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-export JAVA_HOME="/opt/homebrew/opt/openjdk"
-
-. "$HOME/.local/bin/env"
+[[ -r $HOME/.local/bin/env ]] && . "$HOME/.local/bin/env"
 export PATH=$PATH:$HOME/.local/bin
 
 my-oc() {
@@ -117,9 +143,21 @@ export PATH="$HOME/.mtplx/bin:$PATH"
 # The Homebrew prefix differs per machine (~/homebrew from init.darwin.sh vs
 # the stock /opt/homebrew), so never hardcode it. ~/.zprofile's
 # `brew shellenv` exports it; asking brew covers shells that skipped that.
-: ${HOMEBREW_PREFIX:=$(brew --prefix 2>/dev/null)}
+if command -v brew >/dev/null 2>&1; then
+    : ${HOMEBREW_PREFIX:=$(brew --prefix)}
+    _openjdk_prefix=$(brew --prefix openjdk 2>/dev/null)
+    if [[ -n $_openjdk_prefix ]]; then
+        export PATH="$_openjdk_prefix/bin:$PATH"
+        if [[ -d $_openjdk_prefix/libexec/openjdk.jdk/Contents/Home ]]; then
+            export JAVA_HOME="$_openjdk_prefix/libexec/openjdk.jdk/Contents/Home"
+        else
+            export JAVA_HOME="$_openjdk_prefix"
+        fi
+    fi
+    unset _openjdk_prefix
 
-export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/icu4c/lib/pkgconfig:$PKG_CONFIG_PATH"
+    export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/icu4c/lib/pkgconfig:$PKG_CONFIG_PATH"
+fi
 
 # LLVM: machines carry either the pinned llvm@22 or the floating `llvm`
 # formula. Use the first one installed, pinned first, so compilers and cmake

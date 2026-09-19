@@ -20,19 +20,19 @@ vim.api.nvim_create_autocmd('BufWinEnter', {
 
     vim.keymap.set('n', 'cc', function()
       vim.cmd.Git('commit -s')
-    end, { buf = bufnr, remap = false, desc = 'git commit -s' })
+    end, { buffer = bufnr, remap = false, desc = 'git commit -s' })
 
     vim.keymap.set('n', '<leader>gp', function()
       vim.cmd.Git('push')
-    end, { buf = bufnr, remap = false, desc = 'git push' })
+    end, { buffer = bufnr, remap = false, desc = 'git push' })
 
     -- Not sure I need these yet
     -- vim.keymap.set('n', '<leader>gt', function()
     --   vim.cmd.Git('push -u origin')
-    -- end, { buf = bufnr, remap = false, desc = 'git push ' })
+    -- end, { buffer = bufnr, remap = false, desc = 'git push ' })
 
     vim.keymap.set('n', '<leader>gP', function()
       vim.cmd.Git('pull --rebase')
-    end, { buf = bufnr, remap = false, desc = 'git pull w/ rebase' })
+    end, { buffer = bufnr, remap = false, desc = 'git pull w/ rebase' })
   end,
 })

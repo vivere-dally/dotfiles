@@ -26,7 +26,6 @@ require('sidekick').setup({
       -- Forcing Claude's classic renderer restores native tmux scrollback (which
       -- sidekick can dump and page through), and disabling mouse capture keeps the
       -- wheel flowing to Neovim. Trade-off: lose in-app click/select inside Claude.
-      -- Full write-up: SIDEKICK_SCROLL_FIX.md at the nvim config root.
       claude = {
         cmd = { 'claude' },
         env = {

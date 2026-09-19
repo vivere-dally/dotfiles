@@ -170,7 +170,7 @@
 | `F10` | Step back |
 | `F11` | Restart session |
 | `leader ?` | Show the value under the cursor |
-| `leader u` | Toggle DAP View |
+| `leader U` | Toggle DAP View |
 
 ---
 

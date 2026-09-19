@@ -1,4 +1,6 @@
 .DS_Store
+/.nvimlog
+/nvim.log
 .nvm/
 ^.nvm/default-packages
 

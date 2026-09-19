@@ -38,14 +38,53 @@ HARNESSES=(
 mkdir -p "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.config/opencode/skills" \
     "$HOME/.config/opencode/plugins" "$HOME/.pi/agent/skills" "$HOME/.pi/agent/extensions"
 
+# Print the absolute, lexically normalized target of a link. This also works for
+# a broken link, where realpath cannot resolve the target.
+link_target() {
+    local path=$1 target remainder part index
+    local -a parts=()
+    target=$(readlink "$path") || return 1
+    if [[ $target == /* ]]; then
+        remainder=${target#/}
+    else
+        remainder="$(cd "$(dirname "$path")" && pwd -P)/$target"
+        remainder=${remainder#/}
+    fi
+
+    while [[ -n $remainder ]]; do
+        if [[ $remainder == */* ]]; then
+            part=${remainder%%/*}
+            remainder=${remainder#*/}
+        else
+            part=$remainder
+            remainder=
+        fi
+        case $part in
+            '' | .) ;;
+            ..)
+                index=$((${#parts[@]} - 1))
+                (( index >= 0 )) && unset 'parts[index]'
+                ;;
+            *) parts[${#parts[@]}]=$part ;;
+        esac
+    done
+
+    printf '/'
+    local separator=
+    for part in "${parts[@]}"; do
+        printf '%s%s' "$separator" "$part"
+        separator=/
+    done
+    printf '\n'
+}
+
 # A link that points into the repository or into the build belongs to this script,
-# and it is replaced without a backup. Stow writes relative links, such as
-# `../../dotfiles/claude/.claude/skills/<skill>` from the old claude package, thus
-# the last two patterns match on the path of the target, not on its prefix.
+# and it is replaced without a backup. Normalize old relative Stow links before
+# comparing them so similarly named paths elsewhere are never treated as ours.
 ours() {
     [[ -L $1 ]] || return 1
-    case $(readlink "$1") in
-        "$DOTFILES"/* | "$STABLE" | "$STABLE"/* | *dotfiles/claude/* | *llm-capabilities*) return 0 ;;
+    case $(link_target "$1") in
+        "$DOTFILES"/* | "$STABLE" | "$STABLE"/*) return 0 ;;
     esac
     return 1
 }
@@ -77,7 +116,7 @@ link() {
 mkdir -p "$STABLE"
 link "$SRC" "$STABLE/src"
 
-PATH="$HOME/.bun/bin:$PATH" bun "$SRC/render.ts" "$STABLE"
+"$HOME/.local/bin/bun" "$SRC/render.ts" "$STABLE"
 
 for entry in "${HARNESSES[@]}"; do
     harness=${entry%%:*}
@@ -158,8 +197,8 @@ for dir in "$HOME/.claude" "$HOME/.claude/skills" "$HOME/.claude/hooks" "$HOME/.
     [[ -d $dir ]] || continue
     for entry in "$dir"/* "$dir"/.[!.]*; do
         [[ -L $entry && ! -e $entry ]] || continue
-        case $(readlink "$entry") in
-            "$DOTFILES"/* | "$STABLE"/* | *dotfiles/claude/* | *llm-capabilities*)
+        case $(link_target "$entry") in
+            "$DOTFILES"/* | "$STABLE"/*)
                 rm "$entry"
                 echo "removed stale link: ~/${entry#"$HOME"/}"
                 ;;

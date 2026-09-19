@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PATH=\"$HOME/.bun/bin:$PATH\" bun \"$HOME/.local/share/llm-capabilities/src/ste/cli.ts\"",
+            "command": "\"$HOME/.local/bin/bun\" \"$HOME/.local/share/llm-capabilities/src/ste/cli.ts\"",
             "timeout": 15,
             "statusMessage": "STE check"
           }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "PATH=\"$HOME/.bun/bin:$PATH\" bun \"$HOME/.local/share/llm-capabilities/src/ste/cli.ts\"",
+            "command": "\"$HOME/.local/bin/bun\" \"$HOME/.local/share/llm-capabilities/src/ste/cli.ts\"",
             "timeout": 15,
             "statusMessage": "STE check"
           }

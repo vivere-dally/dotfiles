@@ -8,6 +8,15 @@ NPM="$(command -v npm || true)"
 mkdir -p "$HOME/.local/bin"
 export PATH="$HOME/.local/bin:$PATH"
 
+case "$(uname -s)" in
+    Darwin) DOTFILES_BOOTSTRAP_PLATFORM_HELPER=1 "$DOTFILES/scripts/init.darwin.sh" ;;
+    Linux) DOTFILES_BOOTSTRAP_PLATFORM_HELPER=1 "$DOTFILES/scripts/init.linux.sh" ;;
+    *)
+        echo "bootstrap: only macOS and Linux are supported" >&2
+        exit 1
+        ;;
+esac
+
 find_brew() {
     if command -v brew >/dev/null 2>&1; then
         command -v brew
@@ -49,7 +58,10 @@ fi
 
 eval "$("$BREW" shellenv)"
 
-formulae=(stow neovim tree-sitter-cli jq pyenv uv)
+formulae=(
+    stow neovim tree-sitter-cli jq pyenv uv zsh fzf git
+    ripgrep fd lazygit tmux golangci-lint
+)
 command -v tic >/dev/null 2>&1 || formulae+=(ncurses)
 
 "$BREW" install "${formulae[@]}"
@@ -81,6 +93,18 @@ if [[ ! -s $NVM_DIR/nvm.sh ]]; then
     exit 1
 fi
 
+# nvm reads this file while it installs a Node release. Link it before the
+# first Node installation; the later Stow run then keeps the same link.
+mkdir -p "$NVM_DIR"
+nvm_packages="$NVM_DIR/default-packages"
+repo_nvm_packages="$DOTFILES/.nvm/default-packages"
+if [[ ! -e $nvm_packages ]] || [[ ! $nvm_packages -ef $repo_nvm_packages ]]; then
+    if [[ -e $nvm_packages || -L $nvm_packages ]]; then
+        mv "$nvm_packages" "$nvm_packages.bootstrap-backup-$(date +%Y%m%d-%H%M%S)"
+    fi
+    ln -s "$repo_nvm_packages" "$nvm_packages"
+fi
+
 set +u
 # shellcheck source=/dev/null
 . "$NVM_DIR/nvm.sh"
@@ -98,12 +122,58 @@ python_version=$(pyenv latest --known 3)
 pyenv install -s "$python_version"
 pyenv global "$python_version"
 
+# The previous macOS installer wrote this one line directly. Move only that
+# known file so Stow can replace it with the portable profile from this repo.
+if [[ -f $HOME/.zprofile && ! -L $HOME/.zprofile ]] && \
+    [[ $(<"$HOME/.zprofile") == 'eval "$($HOME/homebrew/bin/brew shellenv)"' ]]; then
+    mv "$HOME/.zprofile" "$HOME/.zprofile.bootstrap-backup-$(date +%Y%m%d-%H%M%S)"
+fi
+
+"$DOTFILES/scripts/stow.sh"
+
+export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
+if [[ ! -r $ZSH/oh-my-zsh.sh ]]; then
+    omz_installer=$(mktemp)
+    trap 'rm -f "$omz_installer"' EXIT
+    curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o "$omz_installer"
+    RUNZSH=no CHSH=no KEEP_ZSHRC=yes /bin/sh "$omz_installer" --unattended
+    rm -f "$omz_installer"
+    trap - EXIT
+elif [[ -d $ZSH/.git ]]; then
+    git -C "$ZSH" pull --ff-only
+fi
+
+install_zsh_plugin() {
+    local repository=$1 destination=$2
+    if [[ -d $destination/.git ]]; then
+        git -C "$destination" pull --ff-only
+    elif [[ ! -e $destination ]]; then
+        git clone --depth=1 "$repository" "$destination"
+    fi
+}
+
+ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
+mkdir -p "$ZSH_CUSTOM/plugins"
+install_zsh_plugin \
+    https://github.com/zsh-users/zsh-autosuggestions.git \
+    "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+install_zsh_plugin \
+    https://github.com/zsh-users/zsh-syntax-highlighting.git \
+    "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+
+for plugin_file in \
+    "$ZSH_CUSTOM/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+    "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"; do
+    if [[ ! -r $plugin_file ]]; then
+        echo "bootstrap: Zsh plugin installation did not create $plugin_file" >&2
+        exit 1
+    fi
+done
+
 TIC="$(command -v tic || true)"
 if [[ -z $TIC ]]; then TIC="$("$BREW" --prefix ncurses)/bin/tic"; fi
 mkdir -p "$HOME/.terminfo"
 "$TIC" -x -o "$HOME/.terminfo" "$DOTFILES/.config/alacritty/extra/alacritty.info"
-
-"$DOTFILES/scripts/stow.sh"
 
 if ! nvim --clean --headless -u NONE -i NONE -n \
     -c "lua if vim.fn.has('nvim-0.12') == 0 then vim.cmd.cquit() end" \
@@ -124,8 +194,7 @@ if ! tree-sitter --version | awk '
 fi
 
 NVIM_BOOTSTRAP=1 nvim --headless \
-    -c "lua local failed = require('pack').failed; if #failed > 0 then print('Plugin groups failed: ' .. table.concat(failed, ', ')); vim.cmd('cquit 1') end" \
-    -c "lua local ok, err = pcall(vim.cmd, 'MasonToolsInstallSync'); if not ok then print(err); vim.cmd('cquit 1') end" \
+    -c "lua require('core.bootstrap').run()" \
     -c 'qa!'
 
 echo "bootstrap: installation complete"

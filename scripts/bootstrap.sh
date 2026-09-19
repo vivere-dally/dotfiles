@@ -207,8 +207,7 @@ done
 
 TIC="$(command -v tic || true)"
 if [[ -z $TIC ]]; then TIC="$("$BREW" --prefix ncurses)/bin/tic"; fi
-mkdir -p "$HOME/.terminfo"
-"$TIC" -x -o "$HOME/.terminfo" "$DOTFILES/.config/alacritty/extra/alacritty.info"
+TIC="$TIC" "$DOTFILES/scripts/install-terminfo.sh"
 
 if ! nvim --clean --headless -u NONE -i NONE -n \
     -c "lua if vim.fn.has('nvim-0.12') == 0 then vim.cmd.cquit() end" \

@@ -1,9 +1,3 @@
-return {
-  {
-    'ellisonleao/gruvbox.nvim',
-    priority = 1000,
-    config = function()
-      vim.cmd([[colorscheme gruvbox]])
-    end,
-  },
-}
+vim.pack.add({ require('pack').gh('ellisonleao/gruvbox.nvim') })
+
+vim.cmd.colorscheme('gruvbox')

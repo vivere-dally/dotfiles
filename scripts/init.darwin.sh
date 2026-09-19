@@ -67,6 +67,9 @@ echo "To install Alacritty goto https://alacritty.org/ and download the dmg file
 # neovim https://github.com/neovim/neovim
 #--------------------------------------------------------------------------
 brew install neovim
+# nvim-treesitter (main) compiles parsers with the tree-sitter CLI, and needs a
+# native one: not the npm package, which also needs node on PATH.
+brew install tree-sitter-cli
 
 #--------------------------------------------------------------------------
 # php

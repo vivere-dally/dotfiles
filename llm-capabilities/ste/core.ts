@@ -193,7 +193,11 @@ export function countWords(sentence: string): number {
  * and its deliberately non-STE example would otherwise report themselves.
  */
 export function markdownProse(source: string): string[] {
-  const body = source.replace(/^---\n[\s\S]*?\n---\n/, "");
+  const body = source
+    .replace(/^---\n[\s\S]*?\n---\n/, "")
+    // Raw HTML can carry code that Markdown renders but ASD-STE100 does not
+    // govern. Keep prose around these blocks, but do not parse CSS or JavaScript.
+    .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "\n");
   const blocks: string[] = [];
   let current: string[] = [];
   let inFence = false;

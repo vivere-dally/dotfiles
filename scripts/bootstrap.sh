@@ -120,7 +120,7 @@ nvm install --lts --latest-npm
 node_version=$(nvm current)
 nvm alias default "$node_version"
 nvm use "$node_version"
-npm install --global bun@latest
+npm install --global --allow-scripts=bun bun@latest
 
 export PYENV_ROOT="${PYENV_ROOT:-$HOME/.pyenv}"
 export PATH="$PYENV_ROOT/bin:$PATH"

@@ -1,18 +1,7 @@
-local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    'git',
-    'clone',
-    '--filter=blob:none',
-    'https://github.com/folke/lazy.nvim.git',
-    '--branch=stable', -- latest stable release
-    lazypath,
-  })
-end
+-- Byte-compiled module cache. Off by default, and vim.pack does not turn it on.
+vim.loader.enable()
 
-vim.opt.rtp:prepend(lazypath)
-
--- Make sure to set `mapleader` before lazy so your mappings are correct
+-- Before any plugin, so their <leader> mappings use it
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
@@ -20,4 +9,19 @@ vim.g.maplocalleader = ' '
 vim.opt.termguicolors = true
 
 require('core')
-require('lazy').setup('plugins')
+
+-- The PackChanged hook in lua/pack.lua must exist before the first vim.pack.add().
+local pack = require('pack')
+
+-- Order matters: colors first, and snacks before the groups that call Snacks.
+-- Each group adds its plugins with vim.pack.add(), then sets them up.
+for _, group in ipairs({ 'colors', 'snacks', 'file', 'git', 'intellisense', 'lsp', 'ml', 'python', 'debug' }) do
+  -- One broken group must not stop the others from loading.
+  local ok, err = xpcall(require, debug.traceback, 'plugins.' .. group)
+  if not ok then
+    table.insert(pack.failed, group)
+    vim.schedule(function()
+      vim.notify(('plugins.%s: %s'):format(group, err), vim.log.levels.ERROR)
+    end)
+  end
+end

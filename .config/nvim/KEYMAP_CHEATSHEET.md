@@ -44,9 +44,9 @@
 | Key | Action |
 |-----|--------|
 | `gd` | Go to definition |
-| `gr` | References |
+| `grr` | References |
 | `gi` | Implementations |
-| `go` | Type definition |
+| `grt` | Type definition |
 | `gD` | Declaration |
 | `gs` | Signature help |
 | `K` | Hover docs |
@@ -163,10 +163,14 @@
 |-----|--------|
 | `leader b` | Toggle breakpoint |
 | `F5` | Continue |
+| `F6` | Run to cursor |
 | `F7` | Step into |
 | `F8` | Step over |
 | `F9` | Step out |
-| `leader u` | Toggle debug UI |
+| `F10` | Step back |
+| `F11` | Restart session |
+| `leader ?` | Show the value under the cursor |
+| `leader U` | Toggle DAP View |
 
 ---
 

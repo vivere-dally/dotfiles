@@ -9,7 +9,10 @@ return {
         unusedwrite = true,
         useany = true,
         nilness = true,
-        shadow = true,
+        -- shadow is owned by golangci-lint (govet shadow + err exclusion in
+        -- per-repo .golangci.yml): gopls can't scope it per-variable, and
+        -- idiomatic err shadowing should not be flagged.
+        shadow = false,
       },
       hints = {
         assignVariableTypes = true,

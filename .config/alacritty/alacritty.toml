@@ -24,24 +24,24 @@ style = "Medium"
 
 [font.bold]
 family = "JetBrainsMonoNL Nerd Font"
-style = "Bol"
+style = "Bold"
 # family = "Iosevka Nerd Font Mono"
 # style = "Medium"
 
 [font.italic]
 family = "JetBrainsMonoNL Nerd Font"
-style = "Medium"
+style = "Medium Italic"
 # family = "Iosevka Nerd Font Mono"
 # style = "Regular"
 
 [font.bold_italic]
 family = "JetBrainsMonoNL Nerd Font"
-style = "BoldItalic"
+style = "Bold Italic"
 # family = "Iosevka Nerd Font Mono"
 # style = "Medium"
 
 [window]
-decorations = "none"
+decorations = "None"
 
 [keyboard]
 bindings = [

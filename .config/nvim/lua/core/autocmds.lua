@@ -8,7 +8,7 @@ augroup('YankHighlight', { clear = true })
 autocmd('TextYankPost', {
   group = 'YankHighlight',
   callback = function()
-    vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 150 })
+    vim.hl.on_yank({ higroup = 'IncSearch', timeout = 150 })
   end,
   desc = 'Highlight yanked text',
 })
@@ -58,7 +58,8 @@ autocmd('BufReadPost', {
 augroup('CloseWithQ', { clear = true })
 autocmd('FileType', {
   group = 'CloseWithQ',
-  pattern = { 'help', 'qf', 'man', 'notify', 'checkhealth' },
+  -- Not checkhealth: its own `q` also deletes the buffer when it is the last window.
+  pattern = { 'help', 'qf', 'man', 'notify' },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
     vim.keymap.set('n', 'q', '<cmd>close<CR>', { buffer = event.buf, silent = true })

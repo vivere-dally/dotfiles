@@ -1,3 +1,10 @@
 .DS_Store
+/.nvimlog
+/nvim.log
 .nvm/
 ^.nvm/default-packages
+
+# Skill dirs are linked whole into ~/.claude/skills, so anything a skill
+# caches at runtime, or a Claude session started inside one, writes here
+__pycache__/
+settings.local.json

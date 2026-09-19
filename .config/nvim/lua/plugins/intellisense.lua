@@ -1,125 +1,100 @@
-return {
-  {
-    'saghen/blink.cmp',
-    -- optional: provides snippets for the snippet source
-    dependencies = {
-      'rafamadriz/friendly-snippets',
-      {
+local pack = require('pack')
+local gh = pack.gh
 
-        'folke/lazydev.nvim',
-        ft = 'lua', -- only load on lua files
-        ---@module 'lazydev'
-        ---@type lazydev.Config
-        opts = {
-          library = {
-            'lazy.nvim',
-            'LazyVim',
-          },
-        },
-      },
-      'milanglacier/minuet-ai.nvim',
-    },
+pack.add({
+  gh('rafamadriz/friendly-snippets'),
+  gh('folke/lazydev.nvim'),
+  -- A release tag makes blink download its prebuilt fuzzy library; a branch would
+  -- need a Rust build. The default branch is the unreleased v2 (breaking changes).
+  { src = gh('saghen/blink.cmp'), version = vim.version.range('1.*') },
+})
 
-    -- use a release tag to download pre-built binaries
-    version = '1.*',
-    -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
-    -- build = 'cargo build --release',
-    -- If you use nix, you can build from source using latest nightly rust with:
-    -- build = 'nix run .#build-plugin',
+-- lazydev finds the vim.pack plugins in pack/*/opt on its own.
+require('lazydev').setup({})
 
-    ---@module 'blink.cmp'
-    ---@type blink.cmp.Config
-    opts = {
-      -- 'default' (recommended) for mappings similar to built-in completions (C-y to accept)
-      -- 'super-tab' for mappings similar to vscode (tab to accept)
-      -- 'enter' for enter to accept
-      -- 'none' for no mappings
-      --
-      -- All presets have the following mappings:
-      -- C-space: Open menu or open docs if already open
-      -- C-n/C-p or Up/Down: Select next/previous item
-      -- C-e: Hide menu
-      -- C-k: Toggle signature help (if signature.enabled = true)
-      --
-      -- See :h blink-cmp-config-keymap for defining your own keymap
-      keymap = {
-        preset = 'enter',
-        ['<C-k>'] = { 'select_prev', 'fallback_to_mappings' },
-        ['<C-j>'] = { 'select_next', 'fallback_to_mappings' },
-        ['<C-b>'] = { 'scroll_documentation_up', 'fallback' },
-        ['<C-n>'] = { 'scroll_documentation_down', 'fallback' },
-        -- ['<Tab>'] = {
-        --   'snippet_forward',
-        --   function()
-        --     return require('sidekick').nes_jump_or_apply()
-        --   end,
-        --   function()
-        --     return vim.lsp.inline_completion.get()
-        --   end,
-        --   'fallback',
-        -- },
-      },
-
-      appearance = {
-        -- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
-        -- Adjusts spacing to ensure icons are aligned
-        nerd_font_variant = 'mono',
-      },
-
-      -- (Default) Only show the documentation popup when manually triggered
-      completion = {
-        accept = { auto_brackets = { enabled = true } },
-        documentation = { auto_show = true, window = { border = 'single' } },
-        menu = {
-          border = 'single',
-          draw = {
-            columns = {
-              { 'label', 'label_description', 'source_name', 'kind', gap = 1 },
-            },
-          },
-        },
-        trigger = { prefetch_on_insert = false },
-      },
-
-      signature = { window = { border = 'single' } },
-
-      -- Default list of enabled providers defined so that you can extend it
-      -- elsewhere in your config, without redefining it, due to `opts_extend`
-      sources = {
-        default = {
-          'lazydev',
-          'lsp',
-          'path',
-          'snippets',
-          'buffer',
-          -- 'minuet',
-        },
-        providers = {
-          lazydev = {
-            name = 'LazyDev',
-            module = 'lazydev.integrations.blink',
-            -- make lazydev completions top priority (see `:h blink.cmp`)
-            score_offset = 100,
-          },
-          -- minuet = {
-          --   name = 'minuet',
-          --   module = 'minuet.blink',
-          --   async = true,
-          --   -- Should match minuet.config.request_timeout * 1000,
-          --   -- since minuet.config.request_timeout is in seconds
-          --   timeout_ms = 3000,
-          --   score_offset = 50, -- Gives minuet higher priority among suggestions
-          -- },
-        },
-      },
-
-      -- (Default) Rust fuzzy matcher for typo resistance and significantly better performance
-      -- You may use a lua implementation instead by using `implementation = "lua"` or fallback to the lua implementation,
-      -- when the Rust fuzzy matcher is not available, by using `implementation = "prefer_rust"`
-      --
-      -- See the fuzzy documentation for more information
-      fuzzy = { implementation = 'prefer_rust_with_warning' },
-    },
-    opts_extend = { 'sources.default' },
+require('blink.cmp').setup({
+  -- 'default' (recommended) for mappings similar to built-in completions (C-y to accept)
+  -- 'super-tab' for mappings similar to vscode (tab to accept)
+  -- 'enter' for enter to accept
+  -- 'none' for no mappings
+  --
+  -- All presets have the following mappings:
+  -- C-space: Open menu or open docs if already open
+  -- C-n/C-p or Up/Down: Select next/previous item
+  -- C-e: Hide menu
+  -- C-k: Toggle signature help (if signature.enabled = true)
+  --
+  -- See :h blink-cmp-config-keymap for defining your own keymap
+  keymap = {
+    preset = 'enter',
+    ['<C-k>'] = { 'select_prev', 'fallback_to_mappings' },
+    ['<C-j>'] = { 'select_next', 'fallback_to_mappings' },
+    ['<C-b>'] = { 'scroll_documentation_up', 'fallback' },
+    ['<C-n>'] = { 'scroll_documentation_down', 'fallback' },
+    -- ['<Tab>'] = {
+    --   'snippet_forward',
+    --   function()
+    --     return require('sidekick').nes_jump_or_apply()
+    --   end,
+    --   function()
+    --     return vim.lsp.inline_completion.get()
+    --   end,
+    --   'fallback',
+    -- },
   },
-}
+
+  appearance = {
+    -- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
+    -- Adjusts spacing to ensure icons are aligned
+    nerd_font_variant = 'mono',
+  },
+
+  -- (Default) Only show the documentation popup when manually triggered
+  completion = {
+    accept = { auto_brackets = { enabled = true } },
+    documentation = { auto_show = true, window = { border = 'single' } },
+    menu = {
+      border = 'single',
+      draw = {
+        -- Two column *groups*: the first (label + description) has a
+        -- fill component (`label`), so it expands to the menu width and
+        -- pushes the second group flush to the right edge. Keeping
+        -- source_name + kind in the *same* group as label instead splits
+        -- the fill between `label` and `kind`, which is why the kind used
+        -- to float mid-line next to the label instead of flexing to `end`.
+        columns = {
+          { 'label', 'label_description', gap = 1 },
+          { 'source_name', 'kind', gap = 1 },
+        },
+      },
+    },
+    trigger = { prefetch_on_insert = false },
+  },
+
+  signature = { window = { border = 'single' } },
+
+  sources = {
+    default = {
+      'lazydev',
+      'lsp',
+      'path',
+      'snippets',
+      'buffer',
+    },
+    providers = {
+      lazydev = {
+        name = 'LazyDev',
+        module = 'lazydev.integrations.blink',
+        -- make lazydev completions top priority (see `:h blink.cmp`)
+        score_offset = 100,
+      },
+    },
+  },
+
+  -- (Default) Rust fuzzy matcher for typo resistance and significantly better performance
+  -- You may use a lua implementation instead by using `implementation = "lua"` or fallback to the lua implementation,
+  -- when the Rust fuzzy matcher is not available, by using `implementation = "prefer_rust"`
+  --
+  -- See the fuzzy documentation for more information
+  fuzzy = { implementation = 'prefer_rust_with_warning' },
+})

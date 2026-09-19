@@ -1,0 +1,4 @@
+# Codex ignores disable-model-invocation in SKILL.md. This policy keeps the
+# skill user-invoked there too, as it is in Claude Code and pi.
+policy:
+  allow_implicit_invocation: false

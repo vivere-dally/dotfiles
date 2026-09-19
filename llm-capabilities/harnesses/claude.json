@@ -1,0 +1,16 @@
+{
+  "arguments": "$ARGUMENTS",
+  "read_tool": "the `Read` tool",
+  "parallel_reads": "make one `Read` call for each file, all in the same message",
+  "search_tool": "one `rg` or `grep` search over many files",
+  "start_search_agent": "start an `Explore` subagent with the `Agent` tool",
+  "start_subagents": "start one subagent for each with the `Agent` tool, all in one message",
+  "delegate": "Give this job to a **background agent** with the `Agent` tool, so that you keep working while it reads.",
+  "web_search": "the `WebSearch` tool",
+  "ask_user": "the `AskUserQuestion` tool",
+  "load_skill": "call the `Skill` tool with `{0}`",
+  "instruction_file": "`CLAUDE.md`",
+  "skill_dir": "${CLAUDE_SKILL_DIR}",
+  "skill_dir_note": "",
+  "worktree_isolation_clause": ", and do not use the `isolation: \"worktree\"` option of the `Agent` tool"
+}

@@ -1,0 +1,34 @@
+# The system layer of Codex, linked at /etc/codex/config.toml. Codex never writes
+# this layer, and ~/.codex/config.toml (which Codex writes itself) overrides it.
+# The research behind each key is in docs/research/privacy-codex.md.
+
+check_for_update_on_startup = false
+
+[analytics]
+enabled = false
+
+[otel]
+exporter = "none"
+trace_exporter = "none"
+metrics_exporter = "none"
+log_user_prompt = false
+
+[feedback]
+enabled = false
+
+[tui]
+auto_recap = false
+
+[features]
+# A remote catalog sync and a marketplace auto-upgrade at each start.
+plugins = false
+# The hosted ChatGPT connectors.
+apps = false
+# A goal makes Codex start new turns by itself.
+goals = false
+skill_mcp_dependency_install = false
+
+[shell_environment_policy]
+# Keeps variables with KEY, SECRET, or TOKEN in the name out of the commands that
+# Codex runs. A command that needs such a variable from the environment then fails.
+ignore_default_excludes = false

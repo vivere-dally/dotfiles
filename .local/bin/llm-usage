@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Keep reports stable across machines and across ccusage releases.
+readonly CCUSAGE_VERSION=20.0.23
+
+if ! command -v npx >/dev/null 2>&1; then
+    echo "llm-usage: npx is required" >&2
+    exit 127
+fi
+
+# With no arguments, show the unified daily report for every detected harness.
+# Offline mode keeps pricing refreshes and usage data off the network.
+if (($# == 0)); then
+    set -- daily --breakdown
+fi
+
+exec npx --yes --prefer-offline "ccusage@$CCUSAGE_VERSION" "$@" --offline

@@ -1,5 +1,5 @@
 eslint_d
 typescript
-tree-sitter-cli
+bun@latest
 pm2
 neovim

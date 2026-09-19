@@ -1,3 +1,5 @@
-vim.pack.add({ require('pack').gh('ellisonleao/gruvbox.nvim') })
+local pack = require('pack')
+
+pack.add({ pack.gh('ellisonleao/gruvbox.nvim') })
 
 vim.cmd.colorscheme('gruvbox')

@@ -1,7 +1,7 @@
 local pack = require('pack')
 local gh = pack.gh
 
-vim.pack.add({
+pack.add({
   gh('mfussenegger/nvim-lint'),
   gh('stevearc/conform.nvim'),
   gh('neovim/nvim-lspconfig'),
@@ -259,7 +259,8 @@ local ensure = {
   'vim', 'vimdoc', 'xml', 'yaml', 'go', 'gomod', 'gosum', 'gotmpl', 'zig',
 }
 -- Asynchronous: a failed download or build is logged, not raised here.
-nts.install(ensure)
+local parser_install = nts.install(ensure)
+if vim.env.NVIM_BOOTSTRAP == '1' then parser_install:wait(600000) end
 
 -- Enable highlighting + (experimental) indentation per buffer. The `main`
 -- branch replaces the `highlight`/`indent` modules with vim.treesitter.start()

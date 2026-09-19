@@ -1,7 +1,7 @@
 local pack = require('pack')
 local gh = pack.gh
 
-vim.pack.add({
+pack.add({
   gh('folke/snacks.nvim'),
   gh('folke/which-key.nvim'),
   gh('nvim-tree/nvim-web-devicons'),

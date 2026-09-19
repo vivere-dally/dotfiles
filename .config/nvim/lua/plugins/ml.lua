@@ -1,6 +1,6 @@
 local pack = require('pack')
 
-vim.pack.add({
+pack.add({
   pack.gh('supermaven-inc/supermaven-nvim'),
   pack.gh('folke/sidekick.nvim'),
 })

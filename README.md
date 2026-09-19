@@ -1,35 +1,25 @@
 # dotfiles
 
-- (mac) `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-- install stow
+## Install
 
-  - (linux) `sudo apt install stow`
-  - (mac) `sudo brew install stow`
+Run the bootstrap script after you clone the repository:
 
-- alacritty:
-  - some [terminal issues](https://unix.stackexchange.com/questions/597445/why-would-i-set-term-to-xterm-256color-when-using-alacritty)
-  - TLDR:
-    - download the alacritty/extra/ folder and copy it into the alacritty/ you just made, then:
-    - `sudo tic -xe alacritty,alacritty-direct extra/alacritty.info`
+```sh
+scripts/bootstrap.sh
+```
 
-TODO - automate poetry install
+The script works on macOS and Linux. It installs Homebrew when needed, then installs or updates these tools:
 
+- Stow, Neovim, Tree-sitter, jq, pyenv, and uv
+- nvm with the latest Node.js LTS release
+- The latest stable CPython release through pyenv. Python does not have an LTS channel.
+- The latest Bun release in the nvm-managed Node.js installation
 
-useful:
-- https://github.com/wez/wezterm/discussions/4680
+The script removes the unsupported npm Tree-sitter CLI when it is present. It compiles the Alacritty terminfo entries into `~/.terminfo`, links the dotfiles, installs the locked Neovim plugins, and waits for the configured parsers and Mason tools. You can run it again after a pull.
 
 ## Neovim
 
-The configuration requires Neovim 0.12 or later. Install the Tree-sitter command line tool through Homebrew. The npm package can hide the Homebrew version when nvm comes first in `PATH`.
-
-```sh
-brew upgrade neovim
-brew install tree-sitter-cli
-npm uninstall -g tree-sitter-cli
-scripts/stow.sh
-```
-
-Start Neovim and accept the plugin installation prompt. The first start installs the plugins from `nvim-pack-lock.json`. Parser and Mason installations continue in the background.
+The configuration requires Neovim 0.12 or later and Tree-sitter CLI 0.26.1 or later. The bootstrap script installs them and installs the plugins from `nvim-pack-lock.json` without a confirmation prompt.
 
 Use these commands for plugin maintenance:
 
@@ -54,4 +44,4 @@ llm-usage daily --since 20260901 --json
 
 In Neovim, `:LlmUsage` opens the daily report in a floating window. Pass the same arguments to the command, for example `:LlmUsage codex monthly`. Use `r` to refresh the report and `q` to close it.
 
-The wrapper pins ccusage. The first run downloads that version through `bunx`. Later runs use the Bun cache.
+The wrapper pins ccusage. The first run downloads that version through `npx`. Later runs use the npm cache.

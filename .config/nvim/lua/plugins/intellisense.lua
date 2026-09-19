@@ -1,6 +1,7 @@
-local gh = require('pack').gh
+local pack = require('pack')
+local gh = pack.gh
 
-vim.pack.add({
+pack.add({
   gh('rafamadriz/friendly-snippets'),
   gh('folke/lazydev.nvim'),
   -- A release tag makes blink download its prebuilt fuzzy library; a branch would

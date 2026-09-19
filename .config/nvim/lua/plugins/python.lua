@@ -1,4 +1,6 @@
-vim.pack.add({ require('pack').gh('linux-cultist/venv-selector.nvim') })
+local pack = require('pack')
+
+pack.add({ pack.gh('linux-cultist/venv-selector.nvim') })
 
 require('venv-selector').setup({
   search = {}, -- if you add your own searches, they go here.

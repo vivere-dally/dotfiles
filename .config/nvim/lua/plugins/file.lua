@@ -1,6 +1,7 @@
-local gh = require('pack').gh
+local pack = require('pack')
+local gh = pack.gh
 
-vim.pack.add({
+pack.add({
   gh('nvim-tree/nvim-web-devicons'),
   gh('stevearc/oil.nvim'),
 })

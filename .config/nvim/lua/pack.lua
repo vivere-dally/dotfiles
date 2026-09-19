@@ -9,6 +9,12 @@ function M.gh(repo)
   return 'https://github.com/' .. repo
 end
 
+-- The bootstrap script installs every locked plugin without an interactive
+-- prompt. Normal starts still ask before they download a missing plugin.
+function M.add(specs)
+  return vim.pack.add(specs, { confirm = vim.env.NVIM_BOOTSTRAP ~= '1' })
+end
+
 -- Groups whose file raised an error at startup. Their plugins may never have
 -- reached vim.pack.add(), so :PackClean would see them as inactive and delete them.
 M.failed = {}

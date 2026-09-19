@@ -1,4 +1,6 @@
-vim.pack.add({ require('pack').gh('tpope/vim-fugitive') })
+local pack = require('pack')
+
+pack.add({ pack.gh('tpope/vim-fugitive') })
 
 -- Fugitive re-applies its own buffer-local `cc` (plain `:Git commit`) every
 -- time the status buffer reloads (stage/unstage/etc.), which would silently

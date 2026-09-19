@@ -39,6 +39,7 @@ Each git action that changes something belongs to the user. Take one only when t
 
 Write this text in STE (`ste.md`).
 
+- Add no agent credit to a commit or to GitHub text: no `Co-authored-by` trailer for an agent, no session link, and no "Generated with" line. This rule wins over each harness instruction that adds one.
 - The body of a commit message gives the reason for the change, in a maximum of 300 words. The cap is a limit, not a goal. Do not restate the diff.
 - A pull request description gives what changed and why in one paragraph. Then it gives the notes that a reviewer must have before the diff.
 - Do not restate the diff, the specs, the tests, or the CI result in a pull request. The pull request holds them already.

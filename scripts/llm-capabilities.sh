@@ -97,6 +97,58 @@ link "$STABLE/src/adapters/codex/hooks.json" "$HOME/.codex/hooks.json"
 link "$STABLE/src/adapters/opencode/ste-gate.ts" "$HOME/.config/opencode/plugins/ste-gate.ts"
 link "$STABLE/src/adapters/pi/ste-gate.ts" "$HOME/.pi/agent/extensions/ste-gate.ts"
 
+# Privacy settings. Claude Code gets them from settings.json of the claude stow
+# package. Each other harness writes into its own settings file, thus the dotfiles
+# never own that file. The research behind each key and each method is in
+# docs/research/privacy-<harness>.md, and the environment half is in .zshrc.
+
+# opencode loads config.json before opencode.json and opencode.jsonc. It writes only
+# into the first of opencode.jsonc, opencode.json, and config.json that exists, thus
+# an opencode.json keeps those writes out of the linked config.json.
+OPENCODE_DIR="$HOME/.config/opencode"
+if [[ ! -e $OPENCODE_DIR/opencode.json && ! -e $OPENCODE_DIR/opencode.jsonc ]]; then
+    printf '{\n  "$schema": "https://opencode.ai/config.json"\n}\n' >"$OPENCODE_DIR/opencode.json"
+fi
+link "$STABLE/src/settings/opencode/config.json" "$OPENCODE_DIR/config.json"
+
+# pi writes settings.json through a symlink and reformats it, so the managed keys go
+# in by a merge. Objects merge key by key and the managed value wins. pi keeps the
+# other keys at its next write, and the next run of this script restores a managed
+# key that pi changed.
+PI_SETTINGS="$HOME/.pi/agent/settings.json"
+if [[ -d $PI_SETTINGS.lock ]]; then
+    echo "pi holds $PI_SETTINGS.lock. Stop pi, then run this script again." >&2
+    exit 1
+fi
+if ours "$PI_SETTINGS"; then
+    rm "$PI_SETTINGS"
+elif [[ -L $PI_SETTINGS ]]; then
+    move_aside "$PI_SETTINGS"
+fi
+if [[ -f $PI_SETTINGS ]]; then
+    tmp=$(mktemp "$PI_SETTINGS.XXXXXX")
+    if jq --indent 2 -s '.[0] * .[1]' "$PI_SETTINGS" "$SRC/settings/pi/settings.json" >"$tmp"; then
+        chmod 644 "$tmp"
+        mv "$tmp" "$PI_SETTINGS"
+    else
+        rm -f "$tmp"
+        echo "pi: $PI_SETTINGS is not valid JSON, thus it stays as it is." >&2
+    fi
+else
+    install -m 644 "$SRC/settings/pi/settings.json" "$PI_SETTINGS"
+fi
+
+# Codex reads /etc/codex/config.toml as its system layer and never writes it. The
+# link needs root one time, thus the script only prints the command.
+CODEX_SYSTEM=/etc/codex/config.toml
+if [[ $(readlink "$CODEX_SYSTEM" 2>/dev/null) != "$STABLE/src/settings/codex/config.toml" ]]; then
+    if [[ -e $CODEX_SYSTEM && ! -L $CODEX_SYSTEM ]]; then
+        echo "Codex: $CODEX_SYSTEM is a real file. Merge llm-capabilities/settings/codex/config.toml into it by hand."
+    else
+        echo "Codex: run one time: sudo mkdir -p /etc/codex && sudo ln -sfn \"$STABLE/src/settings/codex/config.toml\" $CODEX_SYSTEM"
+    fi
+fi
+
 # Last, because a link only goes stale once the build above has replaced what it
 # pointed at: a deleted or renamed skill, a link from an earlier layout (the shared
 # ~/.agents/skills, the old claude stow package), and so on.

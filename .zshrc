@@ -102,6 +102,27 @@ export OPENSPEC_TELEMETRY=0
 # times, one of them with the tool names of Claude Code.
 export OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1
 
+# Agent harnesses: no telemetry, no update checks, no uploads, and nothing that runs
+# by itself. The settings files of each harness hold the other half (see
+# scripts/llm-capabilities.sh), and docs/research/privacy-*.md has the research.
+# Codex has no such variables, thus it gets /etc/codex/config.toml only.
+# The cross-tool opt-out that many CLIs honor.
+export DO_NOT_TRACK=1
+# opencode installs patch releases by itself one second after start, fetches the
+# models catalog every hour, and downloads LSP binaries when LSP is on.
+export OPENCODE_DISABLE_AUTOUPDATE=1
+export OPENCODE_DISABLE_MODELS_FETCH=1
+export OPENCODE_DISABLE_SHARE=1
+export OPENCODE_DISABLE_LSP_DOWNLOAD=1
+export OPENCODE_DISABLE_AUTOCOMPACT=1
+# pi: no install ping and no provider attribution headers, which beats a trusted
+# project that turns them back on. PI_OFFLINE stops the version check, the package
+# update check, and the model catalog refresh. To update pi, run
+# `env -u PI_OFFLINE pi update`: pi reads any value of PI_OFFLINE, even 0, as offline.
+export PI_TELEMETRY=0
+export PI_OFFLINE=1
+export PI_SKIP_VERSION_CHECK=1
+
 # Added by MTPLX.app — terminal command
 export PATH="$HOME/.mtplx/bin:$PATH"
 

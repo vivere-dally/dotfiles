@@ -1,0 +1,8 @@
+{
+  "enableInstallTelemetry": false,
+  "enableAnalytics": false,
+  "defaultProjectTrust": "ask",
+  "compaction": {
+    "enabled": false
+  }
+}

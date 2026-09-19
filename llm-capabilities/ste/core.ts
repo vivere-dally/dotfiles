@@ -478,6 +478,34 @@ function ghPayload(command: string, projectDir: string, read: ReadText): { texts
   return { texts, unreadable };
 }
 
+/**
+ * An agent credit in a commit or on GitHub: a co-author trailer that names an agent,
+ * a session trailer, or a "Generated with" line. Codex takes this text from a ChatGPT
+ * account setting and tells the model to ignore instructions against it, thus this
+ * check is the one local control that holds in each harness.
+ */
+const ATTRIBUTION = [
+  /^[ \t]*Co-authored-by:[^\n]*\b(?:claude|anthropic|codex|openai|chatgpt|opencode|copilot|cursor|gemini)\b[^\n]*/gim,
+  /^[ \t]*(?:Claude|Codex)-Session:[^\n]*/gim,
+  /\bGenerated (?:with|by)\b[^\n]{0,40}?\b(?:Claude|Codex|ChatGPT|opencode|Copilot|Gemini)\b[^\n]*/gi,
+];
+
+function attributionFindings(text: string, where: string): Finding[] {
+  const findings: Finding[] = [];
+  for (const re of ATTRIBUTION) {
+    for (const m of text.matchAll(re)) {
+      findings.push({
+        rule: "attribution",
+        severity: "hard",
+        where,
+        quote: m[0].trim(),
+        hint: "Remove the agent credit (rules/git.md, \"Commit and pull request text\")",
+      });
+    }
+  }
+  return findings;
+}
+
 /** The `gh` subcommands that publish prose. `--editor` and `--web` hand the text to a
  * person instead, and a person is outside the reach of a tool hook. */
 const GH_TEXT_COMMAND = /\bgh\s+(pr|issue)\s+(create|edit|comment|review)\b/;
@@ -610,6 +638,7 @@ export function evaluate(event: GateEvent, ctx: GateContext): Verdict {
         `Write a maximum of ${MAX_WORDS_COMMIT_BODY} words in the body (rules/git.md, "Commit and pull request text")`,
       );
       if (body) findings.push(body);
+      findings.push(...attributionFindings(message, subject));
     }
     if (!hasSignoff(command, message)) {
       findings.push({
@@ -636,6 +665,7 @@ export function evaluate(event: GateEvent, ctx: GateContext): Verdict {
         `Write a maximum of ${MAX_WORDS_GH_PROSE} words (rules/git.md, "Commit and pull request text")`,
       );
       if (budget) findings.push(budget);
+      findings.push(...attributionFindings(texts.join("\n\n"), subject));
     }
     for (const reason of unreadable) {
       findings.push({

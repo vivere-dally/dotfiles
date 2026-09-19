@@ -38,3 +38,20 @@ Use these commands for plugin maintenance:
 - `:PackClean` removes plugins that the configuration no longer names. Run it only after a start with no plugin group error.
 
 Run `:checkhealth vim.pack` when an installation stops. An interrupted clone can leave a partial plugin directory. Delete only the directory that the health report names, then start Neovim again.
+
+## LLM usage
+
+Run `llm-usage` to show daily token use and estimated API cost for Claude Code, Codex, OpenCode, and pi. The command reads the local data of each harness and uses the offline pricing data from ccusage.
+
+Pass ccusage commands and options after the wrapper name:
+
+```sh
+llm-usage monthly
+llm-usage session
+llm-usage codex daily
+llm-usage daily --since 20260901 --json
+```
+
+In Neovim, `:LlmUsage` opens the daily report in a floating window. Pass the same arguments to the command, for example `:LlmUsage codex monthly`. Use `r` to refresh the report and `q` to close it.
+
+The wrapper pins ccusage. The first run downloads that version through `bunx`. Later runs use the Bun cache.

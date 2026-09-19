@@ -29,31 +29,38 @@ run_as_root() {
 if command -v apt-get >/dev/null 2>&1; then
     run_as_root apt-get update
     run_as_root apt-get install -y \
-        build-essential curl file git procps wl-clipboard zsh \
+        build-essential cmake curl file g++ git pkg-config procps wl-clipboard zsh \
         libbz2-dev libffi-dev libgdbm-dev liblzma-dev libncursesw5-dev \
-        libreadline-dev libsqlite3-dev libssl-dev libxml2-dev libxmlsec1-dev \
+        libfontconfig1-dev libreadline-dev libsqlite3-dev libssl-dev \
+        libxcb-xfixes0-dev libxkbcommon-dev libxml2-dev libxmlsec1-dev \
         tk-dev uuid-dev xz-utils zlib1g-dev
 elif command -v dnf >/dev/null 2>&1; then
     run_as_root dnf install -y \
-        '@Development Tools' curl file git procps-ng wl-clipboard zsh \
+        '@Development Tools' cmake curl file gcc-c++ git procps-ng wl-clipboard zsh \
         bzip2-devel libffi-devel gdbm-devel libuuid-devel ncurses-devel \
-        openssl-devel readline-devel sqlite-devel tk-devel xz-devel zlib-devel
+        fontconfig-devel freetype-devel libxcb-devel libxkbcommon-devel \
+        openssl-devel pkgconf-pkg-config readline-devel sqlite-devel \
+        tk-devel xz-devel zlib-devel
 elif command -v yum >/dev/null 2>&1; then
     run_as_root yum groupinstall -y 'Development Tools'
     run_as_root yum install -y \
-        curl file git procps-ng wl-clipboard zsh bzip2-devel libffi-devel gdbm-devel \
-        libuuid-devel ncurses-devel openssl-devel readline-devel sqlite-devel \
-        tk-devel xz-devel zlib-devel
+        cmake curl file gcc-c++ git procps-ng wl-clipboard zsh \
+        bzip2-devel fontconfig-devel freetype-devel libffi-devel gdbm-devel \
+        libuuid-devel libxcb-devel libxkbcommon-devel ncurses-devel \
+        openssl-devel pkgconfig readline-devel sqlite-devel tk-devel \
+        xcb-util-devel xz-devel zlib-devel
 elif command -v zypper >/dev/null 2>&1; then
     run_as_root zypper --non-interactive install -t pattern devel_basis
     run_as_root zypper --non-interactive install \
-        curl file git procps wl-clipboard zsh libbz2-devel libffi-devel gdbm-devel \
+        cmake curl file gcc-c++ git make pkg-config procps wl-clipboard zsh \
+        fontconfig-devel freetype-devel libbz2-devel libffi-devel gdbm-devel \
         libopenssl-devel libreadline-devel libsqlite3-devel libuuid-devel \
-        ncurses-devel tk-devel xz-devel zlib-devel
+        libxcb-devel libxkbcommon-devel ncurses-devel tk-devel xz-devel zlib-devel
 elif command -v pacman >/dev/null 2>&1; then
     run_as_root pacman -Syu --needed --noconfirm \
-        base-devel curl git procps-ng wl-clipboard zsh bzip2 libffi gdbm libxcrypt \
-        ncurses openssl readline sqlite tk util-linux xz zlib
+        base-devel cmake curl fontconfig freetype2 git libxcb libxkbcommon \
+        procps-ng python wl-clipboard zsh bzip2 libffi gdbm libxcrypt ncurses \
+        openssl readline sqlite tk util-linux xz zlib
 else
     echo "init.linux.sh: unsupported package manager; install the pyenv build dependencies first" >&2
     exit 1

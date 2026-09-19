@@ -63,19 +63,16 @@ formulae=(
     stow neovim tree-sitter-cli jq pyenv uv zsh fzf git
     ripgrep fd lazygit tmux golangci-lint
 )
+[[ $PLATFORM == Linux ]] && formulae+=(rust)
 command -v tic >/dev/null 2>&1 || formulae+=(ncurses)
 
 "$BREW" install "${formulae[@]}"
 "$BREW" upgrade "${formulae[@]}"
 
-if [[ $PLATFORM == Darwin ]]; then
-    if "$BREW" list --cask alacritty >/dev/null 2>&1; then
-        "$BREW" upgrade --cask alacritty
-    else
-        # Adopt an existing manually installed app when necessary.
-        "$BREW" install --cask --force alacritty
-    fi
-fi
+case "$PLATFORM" in
+    Darwin) "$DOTFILES/scripts/install-alacritty.darwin.sh" ;;
+    Linux) "$DOTFILES/scripts/install-alacritty.linux.sh" ;;
+esac
 hash -r
 
 if [[ -z $NPM ]]; then NPM="$(command -v npm || true)"; fi

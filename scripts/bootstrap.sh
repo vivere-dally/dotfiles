@@ -61,7 +61,8 @@ eval "$("$BREW" shellenv)"
 
 formulae=(
     stow neovim tree-sitter-cli jq pyenv uv zsh fzf git
-    ripgrep fd lazygit tmux golangci-lint
+    ripgrep fd lazygit tmux
+    go gopls delve golangci-lint goimports templ
 )
 [[ $PLATFORM == Linux ]] && formulae+=(rust)
 command -v tic >/dev/null 2>&1 || formulae+=(ncurses)
@@ -227,8 +228,11 @@ if ! tree-sitter --version | awk '
     exit 1
 fi
 
-NVIM_BOOTSTRAP=1 nvim --headless \
-    -c "lua require('core.bootstrap').run()" \
-    -c 'qa!'
+if ! NVIM_BOOTSTRAP=1 nvim --headless \
+    -c "lua local ok, err = pcall(require('core.bootstrap').run); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end" \
+    -c 'qa!'; then
+    echo "bootstrap: Neovim setup failed" >&2
+    exit 1
+fi
 
 echo "bootstrap: installation complete"

@@ -41,9 +41,22 @@ local function run()
   })
   stub('conform', { format = function() end, setup = function() end })
   stub('lint', lint)
-  stub('mason', { setup = function() end })
-  stub('mason-lspconfig', { setup = function() end })
-  stub('mason-tool-installer', { setup = function() end })
+  local mason_options, mason_lsp_options, mason_tool_options
+  stub('mason', {
+    setup = function(options)
+      mason_options = options
+    end,
+  })
+  stub('mason-lspconfig', {
+    setup = function(options)
+      mason_lsp_options = options
+    end,
+  })
+  stub('mason-tool-installer', {
+    setup = function(options)
+      mason_tool_options = options
+    end,
+  })
   stub('mini.pairs', { setup = function() end })
   stub('nvim-ts-autotag', { setup = function() end })
   stub('nvim-treesitter', {
@@ -59,9 +72,19 @@ local function run()
   stub('trouble', { setup = function() end })
 
   local lsp_enable = vim.lsp.enable
-  vim.lsp.enable = function() end
+  local enabled_lsp_servers
+  vim.lsp.enable = function(servers)
+    enabled_lsp_servers = servers
+  end
   dofile(root .. '/.config/nvim/lua/plugins/lsp.lua')
   vim.lsp.enable = lsp_enable
+
+  assert(mason_options.PATH == 'append', 'Mason must not override Homebrew tools')
+  assert(not vim.list_contains(mason_lsp_options.ensure_installed, 'gopls'), 'Mason must not install gopls')
+  assert(not vim.list_contains(mason_lsp_options.ensure_installed, 'templ'), 'Mason must not install templ')
+  assert(vim.list_contains(enabled_lsp_servers, 'gopls'), 'gopls must be enabled')
+  assert(vim.list_contains(enabled_lsp_servers, 'templ'), 'templ must be enabled')
+  assert(not vim.list_contains(mason_tool_options.ensure_installed, 'goimports'), 'Mason must not install goimports')
 
   vim.api.nvim_exec_autocmds('LspAttach', {
     buffer = buffer,

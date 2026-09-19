@@ -10,7 +10,8 @@ scripts/bootstrap.sh
 
 The script works on macOS and Linux. It installs the system packages needed to build Python, installs Homebrew when needed, and then installs or updates these tools:
 
-- Stow, Neovim, Tree-sitter, jq, pyenv, uv, Zsh, fzf, ripgrep, fd, lazygit, tmux, and golangci-lint
+- Stow, Neovim, Tree-sitter, jq, pyenv, uv, Zsh, fzf, ripgrep, fd, lazygit, and tmux
+- The latest stable Go toolchain, gopls, Delve, golangci-lint, goimports, and templ
 - The latest stable Alacritty release on macOS and Linux
 - nvm with the latest Node.js LTS release
 - The latest stable CPython release through pyenv. Python does not have an LTS channel.

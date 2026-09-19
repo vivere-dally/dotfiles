@@ -192,6 +192,17 @@ local lsp_servers = {
   'kotlin_language_server',
 }
 
+-- Homebrew keeps these in step with the Go toolchain. Mason currently installs
+-- gopls v0.23.0 with the parent x/tools module tag, which has no gopls package.
+local external_lsp_servers = {
+  gopls = true,
+  templ = true,
+}
+local mason_lsp_servers = {}
+for _, server in ipairs(lsp_servers) do
+  if not external_lsp_servers[server] then table.insert(mason_lsp_servers, server) end
+end
+
 local mason_tools = {
   'shfmt',
   'stylua',
@@ -208,13 +219,6 @@ local mason_tools = {
   'cpplint',
   'codelldb',
 
-  -- Golang (golangci-lint installed via brew — Mason build may lag behind Go versions)
-  'goimports',
-  'golines',
-  'gomodifytags',
-  'gotests',
-  'iferr',
-
   -- Python
   'bandit',
 
@@ -224,17 +228,12 @@ local mason_tools = {
   -- 'phpstan',
 }
 
-require('mason').setup()
+require('mason').setup({ PATH = 'append' })
 require('mason-lspconfig').setup({
-  ensure_installed = lsp_servers,
-  -- automatic_enable starts every installed Mason package that maps to a server.
-  -- stylua and sqruff are installed as a formatter and a linter (conform and
-  -- nvim-lint run them); pyright is superseded by basedpyright; copilot is unused
-  -- (supermaven completes) and would attach to every buffer.
-  automatic_enable = {
-    exclude = { 'stylua', 'sqruff', 'pyright', 'copilot' },
-  },
+  ensure_installed = mason_lsp_servers,
+  automatic_enable = false,
 })
+vim.lsp.enable(lsp_servers)
 
 -- installer for non-LSP tools
 require('mason-tool-installer').setup({
@@ -255,7 +254,7 @@ vim.api.nvim_create_user_command('MasonBootstrap', function()
   local mapping = require('mason-lspconfig.mappings').get_mason_map().lspconfig_to_package
   local expected = vim.deepcopy(mason_tools)
 
-  for _, server in ipairs(lsp_servers) do
+  for _, server in ipairs(mason_lsp_servers) do
     local package = mapping[server]
     if not package then error(('No Mason package maps to LSP server %q'):format(server)) end
     table.insert(expected, package)

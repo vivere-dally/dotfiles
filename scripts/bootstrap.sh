@@ -122,6 +122,7 @@ node_version=$(nvm current)
 nvm alias default "$node_version"
 nvm use "$node_version"
 npm install --global --allow-scripts=bun bun@latest
+npm install --global --ignore-scripts @earendil-works/pi-coding-agent@latest
 
 export PYENV_ROOT="${PYENV_ROOT:-$HOME/.pyenv}"
 export PATH="$PYENV_ROOT/bin:$PATH"

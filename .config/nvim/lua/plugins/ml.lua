@@ -12,6 +12,22 @@ require('sidekick').setup({
   nes = { enabled = false },
   -- add any options here
   cli = {
+    win = {
+      keys = {
+        -- Neovim drops the modifier before Shift+Enter reaches CLI tools
+        -- through tmux, so send the standard CSI-u sequence directly.
+        newline = {
+          '<S-CR>',
+          function(terminal)
+            if terminal:is_running() then
+              vim.api.nvim_chan_send(terminal.job, '\x1b[13;2u')
+            end
+          end,
+          mode = 't',
+          desc = 'CLI New Line',
+        },
+      },
+    },
     mux = {
       backend = 'tmux',
       enabled = true,
@@ -31,6 +47,22 @@ require('sidekick').setup({
         env = {
           CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN = '1',
           CLAUDE_CODE_DISABLE_MOUSE = '1',
+        },
+      },
+      pi = {
+        keys = {
+          -- Pi assigns Alt+Enter to follow-up messages and expects its CSI-u
+          -- sequence, which Neovim does not pass through tmux unchanged.
+          follow_up = {
+            '<A-CR>',
+            function(terminal)
+              if terminal:is_running() then
+                vim.api.nvim_chan_send(terminal.job, '\x1b[13;3u')
+              end
+            end,
+            mode = 't',
+            desc = 'Pi Queue Follow-up',
+          },
         },
       },
     },
@@ -122,8 +154,8 @@ pack.keys({
   {
     '<leader>aa',
     function()
-      require('sidekick.cli').toggle({ name = 'opencode', focus = true })
+      require('sidekick.cli').toggle({ name = 'pi', focus = true })
     end,
-    desc = 'Sidekick Toggle OpenCode',
+    desc = 'Sidekick Toggle Pi',
   },
 })

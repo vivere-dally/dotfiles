@@ -282,9 +282,68 @@ require('nvim-ts-autotag').setup()
 
 local nts = require('nvim-treesitter')
 nts.setup()
--- No select/move/swap keymaps yet. sidekick reads the textobjects queries for
--- its {function} and {class} prompt context.
-require('nvim-treesitter-textobjects').setup({})
+require('nvim-treesitter-textobjects').setup({
+  select = {
+    lookahead = true,
+    selection_modes = {
+      ['@parameter.outer'] = 'v',
+      ['@function.outer'] = 'V',
+      ['@class.outer'] = 'V',
+    },
+  },
+  move = { set_jumps = true },
+})
+
+local ts_select = require('nvim-treesitter-textobjects.select')
+local ts_move = require('nvim-treesitter-textobjects.move')
+local ts_swap = require('nvim-treesitter-textobjects.swap')
+
+local function textobject(lhs, query, desc)
+  vim.keymap.set({ 'x', 'o' }, lhs, function()
+    ts_select.select_textobject(query, 'textobjects')
+  end, { desc = desc })
+end
+
+textobject('af', '@function.outer', 'Around function')
+textobject('if', '@function.inner', 'Inside function')
+textobject('ac', '@class.outer', 'Around class')
+textobject('ic', '@class.inner', 'Inside class')
+
+local function motion(bufnr, lhs, move, query, desc)
+  vim.keymap.set({ 'n', 'x', 'o' }, lhs, function()
+    move(query, 'textobjects')
+  end, { buffer = bufnr, desc = desc })
+end
+
+local motion_specs = {
+  { ']m', ts_move.goto_next_start, '@function.outer', 'Next function start' },
+  { '[m', ts_move.goto_previous_start, '@function.outer', 'Previous function start' },
+  { ']M', ts_move.goto_next_end, '@function.outer', 'Next function end' },
+  { '[M', ts_move.goto_previous_end, '@function.outer', 'Previous function end' },
+  { ']]', ts_move.goto_next_start, '@class.outer', 'Next class start' },
+  { '[[', ts_move.goto_previous_start, '@class.outer', 'Previous class start' },
+  { '][', ts_move.goto_next_end, '@class.outer', 'Next class end' },
+  { '[]', ts_move.goto_previous_end, '@class.outer', 'Previous class end' },
+}
+
+local function map_textobject_motions(bufnr, query)
+  local captures = {}
+  for _, capture in ipairs(query.captures) do
+    captures['@' .. capture] = true
+  end
+
+  for _, spec in ipairs(motion_specs) do
+    if captures[spec[3]] then motion(bufnr, unpack(spec)) end
+  end
+end
+
+vim.keymap.set('n', '<leader>cn', function()
+  ts_swap.swap_next('@parameter.inner')
+end, { desc = 'Swap with next parameter' })
+
+vim.keymap.set('n', '<leader>cp', function()
+  ts_swap.swap_previous('@parameter.inner')
+end, { desc = 'Swap with previous parameter' })
 
 -- Parsers to keep installed (replaces the old `ensure_installed`).
 -- `install()` only compiles parsers that are missing, so this is a cheap
@@ -336,6 +395,8 @@ vim.api.nvim_create_autocmd('FileType', {
       local target_lang = vim.treesitter.language.get_lang(vim.bo[target_buf].filetype)
       if target_lang ~= lang then return end
       if not pcall(vim.treesitter.start, target_buf, lang) then return end
+      local has_textobjects, textobjects = pcall(vim.treesitter.query.get, lang, 'textobjects')
+      if has_textobjects and textobjects then map_textobject_motions(target_buf, textobjects) end
       -- Without an indents query the treesitter indentexpr puts each new line at
       -- column 0 (vim, gitconfig, dockerfile, ...); keep the runtime indent there.
       local has_indents, indents = pcall(vim.treesitter.query.get, lang, 'indents')

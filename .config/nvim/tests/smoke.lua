@@ -68,14 +68,30 @@ local function run()
   stub('nvim-ts-autotag', { setup = function() end })
   stub('nvim-treesitter', {
     get_available = function()
-      return {}
+      return { 'python' }
     end,
     install = function()
       return task
     end,
     setup = function() end,
   })
-  stub('nvim-treesitter-textobjects', { setup = function() end })
+  local textobject_options
+  stub('nvim-treesitter-textobjects', {
+    setup = function(options)
+      textobject_options = options
+    end,
+  })
+  stub('nvim-treesitter-textobjects.select', { select_textobject = function() end })
+  stub('nvim-treesitter-textobjects.move', {
+    goto_next_start = function() end,
+    goto_previous_start = function() end,
+    goto_next_end = function() end,
+    goto_previous_end = function() end,
+  })
+  stub('nvim-treesitter-textobjects.swap', {
+    swap_next = function() end,
+    swap_previous = function() end,
+  })
   stub('trouble', { setup = function() end })
 
   local colors_dir = vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'colors')
@@ -93,8 +109,20 @@ local function run()
 
   local lsp_enable = vim.lsp.enable
   local enabled_lsp_servers
+  local treesitter_start = vim.treesitter.start
+  local treesitter_language_add = vim.treesitter.language.add
+  local treesitter_query_get = vim.treesitter.query.get
   vim.lsp.enable = function(servers)
     enabled_lsp_servers = servers
+  end
+  vim.treesitter.start = function()
+    return true
+  end
+  vim.treesitter.language.add = function()
+    return true
+  end
+  vim.treesitter.query.get = function(_, query_name)
+    if query_name == 'textobjects' then return { captures = { 'function.outer', 'class.outer' } } end
   end
   dofile(root .. '/.config/nvim/lua/plugins/lsp.lua')
   vim.lsp.enable = lsp_enable
@@ -105,6 +133,39 @@ local function run()
   assert(vim.list_contains(enabled_lsp_servers, 'gopls'), 'gopls must be enabled')
   assert(vim.list_contains(enabled_lsp_servers, 'templ'), 'templ must be enabled')
   assert(not vim.list_contains(mason_tool_options.ensure_installed, 'goimports'), 'Mason must not install goimports')
+  assert(textobject_options.select.lookahead, 'Tree-sitter text objects must search forward')
+  assert(textobject_options.move.set_jumps, 'Tree-sitter motions must update the jump list')
+  for _, lhs in ipairs({ 'af', 'if', 'ac', 'ic' }) do
+    assert(vim.fn.maparg(lhs, 'o') ~= '', ('Tree-sitter text object %s is missing'):format(lhs))
+  end
+  for _, lhs in ipairs({ ']m', '[m', ']M', '[M', ']]', '[[', '][', '[]' }) do
+    vim.keymap.set('n', lhs, '<nop>', { buffer = buffer, desc = 'Filetype motion' })
+  end
+  vim.bo[buffer].filetype = 'python'
+  for _, lhs in ipairs({ ']m', '[m', ']M', '[M', ']]', '[[', '][', '[]' }) do
+    local mapping = vim.fn.maparg(lhs, 'n', false, true)
+    assert(mapping.buffer == 1, ('Tree-sitter motion %s must be buffer-local'):format(lhs))
+    assert(mapping.desc ~= 'Filetype motion', ('Tree-sitter motion %s did not replace the filetype map'):format(lhs))
+  end
+  vim.treesitter.start = treesitter_start
+  vim.treesitter.language.add = treesitter_language_add
+  vim.treesitter.query.get = treesitter_query_get
+  for _, lhs in ipairs({ '<leader>cn', '<leader>cp' }) do
+    assert(vim.fn.maparg(lhs, 'n') ~= '', ('Tree-sitter parameter swap %s is missing'):format(lhs))
+  end
+
+  local grug_far_options
+  stub('grug-far', {
+    setup = function(options)
+      grug_far_options = options
+    end,
+    open = function() end,
+    with_visual_selection = function() end,
+  })
+  dofile(root .. '/.config/nvim/lua/plugins/search.lua')
+  assert(type(grug_far_options) == 'table', 'Grug Far setup did not run')
+  assert(vim.fn.maparg('<leader>rp', 'n') ~= '', 'project replace mapping is missing')
+  assert(vim.fn.maparg('<leader>rp', 'x') ~= '', 'visual project replace mapping is missing')
 
   vim.api.nvim_exec_autocmds('LspAttach', {
     buffer = buffer,

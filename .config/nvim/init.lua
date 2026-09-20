@@ -15,7 +15,7 @@ local pack = require('pack')
 
 -- Order matters: colors first, and snacks before the groups that call Snacks.
 -- Each group adds its plugins with vim.pack.add(), then sets them up.
-for _, group in ipairs({ 'colors', 'snacks', 'file', 'git', 'intellisense', 'lsp', 'ml', 'python', 'debug' }) do
+for _, group in ipairs({ 'colors', 'snacks', 'search', 'file', 'git', 'intellisense', 'lsp', 'ml', 'python', 'debug' }) do
   -- One broken group must not stop the others from loading.
   local ok, err = xpcall(require, debug.traceback, 'plugins.' .. group)
   if not ok then

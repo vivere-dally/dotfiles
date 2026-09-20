@@ -36,6 +36,8 @@
 | `leader cl` | Lint |
 | `leader cj` | Join block |
 | `leader cs` | Split block |
+| `leader cn` | Swap with next parameter |
+| `leader cp` | Swap with previous parameter |
 
 ---
 
@@ -66,6 +68,7 @@
 | `leader fr` | Recent files |
 | `leader ,` | Buffers |
 | `leader rw` | Replace word under cursor |
+| `leader rp` | Replace across project |
 | `leader sw` | Grep word/selection |
 
 ---
@@ -132,6 +135,19 @@
 | `N` | Prev match (centered) |
 | `Ctrl+j` | Quickfix next |
 | `Ctrl+k` | Quickfix prev |
+| `]m` / `[m` | Next/previous function start |
+| `]M` / `[M` | Next/previous function end |
+| `]]` / `[[` | Next/previous class start |
+| `][` / `[]` | Next/previous class end |
+
+---
+
+## Text Objects
+
+| Key | Action |
+|-----|--------|
+| `if` / `af` | Inside/around function |
+| `ic` / `ac` | Inside/around class |
 
 ---
 

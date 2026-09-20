@@ -18,25 +18,25 @@ size = 18
 
 [font.normal]
 family = "JetBrainsMonoNL Nerd Font"
-style = "Medium"
+style = "Regular"
 # family = "Iosevka Nerd Font Mono"
 # style = "Regular"
 
 [font.bold]
 family = "JetBrainsMonoNL Nerd Font"
-style = "Bold"
+style = "Medium"
 # family = "Iosevka Nerd Font Mono"
 # style = "Medium"
 
 [font.italic]
 family = "JetBrainsMonoNL Nerd Font"
-style = "Medium Italic"
+style = "Regular"
 # family = "Iosevka Nerd Font Mono"
 # style = "Regular"
 
 [font.bold_italic]
 family = "JetBrainsMonoNL Nerd Font"
-style = "Bold Italic"
+style = "Medium"
 # family = "Iosevka Nerd Font Mono"
 # style = "Medium"
 

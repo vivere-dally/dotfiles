@@ -39,6 +39,13 @@ local function run()
     end,
     keys = function() end,
   })
+  local gruvbox_options
+  stub('gruvbox', {
+    palette = { bright_orange = '#fe8019' },
+    setup = function(options)
+      gruvbox_options = options
+    end,
+  })
   stub('conform', { format = function() end, setup = function() end })
   stub('lint', lint)
   local mason_options, mason_lsp_options, mason_tool_options
@@ -70,6 +77,19 @@ local function run()
   })
   stub('nvim-treesitter-textobjects', { setup = function() end })
   stub('trouble', { setup = function() end })
+
+  local colors_dir = vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'colors')
+  vim.fn.mkdir(colors_dir, 'p')
+  vim.fn.writefile({}, vim.fs.joinpath(colors_dir, 'gruvbox.vim'))
+  vim.opt.runtimepath:append(vim.fs.dirname(colors_dir))
+  dofile(root .. '/.config/nvim/lua/plugins/colors.lua')
+  for name, enabled in pairs(gruvbox_options.italic) do
+    assert(not enabled, ('Gruvbox italic option %s must be disabled'):format(name))
+  end
+  assert(gruvbox_options.overrides.Comment.fg == '#fe8019', 'comments must use bright orange')
+  for name, highlight in pairs(gruvbox_options.overrides) do
+    assert(not highlight.italic, ('highlight %s must not use italics'):format(name))
+  end
 
   local lsp_enable = vim.lsp.enable
   local enabled_lsp_servers

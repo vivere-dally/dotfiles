@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Build and debug project",
+      "type": "codelldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/zig-out/bin/${input:zigExecutable}",
+      "cwd": "${workspaceFolder}",
+      "stopOnEntry": false,
+      "preLaunchTask": "zig: build project"
+    },
+    {
+      "name": "Debug test for current file",
+      "type": "codelldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/zig-test-debug",
+      "cwd": "${workspaceFolder}",
+      "stopOnEntry": false,
+      "preLaunchTask": "zig: build test for current file"
+    },
+    {
+      "name": "Attach to process",
+      "type": "codelldb",
+      "request": "attach",
+      "pid": "${command:pickProcess}",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "zigExecutable",
+      "type": "promptString",
+      "description": "Executable name in zig-out/bin"
+    }
+  ]
+}

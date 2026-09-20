@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "zig: build project",
+      "type": "process",
+      "command": "zig",
+      "args": [
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "zig: build test for current file",
+      "type": "process",
+      "command": "/usr/bin/env",
+      "args": [
+        "bash",
+        "${workspaceFolder}/.vscode/debug/build-zig-test.sh",
+        "${workspaceFolder}",
+        "${file}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

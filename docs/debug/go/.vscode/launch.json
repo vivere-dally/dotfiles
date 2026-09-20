@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Go: debug command",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/${workspaceFolderBasename}",
+      "outputMode": "remote"
+    },
+    {
+      "name": "Go: debug project",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}",
+      // "buildFlags": "-tags=dev",
+      "outputMode": "remote"
+    }
+  ]
+}

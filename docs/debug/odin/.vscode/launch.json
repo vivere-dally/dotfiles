@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Odin compiler: check scratch/hello.odin",
+      "type": "codelldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/odin",
+      "args": "check ${workspaceFolder}/scratch/hello.odin -file -no-threaded-checker -thread-count:1",
+      "cwd": "${workspaceFolder}",
+      "stopOnEntry": false,
+      "preLaunchTask": "odin: build debug compiler"
+    },
+    {
+      "name": "Odin compiler: run with arguments",
+      "type": "codelldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/odin",
+      "args": "${input:odinArguments}",
+      "cwd": "${workspaceFolder}",
+      "stopOnEntry": false,
+      "preLaunchTask": "odin: build debug compiler"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "odinArguments",
+      "type": "promptString",
+      "description": "Odin compiler arguments",
+      "default": "check ${workspaceFolder}/scratch/hello.odin -file -no-threaded-checker -thread-count:1"
+    }
+  ]
+}

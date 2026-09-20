@@ -147,8 +147,15 @@ local function run()
     setup = function() end,
     toggle = function() end,
   })
+  local overseer_options
+  stub('overseer', {
+    setup = function(options)
+      overseer_options = options
+    end,
+  })
   dofile(root .. '/.config/nvim/lua/plugins/debug.lua')
 
+  assert(overseer_options.dap, 'Overseer must connect project build tasks to nvim-dap')
   assert(vim.fn.maparg('<leader>U', 'n') ~= '', 'DAP View mapping is missing')
   assert(vim.fn.maparg('<leader>u', 'n') == '', 'old DAP View mapping still exists')
 

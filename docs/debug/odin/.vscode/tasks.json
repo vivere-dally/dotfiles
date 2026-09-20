@@ -1,0 +1,18 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "odin: build debug compiler",
+      "type": "process",
+      "command": "/usr/bin/env",
+      "args": [
+        "bash",
+        "${workspaceFolder}/.vscode/debug/build-odin.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

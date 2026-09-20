@@ -10,3 +10,4 @@
 - A version, identifier, path, or instruction label is not a collection count.
 - Remove the count if membership can change without a change to the described behavior.
 - Apply this rule to replies, documents, comments, names, commit text, and GitHub text.
+- This rule prevents unnecessary file changes. It also reduces review work, token use, and energy use.

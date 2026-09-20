@@ -51,10 +51,6 @@ A person reads a comment with the code in front of them, not the plan. State the
 
 Each of these pointers goes stale when the document moves. A pointer to living code (a function, a type, `file.ts:42`) or to an external standard is permitted.
 
-## Counts belong to their owner
-
-Never restate a count that a list, a constant, or a file owns. This rule applies to a comment, a docstring, a config header, and a test name. Write `the patterns in PATTERN_NAMES`, not `the eighteen patterns`. Otherwise each change to the list must find each copy, and a missed copy is wrong in silence.
-
 ## Escape hatches per language
 
 Each of these must carry a comment that gives the reason. The types give the "what". The comment states the invariant that makes the unsafe thing sound.

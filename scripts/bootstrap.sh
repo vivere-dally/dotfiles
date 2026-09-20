@@ -87,11 +87,11 @@ command -v curl >/dev/null 2>&1 || {
     exit 1
 }
 
-readonly NVM_VERSION=v0.40.7
+NVM_INSTALLER_VERSION=v0.40.7
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 installer=$(mktemp)
 trap 'rm -f "$installer"' EXIT
-curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh" -o "$installer"
+curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_INSTALLER_VERSION/install.sh" -o "$installer"
 PROFILE=/dev/null /bin/bash "$installer"
 rm -f "$installer"
 trap - EXIT
@@ -131,13 +131,6 @@ python_version=$(pyenv latest --known 3)
 pyenv install -s "$python_version"
 pyenv global "$python_version"
 uv pip install --python "$(pyenv which python)" --upgrade libtmux
-
-# The previous macOS installer wrote this one line directly. Move only that
-# known file so Stow can replace it with the portable profile from this repo.
-if [[ -f $HOME/.zprofile && ! -L $HOME/.zprofile ]] && \
-    [[ $(<"$HOME/.zprofile") == 'eval "$($HOME/homebrew/bin/brew shellenv)"' ]]; then
-    mv "$HOME/.zprofile" "$HOME/.zprofile.bootstrap-backup-$(date +%Y%m%d-%H%M%S)"
-fi
 
 "$DOTFILES/scripts/stow.sh"
 

@@ -5,9 +5,9 @@
 # Two stow packages, then the agent capabilities:
 #   .       the repo root: shell, nvim, tmux, ... (claude/, llm-capabilities/ and
 #           docs/ excluded via .stow-local-ignore)
-#   claude  ~/.claude/settings.json and the status line; a package of its own so
-#           the repo root never has a .claude/ that Claude Code would load as this
-#           repo's project settings
+#   claude  Claude-only settings, agents, skills, and the status line; a package
+#           of its own so the repo root never has a .claude/ that Claude Code
+#           would load as this repo's project settings
 #   llm-capabilities.sh  skills, rules, and the STE gate for Claude Code, Codex,
 #           opencode, and pi
 set -euo pipefail
@@ -19,7 +19,7 @@ BACKUP="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 # that would route Claude Code's runtime state (sessions, history, the
 # claude.ai-synced skills under skills/synced) into the repo, so it must be a
 # real dir before stow runs.
-mkdir -p "$HOME/.claude/skills"
+mkdir -p "$HOME/.claude/agents" "$HOME/.claude/skills"
 
 # Stow refuses to overwrite files it doesn't own, which is the normal state of
 # a machine whose ~/.claude predates this repo. Move whatever is in the way

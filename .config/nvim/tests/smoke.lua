@@ -252,6 +252,7 @@ local function run()
       harness = 'claude',
       hours = 5,
       limits = {
+        error = vim.NIL,
         items = {
           { kind = 'session', label = 'Current 5-hour', resetsInSeconds = 3600, utilization = 42 },
         },

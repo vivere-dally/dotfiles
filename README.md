@@ -52,4 +52,15 @@ llm-usage daily --since 20260901 --json
 
 In Neovim, `:LlmUsage` opens the daily report in a floating window. Pass the same arguments to the command, for example `:LlmUsage codex monthly`. Use `r` to refresh the report and `q` to close it.
 
+`:LlmUsageDashboard` opens the Claude dashboard for the last five hours. Give a different window as an argument:
+
+```vim
+:LlmUsageDashboard 12
+:LlmUsageDashboard claude 24
+```
+
+The dashboard shows the account limit windows from the existing Claude Code OAuth login. It also groups local tokens by project, model, and reasoning level. Project bars show shares of local token volume because Anthropic does not return project quota use.
+
+The account bars use Anthropic's undocumented, read-only OAuth usage endpoint. If Anthropic changes the endpoint, the dashboard shows an error. Run `/login` in Claude Code if the dashboard cannot find the OAuth login.
+
 The wrapper pins ccusage. The first run downloads that version through `npx`. Later runs use the npm cache.

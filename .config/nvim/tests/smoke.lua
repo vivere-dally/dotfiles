@@ -222,8 +222,8 @@ local function run()
 
   local system = vim.system
   local processes = {}
-  vim.system = function(_, options)
-    local process = { options = options }
+  vim.system = function(command, options, callback)
+    local process = { callback = callback, command = command, options = options }
     function process:kill(signal)
       self.signal = signal
     end
@@ -238,6 +238,52 @@ local function run()
   assert(processes[1].signal == 15, 'refresh did not stop the previous LLM usage command')
   vim.api.nvim_buf_delete(vim.api.nvim_get_current_buf(), { force = true })
   assert(processes[2].signal == 15, 'closing the report did not stop the LLM usage command')
+  usage.dashboard('claude', 5)
+  assert(vim.deep_equal(
+    processes[3].command,
+    { 'llm-usage', 'dashboard', 'claude', '5' }
+  ), 'Claude usage dashboard command is incorrect')
+  processes[3].callback({
+    code = 0,
+    stderr = '',
+    stdout = vim.json.encode({
+      generatedAt = '2026-09-21T16:00:00.000Z',
+      generatedAtEpoch = 0,
+      harness = 'claude',
+      hours = 5,
+      limits = {
+        items = {
+          { kind = 'session', label = 'Current 5-hour', resetsInSeconds = 3600, utilization = 42 },
+        },
+      },
+      projects = {
+        {
+          models = {
+            {
+              model = 'claude-opus-5',
+              percent = 100,
+              reasoning = 'high',
+              tokens = { cacheCreation = 10, cacheRead = 80, input = 1, output = 9, total = 100 },
+            },
+          },
+          path = '/work/alpha',
+          percent = 100,
+          tokens = { cacheCreation = 10, cacheRead = 80, input = 1, output = 9, total = 100 },
+        },
+      },
+      since = '2026-09-21T11:00:00.000Z',
+      sinceEpoch = 0,
+      totals = { cacheCreation = 10, cacheRead = 80, input = 1, output = 9, total = 100 },
+    }),
+  })
+  vim.wait(1000, function()
+    return vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, 1, false)[1] ~= 'Loading usage dashboard...'
+  end)
+  assert(
+    vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, 1, false)[1] == 'Claude usage · last 5h',
+    'Claude usage dashboard did not render'
+  )
+  vim.api.nvim_buf_delete(vim.api.nvim_get_current_buf(), { force = true })
   vim.system = system
 end
 

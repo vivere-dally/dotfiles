@@ -4,6 +4,15 @@ set -euo pipefail
 # Keep reports stable across machines and across ccusage releases.
 readonly CCUSAGE_VERSION=20.0.23
 
+if [[ ${1:-} == dashboard ]]; then
+    shift
+    if ! command -v node >/dev/null 2>&1; then
+        echo "llm-usage dashboard: node is required" >&2
+        exit 127
+    fi
+    exec node "$(dirname "${BASH_SOURCE[0]}")/../lib/llm-usage/dashboard.mjs" "$@"
+fi
+
 if ! command -v npx >/dev/null 2>&1; then
     echo "llm-usage: npx is required" >&2
     exit 127

@@ -1,0 +1,14 @@
+name: dotfiles
+
+services:
+  searxng:
+    image: docker.io/searxng/searxng:latest@sha256:76f9ec5b3832921c8734c06c34248c9538d94a6cae0cf5e579fa5b41c8479789
+    restart: always
+    ports:
+      - "127.0.0.1:16767:8080"
+    volumes:
+      - ./containers/searxng/settings.yml:/etc/searxng/settings.yml:ro,Z
+      - searxng-cache:/var/cache/searxng
+
+volumes:
+  searxng-cache:

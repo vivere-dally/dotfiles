@@ -33,6 +33,10 @@ Use these commands for plugin maintenance:
 
 Run `:checkhealth vim.pack` when an installation stops. An interrupted clone can leave a partial plugin directory. Delete only the directory that the health report names, then start Neovim again.
 
+## Pi
+
+The bootstrap script installs Pi, the managed extensions, and the reviewed packages. Start Pi with `pi`. Run `/login` and select `OpenAI Codex` one time. Use `/model` to select the model. Pi keeps the account and model choice in its live settings.
+
 ## LLM usage
 
 Run `llm-usage` to show daily token use and estimated API cost for Claude Code, Codex, OpenCode, and pi. The command reads the local data of each harness and uses the offline pricing data from ccusage.

@@ -45,6 +45,7 @@ decorations = "None"
 
 [keyboard]
 bindings = [
+    { key = "Enter", mods = "Alt", chars = "\u001B[13;3u" },
     { key = "Right", mods = "Alt", chars = "\u001BF" },
     { key = "Left", mods = "Alt", chars = "\u001BB" },
     { key = "B", mods = "Control|Shift", action = "ReceiveChar" },

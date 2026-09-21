@@ -134,6 +134,8 @@ link "$STABLE/pi/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
 
 link "$STABLE/src/adapters/codex/hooks.json" "$HOME/.codex/hooks.json"
 link "$STABLE/src/adapters/opencode/ste-gate.ts" "$HOME/.config/opencode/plugins/ste-gate.ts"
+link "$STABLE/src/adapters/pi/ask-user.ts" "$HOME/.pi/agent/extensions/ask-user.ts"
+link "$STABLE/src/adapters/pi/permission-gate.ts" "$HOME/.pi/agent/extensions/permission-gate.ts"
 link "$STABLE/src/adapters/pi/ste-gate.ts" "$HOME/.pi/agent/extensions/ste-gate.ts"
 
 # Privacy settings. Claude Code gets them from settings.json of the claude stow
@@ -150,32 +152,36 @@ if [[ ! -e $OPENCODE_DIR/opencode.json && ! -e $OPENCODE_DIR/opencode.jsonc ]]; 
 fi
 link "$STABLE/src/settings/opencode/config.json" "$OPENCODE_DIR/config.json"
 
-# pi writes settings.json through a symlink and reformats it, so the managed keys go
-# in by a merge. Objects merge key by key and the managed value wins. pi keeps the
-# other keys at its next write, and the next run of this script restores a managed
-# key that pi changed.
+# Pi rewrites its JSON files, so managed keys go in by a merge instead of a link.
+# Objects merge key by key and the managed value wins. Pi keeps each other key.
+merge_json_file() {
+    local live=$1 managed=$2 label=$3 tmp
+    if ours "$live"; then
+        rm "$live"
+    elif [[ -L $live ]]; then
+        move_aside "$live"
+    fi
+    if [[ -f $live ]]; then
+        tmp=$(mktemp "$live.XXXXXX")
+        if jq --indent 2 -s '.[0] * .[1]' "$live" "$managed" >"$tmp"; then
+            chmod 644 "$tmp"
+            mv "$tmp" "$live"
+        else
+            rm -f "$tmp"
+            echo "$label: $live is not valid JSON, thus it stays as it is." >&2
+        fi
+    else
+        install -m 644 "$managed" "$live"
+    fi
+}
+
 PI_SETTINGS="$HOME/.pi/agent/settings.json"
 if [[ -d $PI_SETTINGS.lock ]]; then
     echo "pi holds $PI_SETTINGS.lock. Stop pi, then run this script again." >&2
     exit 1
 fi
-if ours "$PI_SETTINGS"; then
-    rm "$PI_SETTINGS"
-elif [[ -L $PI_SETTINGS ]]; then
-    move_aside "$PI_SETTINGS"
-fi
-if [[ -f $PI_SETTINGS ]]; then
-    tmp=$(mktemp "$PI_SETTINGS.XXXXXX")
-    if jq --indent 2 -s '.[0] * .[1]' "$PI_SETTINGS" "$SRC/settings/pi/settings.json" >"$tmp"; then
-        chmod 644 "$tmp"
-        mv "$tmp" "$PI_SETTINGS"
-    else
-        rm -f "$tmp"
-        echo "pi: $PI_SETTINGS is not valid JSON, thus it stays as it is." >&2
-    fi
-else
-    install -m 644 "$SRC/settings/pi/settings.json" "$PI_SETTINGS"
-fi
+merge_json_file "$PI_SETTINGS" "$SRC/settings/pi/settings.json" pi
+merge_json_file "$HOME/.pi/agent/web-search.json" "$SRC/settings/pi/web-search.json" pi-web-access
 
 # Codex reads /etc/codex/config.toml as its system layer and never writes it. The
 # link needs root one time, thus the script only prints the command.

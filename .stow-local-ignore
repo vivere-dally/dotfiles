@@ -31,5 +31,9 @@ scripts
 # Notes about the repository itself, not files for $HOME
 ^/docs
 
+# Local services run from this repository and do not belong in $HOME
+^/compose\.yaml
+^/containers
+
 # Agent capabilities, linked by scripts/llm-capabilities.sh
 ^/llm-capabilities

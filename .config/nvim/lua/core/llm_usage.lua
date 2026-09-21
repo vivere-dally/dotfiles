@@ -134,7 +134,7 @@ local function set_dashboard(buffer, report)
   ), 'Comment')
   add('')
   add('ACCOUNT LIMITS', 'Special')
-  if report.limits.error then
+  if type(report.limits.error) == 'string' and report.limits.error ~= '' then
     add(report.limits.error, 'DiagnosticWarn')
   else
     for _, limit in ipairs(report.limits.items) do

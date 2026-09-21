@@ -60,9 +60,15 @@ Run independent audits against the same review packet:
 
 If Codex is absent, continue with the Claude audits and record that fact. Do not substitute a different model.
 
-Merge equivalent findings by location and concern. Investigate conflicting findings against the repository and issue. Correct factual errors, ambiguity, drift, and artifact conflicts.
+Merge equivalent findings by location and concern. Investigate conflicting findings against the repository and issue. Keep only findings that the evidence supports.
 
-Ask the user when a correction contains a product or architecture decision that the evidence does not settle. Do the audits again after a correction. Continue when no critical finding remains and each warning has a clear resolution.
+Warnings and suggestions do not block `/opsx:apply`. Record them in the review packet so the implementor and implementation reviewers can use them.
+
+Correct the supported critical findings in one correction pass. Ask the user when a correction contains a product or architecture decision that the evidence does not settle.
+
+After the correction pass, the coordinator does a targeted closure review. Inspect each supported critical finding and the artifact text changed for it. Do not run the full audits again. Do not inspect unchanged artifact text for new findings.
+
+A new finding blocks progress only when the correction directly caused it and it is critical. If a supported critical finding remains, correct only that finding and do its targeted closure review again. Continue to `/opsx:apply` when no supported critical finding remains.
 
 ## Apply and verify
 

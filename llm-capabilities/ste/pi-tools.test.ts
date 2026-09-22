@@ -4,6 +4,10 @@ import registerAskUser, {
   type AskUserTool,
 } from "../adapters/pi/ask-user.ts";
 import registerPermissionGate, {
+  type PermissionGateEventName,
+  type PermissionGateHandler,
+  type PermissionGateOpts,
+  type SessionStartEvent,
   type ToolCallContext,
   type ToolCallDecision,
   type ToolCallEvent,
@@ -21,15 +25,23 @@ const askTool = (): AskUserTool => {
   return registered;
 };
 
-const permissionHandler = (): ((event: ToolCallEvent, ctx: ToolCallContext) => Promise<ToolCallDecision>) => {
-  let registered: ((event: ToolCallEvent, ctx: ToolCallContext) => Promise<ToolCallDecision>) | undefined;
-  registerPermissionGate({
-    on(_event, handler) {
-      registered = handler;
+const permissionHandlers = (opts?: PermissionGateOpts): Map<PermissionGateEventName, PermissionGateHandler> => {
+  const handlers = new Map<PermissionGateEventName, PermissionGateHandler>();
+  registerPermissionGate(
+    {
+      on(event, handler) {
+        handlers.set(event, handler);
+      },
     },
-  });
+    opts,
+  );
+  return handlers;
+};
+
+const permissionHandler = (): ((event: ToolCallEvent, ctx: ToolCallContext) => Promise<ToolCallDecision | void>) => {
+  const registered = permissionHandlers().get("tool_call");
   if (!registered) throw new Error("permission handler was not registered");
-  return registered;
+  return async (event, ctx) => registered(event, ctx);
 };
 
 describe("Pi ask_user tool", () => {
@@ -115,6 +127,36 @@ describe("Pi ask_user tool", () => {
 });
 
 describe("Pi permission gate", () => {
+  test("sets the Pi temporary directory for every session", async () => {
+    const paths: string[] = [];
+    const handlers = permissionHandlers({
+      async makeTempDir(path) {
+        paths.push(path);
+      },
+    });
+    const event: SessionStartEvent = { type: "session_start" };
+    const ctx: ToolCallContext = {
+      cwd: "/workspace/project",
+      hasUI: true,
+      ui: {
+        async confirm() {
+          return false;
+        },
+      },
+    };
+
+    await handlers.get("session_start")?.(event, ctx);
+    const promptGuidelines: string[] = [];
+    const promptEvent = { systemPromptOptions: { promptGuidelines } };
+    await handlers.get("before_agent_start")?.(promptEvent, ctx);
+    await handlers.get("before_agent_start")?.(promptEvent, ctx);
+
+    expect(paths).toEqual(["/tmp/pi"]);
+    expect(promptEvent.systemPromptOptions.promptGuidelines).toEqual([
+      "Store temporary files that do not belong in the project under /tmp/pi/. Do not make another top-level directory under /tmp/.",
+    ]);
+  });
+
   test("leaves routine repository commands automatic", async () => {
     let promptCount = 0;
     const decision = await permissionHandler()(
@@ -170,6 +212,26 @@ describe("Pi permission gate", () => {
 
     expect(decision).toBeUndefined();
     expect(prompts[0]).toContain("Confirm external write");
+  });
+
+  test("leaves writes inside the Pi temporary directory automatic", async () => {
+    let promptCount = 0;
+    const decision = await permissionHandler()(
+      { toolName: "write", input: { path: "/tmp/pi/viv-issue-subagents/coordinator-prompt.md" } },
+      {
+        cwd: "/workspace/project",
+        hasUI: true,
+        ui: {
+          async confirm() {
+            promptCount += 1;
+            return false;
+          },
+        },
+      },
+    );
+
+    expect(decision).toBeUndefined();
+    expect(promptCount).toBe(0);
   });
 
   test("blocks inherited context for direct and scripted subagent launches", async () => {
@@ -233,6 +295,8 @@ describe("Pi tmux status", () => {
     try {
       await handlers.get("session_start")?.();
       await handlers.get("agent_start")?.();
+      await handlers.get("ui_prompt_start")?.();
+      await handlers.get("ui_prompt_end")?.();
       await handlers.get("agent_settled")?.();
       await handlers.get("session_shutdown")?.();
     } finally {
@@ -242,7 +306,9 @@ describe("Pi tmux status", () => {
 
     expect(calls).toEqual([
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_name", "pi"],
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "1"],
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "0"],
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "1"],
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "0"],
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "1"],
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "-u", "@llm_agent_name"],

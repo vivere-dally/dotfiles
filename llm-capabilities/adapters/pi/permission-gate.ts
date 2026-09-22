@@ -4,6 +4,7 @@
  * It is an accident and privacy guard, not an operating-system sandbox.
  */
 
+import { mkdir } from "node:fs/promises";
 import { relative, resolve, sep } from "node:path";
 
 export type ToolCallEvent = {
@@ -21,11 +22,32 @@ export type ToolCallContext = {
 
 export type ToolCallDecision = { block: true; reason: string } | undefined;
 
+export type BeforeAgentStartEvent = {
+  systemPromptOptions: {
+    promptGuidelines: string[];
+  };
+};
+
+export type SessionStartEvent = { type: "session_start" };
+export type PermissionGateEvent = ToolCallEvent | BeforeAgentStartEvent | SessionStartEvent;
+export type PermissionGateEventName = "session_start" | "before_agent_start" | "tool_call";
+export type PermissionGateHandler = (
+  event: PermissionGateEvent,
+  ctx: ToolCallContext,
+) => Promise<ToolCallDecision | void> | ToolCallDecision | void;
+
 type Pi = {
-  on(
-    event: "tool_call",
-    handler: (event: ToolCallEvent, ctx: ToolCallContext) => Promise<ToolCallDecision>,
-  ): void;
+  on(event: PermissionGateEventName, handler: PermissionGateHandler): void;
+};
+
+export type PermissionGateOpts = {
+  makeTempDir(path: string): Promise<void>;
+};
+
+export const DEFAULT_PERMISSION_GATE_OPTS: PermissionGateOpts = {
+  async makeTempDir(path) {
+    await mkdir(path, { recursive: true });
+  },
 };
 
 type CommandRule = {
@@ -44,6 +66,9 @@ const commandRules: CommandRule[] = [
 ];
 
 const PREVIEW_LIMIT = 500;
+const PI_TEMP_DIR = "/tmp/pi";
+const PI_TEMP_GUIDELINE =
+  "Store temporary files that do not belong in the project under /tmp/pi/. Do not make another top-level directory under /tmp/.";
 
 const preview = (text: string): string =>
   text.length <= PREVIEW_LIMIT ? text : `${text.slice(0, PREVIEW_LIMIT)}…`;
@@ -82,8 +107,23 @@ const request = async (
   return (await ctx.ui.confirm(title, message)) ? undefined : { block: true, reason: "Blocked by user" };
 };
 
-export default function registerPermissionGate(pi: Pi) {
+export default function registerPermissionGate(
+  pi: Pi,
+  opts: PermissionGateOpts = DEFAULT_PERMISSION_GATE_OPTS,
+) {
+  pi.on("session_start", async () => {
+    await opts.makeTempDir(PI_TEMP_DIR);
+  });
+
+  pi.on("before_agent_start", (event) => {
+    if (!("systemPromptOptions" in event)) return;
+    if (!event.systemPromptOptions.promptGuidelines.includes(PI_TEMP_GUIDELINE)) {
+      event.systemPromptOptions.promptGuidelines.push(PI_TEMP_GUIDELINE);
+    }
+  });
+
   pi.on("tool_call", async (event, ctx) => {
+    if (!("toolName" in event)) return;
     if (event.toolName === "subagent" && requestsParentTranscript(event.input)) {
       return {
         block: true,
@@ -99,7 +139,7 @@ export default function registerPermissionGate(pi: Pi) {
 
     if (event.toolName === "write" || event.toolName === "edit") {
       const path = typeof event.input?.path === "string" ? event.input.path : "";
-      if (path && !inside(ctx.cwd, path)) {
+      if (path && !inside(ctx.cwd, path) && !inside(PI_TEMP_DIR, path)) {
         return request(ctx, "Confirm external write", `Write outside the active project:\n\n${preview(path)}`);
       }
     }

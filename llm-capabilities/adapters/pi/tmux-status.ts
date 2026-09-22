@@ -4,7 +4,13 @@
  * the final agent run has settled and waits for the next user prompt.
  */
 
-type LifecycleEvent = "session_start" | "agent_start" | "agent_settled" | "session_shutdown";
+type LifecycleEvent =
+  | "session_start"
+  | "agent_start"
+  | "agent_settled"
+  | "ui_prompt_start"
+  | "ui_prompt_end"
+  | "session_shutdown";
 
 export type PiTmux = {
   on(event: LifecycleEvent, handler: () => Promise<void>): void;
@@ -20,6 +26,7 @@ export default function registerTmuxStatus(pi: PiTmux) {
   if (!pane || process.env.PI_SUBAGENT_CHILD === "1") return;
 
   let warned = false;
+  let agentActive = false;
   const tmux = async (args: string[]) => {
     try {
       await pi.exec("tmux", ["set-option", "-w", "-t", pane, "-q", ...args], { timeout: TIMEOUT_MS });
@@ -36,10 +43,18 @@ export default function registerTmuxStatus(pi: PiTmux) {
 
   pi.on("session_start", async () => {
     await tmux(["@llm_agent_name", "pi"]);
+    await setWaiting(true);
+  });
+  pi.on("agent_start", async () => {
+    agentActive = true;
     await setWaiting(false);
   });
-  pi.on("agent_start", async () => setWaiting(false));
-  pi.on("agent_settled", async () => setWaiting(true));
+  pi.on("ui_prompt_start", async () => setWaiting(true));
+  pi.on("ui_prompt_end", async () => setWaiting(!agentActive));
+  pi.on("agent_settled", async () => {
+    agentActive = false;
+    await setWaiting(true);
+  });
   pi.on("session_shutdown", async () => {
     await tmux(["-u", "@llm_agent_name"]);
     await tmux(["-u", "@llm_agent_waiting"]);

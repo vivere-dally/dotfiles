@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import registerAskUser, {
   type AskUserContext,
   type AskUserTool,
@@ -320,6 +321,22 @@ describe("Pi permission gate", () => {
     );
 
     expect(decision).toBeUndefined();
+  });
+});
+
+describe("Pi issue workflow", () => {
+  test("lets the coordinator resume without unrestricted child roles", () => {
+    const coordinator = readFileSync(
+      new URL("../pi/agents/viv-issue-coordinator.md", import.meta.url),
+      "utf8",
+    );
+
+    expect(coordinator).toContain(
+      "allowedAgents: viv-issue-coordinator, viv-issue-implementor, viv-issue-reviewer",
+    );
+    expect(coordinator).toContain(
+      "Do not start a fresh viv-issue-coordinator. The parent resumes this role only from its retained run.",
+    );
   });
 });
 

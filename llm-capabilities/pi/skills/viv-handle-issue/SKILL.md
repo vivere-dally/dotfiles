@@ -16,7 +16,9 @@ Use this form:
 
 The issue is a GitHub URL, `owner/repo#number`, or an issue number for the current repository. Use `medium` when the effort is absent. Read `flavors.json` and use its `defaultFlavor` when the flavor is absent. Reject an effort or flavor that the files do not define.
 
-Read the coordinator model and thinking level from the selected flavor and effort. Join them as `<model>:<thinking>`, then start `viv-issue-coordinator` as a foreground subagent with fresh context. Give it the complete issue input, effort, flavor, and this skill directory. State that this explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
+Read the coordinator model and thinking level from the selected flavor and effort. Join them as `<model>:<thinking>`.
+
+Call the `subagent` tool with `action: "run"`, `agent: "viv-issue-coordinator"`, and `context: "fresh"`. Do not start the coordinator with `bash`, `pi`, `pi -p`, or another shell command. Give the coordinator the complete issue input, effort, flavor, and this skill directory. State that this explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
 
 Wait for the coordinator. If it returns a user question, ask that question and resume the same coordinator with the answer. Continue until the coordinator reports a successful OpenSpec archive or a blocker that repository evidence cannot resolve.
 

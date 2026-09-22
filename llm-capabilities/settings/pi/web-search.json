@@ -1,6 +1,6 @@
 {
   "provider": "searxng",
-  "searxngBaseUrl": "http://127.0.0.1:16767",
+  "searxngBaseUrl": "http://127.0.0.1:16790",
   "webSearch": {
     "allowedProviders": ["searxng"]
   },

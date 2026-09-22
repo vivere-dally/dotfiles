@@ -7,23 +7,46 @@ set -euo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
-for tool in pi jq; do
+for tool in pi jq npm; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         echo "pi setup: $tool is not on PATH. Run scripts/bootstrap.sh first." >&2
         exit 1
     fi
 done
 
-# Offline mode blocks installation of missing packages. Install only a missing or
-# changed pin, because `pi update --extensions` intentionally skips exact versions.
+# The capabilities installer owns Pi's package declarations. Install their code
+# directly into Pi's npm store, then make sure that each exact pin is present.
+pi_npm_root="$HOME/.pi/agent/npm"
+packages_to_install=()
 while IFS= read -r pi_package; do
     package_spec=${pi_package#npm:}
     package_name=${package_spec%@*}
     package_version=${package_spec##*@}
-    package_file="$HOME/.pi/agent/npm/node_modules/$package_name/package.json"
+    package_file="$pi_npm_root/node_modules/$package_name/package.json"
     installed_version=$(jq -r '.version // empty' "$package_file" 2>/dev/null || true)
     if [[ $installed_version != "$package_version" ]]; then
-        env -u PI_OFFLINE pi install "$pi_package"
+        packages_to_install+=("$package_spec")
+    fi
+done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
+    "$DOTFILES/llm-capabilities/settings/pi/settings.json")
+
+if ((${#packages_to_install[@]} > 0)); then
+    mkdir -p "$pi_npm_root"
+    if [[ ! -f $pi_npm_root/package.json ]]; then
+        printf '{\n  "name": "pi-extensions",\n  "private": true\n}\n' >"$pi_npm_root/package.json"
+    fi
+    npm install "${packages_to_install[@]}" --prefix "$pi_npm_root" --legacy-peer-deps
+fi
+
+while IFS= read -r pi_package; do
+    package_spec=${pi_package#npm:}
+    package_name=${package_spec%@*}
+    package_version=${package_spec##*@}
+    package_file="$pi_npm_root/node_modules/$package_name/package.json"
+    installed_version=$(jq -r '.version // empty' "$package_file" 2>/dev/null || true)
+    if [[ $installed_version != "$package_version" ]]; then
+        echo "pi setup: expected $package_name $package_version, found ${installed_version:-nothing}" >&2
+        exit 1
     fi
 done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
     "$DOTFILES/llm-capabilities/settings/pi/settings.json")

@@ -12,6 +12,7 @@
   "instruction_file": "`AGENTS.md` (or `CLAUDE.md`)",
   "skill_dir": "<skill-dir>",
   "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The skill block gives it when the skill loads.",
-  "global_instructions": "Store temporary files that do not belong in the project under `/tmp/pi/`. Do not make another top-level directory under `/tmp/`. Ask the user before you change a file outside the active project or `/tmp/pi/`, including with a shell command.",
-  "worktree_isolation_clause": ""
+  "global_instructions": "Ask the user before you change a file outside the active project, including with a shell command.",
+  "worktree_isolation_clause": "",
+  "scratch_dir": "tmp/pi"
 }

@@ -20,3 +20,9 @@
 - Do not change the state of a remote or live system without consent for that command.
 - Read-only inspection is permitted. To do a test of a migration, use the throwaway database of the test suite.
 - Never start an app, a daemon, or a service as a side step. Ask before a probe touches live data.
+
+## Scratch files
+
+- Put scratch files in `{{scratch_dir}}/` at the root of the project, not in `/tmp`. Examples are intermediate output, comparison artifacts, and one-time scripts.
+- A directory in the project keeps the output easy to find, and prevents a permission prompt for `/tmp`.
+- In a git repository, run `git check-ignore -q tmp/` before the first write. If it fails, add `tmp/` to `.git/info/exclude`. Do not change `.gitignore` for this.

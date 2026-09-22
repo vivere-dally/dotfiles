@@ -31,7 +31,7 @@ Do NOT use:
 ### Phase 0 — Scan (deterministic, ~5s)
 
 ```bash
-python3 "{{skill_dir}}/scripts/scan.py" <repo-root> --agents <N> --out /tmp/opsx-signals.json
+python3 "{{skill_dir}}/scripts/scan.py" <repo-root> --agents <N> --out <repo-root>/{{scratch_dir}}/opsx-signals.json
 ```
 
 {{skill_dir_note}}

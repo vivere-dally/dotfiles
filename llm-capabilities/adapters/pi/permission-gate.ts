@@ -4,7 +4,6 @@
  * It is an accident and privacy guard, not an operating-system sandbox.
  */
 
-import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { relative, resolve, sep } from "node:path";
 
@@ -29,9 +28,8 @@ export type BeforeAgentStartEvent = {
   };
 };
 
-export type SessionStartEvent = { type: "session_start" };
-export type PermissionGateEvent = ToolCallEvent | BeforeAgentStartEvent | SessionStartEvent;
-export type PermissionGateEventName = "session_start" | "before_agent_start" | "tool_call";
+export type PermissionGateEvent = ToolCallEvent | BeforeAgentStartEvent;
+export type PermissionGateEventName = "before_agent_start" | "tool_call";
 export type PermissionGateHandler = (
   event: PermissionGateEvent,
   ctx: ToolCallContext,
@@ -39,16 +37,6 @@ export type PermissionGateHandler = (
 
 type Pi = {
   on(event: PermissionGateEventName, handler: PermissionGateHandler): void;
-};
-
-export type PermissionGateOpts = {
-  makeTempDir(path: string): Promise<void>;
-};
-
-export const DEFAULT_PERMISSION_GATE_OPTS: PermissionGateOpts = {
-  async makeTempDir(path) {
-    await mkdir(path, { recursive: true });
-  },
 };
 
 type CommandRule = {
@@ -71,9 +59,11 @@ const filesystemMutation =
 const pathLiteral = /(?:^|[\s="'`])((?:\/|~\/|\$HOME\/|\$\{HOME\}\/|\.\.?\/)[^\s"'`;|<>]*)/g;
 
 const PREVIEW_LIMIT = 500;
-const PI_TEMP_DIR = "/tmp/pi";
+// The directory is inside the project, thus the write checks below let it without a
+// prompt. The agent makes it on the first write. A session start does not make it,
+// because that puts a `tmp/` directory into each project that Pi opens.
 const PI_TEMP_GUIDELINE =
-  "Store temporary files that do not belong in the project under /tmp/pi/. Do not make another top-level directory under /tmp/.";
+  "Store temporary files under tmp/pi/ at the root of the active project, not under /tmp.";
 
 const preview = (text: string): string =>
   text.length <= PREVIEW_LIMIT ? text : `${text.slice(0, PREVIEW_LIMIT)}…`;
@@ -98,7 +88,7 @@ const externalMutationPath = (cwd: string, command: string): string | undefined 
   let externalPath: string | undefined;
   for (const match of command.matchAll(pathLiteral)) {
     const path = expandHome(match[1]);
-    if (!inside(cwd, path) && !inside(PI_TEMP_DIR, path)) externalPath = match[1];
+    if (!inside(cwd, path)) externalPath = match[1];
   }
   return externalPath;
 };
@@ -132,14 +122,7 @@ const request = async (
   return (await ctx.ui.confirm(title, message)) ? undefined : { block: true, reason: "Blocked by user" };
 };
 
-export default function registerPermissionGate(
-  pi: Pi,
-  opts: PermissionGateOpts = DEFAULT_PERMISSION_GATE_OPTS,
-) {
-  pi.on("session_start", async () => {
-    await opts.makeTempDir(PI_TEMP_DIR);
-  });
-
+export default function registerPermissionGate(pi: Pi) {
   pi.on("before_agent_start", (event) => {
     if (!("systemPromptOptions" in event)) return;
     if (!event.systemPromptOptions.promptGuidelines.includes(PI_TEMP_GUIDELINE)) {
@@ -172,7 +155,7 @@ export default function registerPermissionGate(
 
     if (event.toolName === "write" || event.toolName === "edit") {
       const path = typeof event.input?.path === "string" ? event.input.path : "";
-      if (path && !inside(ctx.cwd, path) && !inside(PI_TEMP_DIR, path)) {
+      if (path && !inside(ctx.cwd, path)) {
         return request(ctx, "Confirm external write", `Write outside the active project:\n\n${preview(path)}`);
       }
     }

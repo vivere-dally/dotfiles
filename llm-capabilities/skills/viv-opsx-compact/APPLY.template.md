@@ -96,7 +96,7 @@ openspec validate --specs --strict --json
 Then the **conservation ledger** — the number that makes compaction trustworthy:
 
 ```bash
-python3 <skill>/scripts/scan.py <repo-root> --out /tmp/opsx-after.json
+python3 <skill>/scripts/scan.py <repo-root> --out <repo-root>/{{scratch_dir}}/opsx-after.json
 ```
 
 Report before/after for specs, requirements, scenarios, and tokens, and reconcile the

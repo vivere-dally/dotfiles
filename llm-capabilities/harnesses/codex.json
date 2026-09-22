@@ -12,5 +12,6 @@
   "instruction_file": "`AGENTS.md`",
   "skill_dir": "<skill-dir>",
   "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The skill list gives it.",
-  "worktree_isolation_clause": ""
+  "worktree_isolation_clause": "",
+  "scratch_dir": "tmp/codex"
 }

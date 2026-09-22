@@ -7,8 +7,6 @@ import registerAskUser, {
 import registerPermissionGate, {
   type PermissionGateEventName,
   type PermissionGateHandler,
-  type PermissionGateOpts,
-  type SessionStartEvent,
   type ToolCallContext,
   type ToolCallDecision,
   type ToolCallEvent,
@@ -26,16 +24,13 @@ const askTool = (): AskUserTool => {
   return registered;
 };
 
-const permissionHandlers = (opts?: PermissionGateOpts): Map<PermissionGateEventName, PermissionGateHandler> => {
+const permissionHandlers = (): Map<PermissionGateEventName, PermissionGateHandler> => {
   const handlers = new Map<PermissionGateEventName, PermissionGateHandler>();
-  registerPermissionGate(
-    {
-      on(event, handler) {
-        handlers.set(event, handler);
-      },
+  registerPermissionGate({
+    on(event, handler) {
+      handlers.set(event, handler);
     },
-    opts,
-  );
+  });
   return handlers;
 };
 
@@ -128,14 +123,8 @@ describe("Pi ask_user tool", () => {
 });
 
 describe("Pi permission gate", () => {
-  test("sets the Pi temporary directory for every session", async () => {
-    const paths: string[] = [];
-    const handlers = permissionHandlers({
-      async makeTempDir(path) {
-        paths.push(path);
-      },
-    });
-    const event: SessionStartEvent = { type: "session_start" };
+  test("points the Pi temporary directory into the project", async () => {
+    const handlers = permissionHandlers();
     const ctx: ToolCallContext = {
       cwd: "/workspace/project",
       hasUI: true,
@@ -146,15 +135,13 @@ describe("Pi permission gate", () => {
       },
     };
 
-    await handlers.get("session_start")?.(event, ctx);
     const promptGuidelines: string[] = [];
     const promptEvent = { systemPromptOptions: { promptGuidelines } };
     await handlers.get("before_agent_start")?.(promptEvent, ctx);
     await handlers.get("before_agent_start")?.(promptEvent, ctx);
 
-    expect(paths).toEqual(["/tmp/pi"]);
     expect(promptEvent.systemPromptOptions.promptGuidelines).toEqual([
-      "Store temporary files that do not belong in the project under /tmp/pi/. Do not make another top-level directory under /tmp/.",
+      "Store temporary files under tmp/pi/ at the root of the active project, not under /tmp.",
     ]);
   });
 
@@ -215,10 +202,30 @@ describe("Pi permission gate", () => {
     expect(prompts[0]).toContain("Confirm external write");
   });
 
-  test("leaves writes inside the Pi temporary directory automatic", async () => {
+  test("asks before a write to the global Pi temporary directory", async () => {
+    const prompts: string[] = [];
+    const decision = await permissionHandler()(
+      { toolName: "write", input: { path: "/tmp/pi/reviews/report.md" } },
+      {
+        cwd: "/workspace/project",
+        hasUI: true,
+        ui: {
+          async confirm(title, message) {
+            prompts.push(`${title}\n${message}`);
+            return false;
+          },
+        },
+      },
+    );
+
+    expect(decision).toEqual({ block: true, reason: "Blocked by user" });
+    expect(prompts[0]).toContain("Confirm external write");
+  });
+
+  test("leaves writes inside the project Pi temporary directory automatic", async () => {
     let promptCount = 0;
     const decision = await permissionHandler()(
-      { toolName: "write", input: { path: "/tmp/pi/viv-issue-subagents/coordinator-prompt.md" } },
+      { toolName: "write", input: { path: "tmp/pi/viv-issue-subagents/coordinator-prompt.md" } },
       {
         cwd: "/workspace/project",
         hasUI: true,
@@ -262,10 +269,10 @@ describe("Pi permission gate", () => {
     expect(prompts[0]).toContain("~/.pi/agent/npm");
   });
 
-  test("leaves shell file changes inside the Pi temporary directory automatic", async () => {
+  test("leaves shell file changes inside the project Pi temporary directory automatic", async () => {
     let promptCount = 0;
     const decision = await permissionHandler()(
-      { toolName: "bash", input: { command: "mkdir -p /tmp/pi/reviews" } },
+      { toolName: "bash", input: { command: "mkdir -p ./tmp/pi/reviews" } },
       {
         cwd: "/workspace/project",
         hasUI: true,

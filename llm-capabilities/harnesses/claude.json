@@ -12,5 +12,6 @@
   "instruction_file": "`CLAUDE.md`",
   "skill_dir": "${CLAUDE_SKILL_DIR}",
   "skill_dir_note": "",
-  "worktree_isolation_clause": ", and do not use the `isolation: \"worktree\"` option of the `Agent` tool"
+  "worktree_isolation_clause": ", and do not use the `isolation: \"worktree\"` option of the `Agent` tool",
+  "scratch_dir": "tmp/claude"
 }

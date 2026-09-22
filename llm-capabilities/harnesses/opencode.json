@@ -12,5 +12,6 @@
   "instruction_file": "`AGENTS.md` (or `CLAUDE.md`)",
   "skill_dir": "<skill-dir>",
   "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The `skill` tool gives it when the skill loads.",
-  "worktree_isolation_clause": ""
+  "worktree_isolation_clause": "",
+  "scratch_dir": "tmp/opencode"
 }

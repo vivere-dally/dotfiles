@@ -3,6 +3,7 @@
   "enableAnalytics": false,
   "defaultProjectTrust": "ask",
   "defaultThinkingLevel": "xhigh",
+  "theme": "terminal-gruvbox",
   "compaction": {
     "enabled": false
   },

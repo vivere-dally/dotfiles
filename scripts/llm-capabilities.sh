@@ -37,7 +37,7 @@ HARNESSES=(
 # package.json and node_modules into its config directory.
 mkdir -p "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.config/opencode/skills" \
     "$HOME/.config/opencode/plugins" "$HOME/.pi/agent/skills" "$HOME/.pi/agent/agents" \
-    "$HOME/.pi/agent/extensions"
+    "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/themes"
 
 # Print the absolute, lexically normalized target of a link. This also works for
 # a broken link, where realpath cannot resolve the target.
@@ -133,6 +133,9 @@ done
 link "$SRC/pi/skills/viv-handle-issue" "$HOME/.pi/agent/skills/viv-handle-issue"
 for agent in "$SRC/pi/agents"/*.md; do
     link "$agent" "$HOME/.pi/agent/agents/$(basename "$agent")"
+done
+for theme in "$SRC/settings/pi/themes"/*.json; do
+    link "$theme" "$HOME/.pi/agent/themes/$(basename "$theme")"
 done
 
 link "$STABLE/claude/rules" "$HOME/.claude/rules"
@@ -231,7 +234,7 @@ fi
 for dir in "$HOME/.claude" "$HOME/.claude/skills" "$HOME/.claude/hooks" "$HOME/.agents/skills" \
     "$HOME/.codex" "$HOME/.codex/skills" "$HOME/.config/opencode" "$HOME/.config/opencode/skills" \
     "$HOME/.config/opencode/plugins" "$HOME/.pi/agent" "$HOME/.pi/agent/skills" \
-    "$HOME/.pi/agent/agents" "$HOME/.pi/agent/extensions"; do
+    "$HOME/.pi/agent/agents" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/themes"; do
     [[ -d $dir ]] || continue
     for entry in "$dir"/* "$dir"/.[!.]*; do
         [[ -L $entry && ! -e $entry ]] || continue

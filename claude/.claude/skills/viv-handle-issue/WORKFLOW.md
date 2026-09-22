@@ -56,9 +56,11 @@ Run independent audits against the same review packet:
 
 1. Load `viv-opsx-artifact-check` and do the coordinator audit.
 2. Start the reviewer agent for the selected effort. Ask it to do the artifact audit.
-3. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" artifacts <effort> <packet>`.
+3. Run these external reviews in parallel:
+   - `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" artifacts <effort> <packet>`
+   - `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" artifacts <effort> <packet>`
 
-If Codex is absent, continue with the Claude audits and record that fact. Do not substitute a different model.
+If an external reviewer is unavailable, continue with the other reviews and record that fact. Do not substitute a different model.
 
 Merge equivalent findings by location and concern. Investigate conflicting findings against the repository and issue. Keep only findings that the evidence supports.
 
@@ -79,7 +81,9 @@ The implementor invokes `/opsx:apply`, completes the tasks, and runs the applica
 After the implementor returns, start these reviews from the same repository state:
 
 1. Ask the reviewer agent to invoke `/opsx:verify` for the change.
-2. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`.
+2. Run these external reviews in parallel:
+   - `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`
+   - `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`
 
 Merge equivalent findings. Send each supported correctness or acceptance finding to the same implementor agent. Also send each failure in the suite. Resume that agent to make the corrections and run the affected tests.
 

@@ -1,55 +1,62 @@
 # Code comments
 
-## Comment the why, not the what
+## Default
 
-- Do not write a comment that restates the code. If a comment paraphrases the line below it, delete the comment.
-- Types and good names already give the "what". Use them.
-- Write the intent and the reason: why the code works this way, which problem it solves, and what a future reader cannot see in the code.
-- Let the type system carry the "what" (descriptive types, unions, branded types, `readonly`, an exhaustive `switch`), so that the prose does not carry it.
+- Keep routine code commentless. Use names, types, structure, and tests for facts that code can express.
+- Match the comment style of adjacent code.
+- Keep a new union member, enum case, field, or branch uncommented when equivalent neighbors have no comments.
+- Do not add a comment only because a line changed.
 
-## Record the decisions
+## Admission test
 
-- Record the alternatives that you considered and rejected, and why.
-- Record the downsides and trade-offs that you accepted, and why. For example: why you used an escape hatch, why you disabled a lint rule, why you selected a library.
-- Each escape hatch in the lists below must carry a comment that tells why it is safe and necessary. An escape hatch is never silent.
+Add or update a comment only when each condition is true:
 
-## Record what is not there
+- The fact is not visible from the code.
+- The fact remains useful without the current task, diff, or session.
+- Without the fact, a future reader can misunderstand the code or make a harmful edit.
+- A name, type, test, assertion, or clearer structure cannot carry the fact better.
 
-- Flag a shortcut or an unhandled case explicitly. Use an explicit error or panic (`throw new Error("not implemented")`, `todo!()`, `panic("unimplemented")`), or a `// TODO:` with an issue link.
-- Never write a stub that returns a fake value.
-- In an exhaustive `switch` or match, make the compiler find each case that you forgot (see the exhaustiveness list below). Then the build fails when a case is missing.
-- Note a deliberate absence: why a method is not there, why a guard is omitted, or an optimization for later.
+Eligible facts include an external constraint, correctness argument, load-bearing invariant, unusual constant, deliberate omission, or accepted trade-off.
 
-## Comments are first-class code
+## Content and placement
 
-- Comments are among the most important code that you write. Give them the same care as the logic.
-- Write the comment or the contract before the code. Give the intended behavior, the inputs, and the invariants in prose, then write the code below it.
+- State the hidden constraint and its consequence.
+- Keep the work log, task narrative, and routine rejected alternatives outside source files.
+- Put a broad design decision in an architecture record. Put a change explanation in the commit or pull request.
+- State the local fact before a stable external link. A TODO can link to its issue.
+- For an escape hatch, state the invariant that makes it safe and necessary.
+- Flag unhandled behavior with an explicit error, panic, or TODO. Never return a fake value from a stub.
 
-## Comment the surprising, the unsafe, and the load-bearing
+## Examples
 
-- Comment each thing that a reader does not expect:
-  - a dependency on external or global state
-  - a change to a shared object
-  - a constraint on order or timing (async order, microtask against macrotask, lock order)
-  - a subtle invariant
-  - an algorithm choice that is not obvious
-- Where you defeat the type checker, the borrow checker, or a lint, state the invariant that makes the code sound. For example: `the zod schema above validates it`, `not null because the line above sets it`, `in bounds because the code compared it to len above`.
+A routine type member has no comment because its peers and fields explain it:
 
-## Comments are not changelogs
+```ts
+type Event =
+  | { kind: "opened"; path: string }
+  | { kind: "saved"; path: string }
+  | { kind: "closed"; path: string };
+```
 
-Never write the history of a change: `Bumped from X to Y`, `Refactored to W`, `Now does Z`, `Renamed from V`, `Extracted from U`, `Previously did A`. Git keeps the history. A comment gives the static reason that a fresh reader meets tomorrow. If a value is unusual, give the reason for the value, not for the diff.
+A hidden aggregation rule earns a comment because the expression does not show it:
 
-## Comments point at code, never at documents
+```ts
+// Match only parent prefixes; child records already contribute to the parent total.
+const projectPrefix = /^projects\/[a-z0-9-]+\/$/;
+```
 
-A person reads a comment with the code in front of them, not the plan. State the rule, the invariant, or the trade-off itself. Never cite the place where it lives. Thus a comment carries no pointer into a document:
+An escape hatch states the invariant that makes it safe:
 
-- a design-decision id (`design D4`)
-- a task, group, or section number
-- a change name or a spec name
-- a PR or issue reference (`PR #72`)
-- a component that does not exist yet
+```ts
+// The schema validates each field before this boundary, so the cast cannot admit unchecked input.
+const record = value as StoredRecord;
+```
 
-Each of these pointers goes stale when the document moves. A pointer to living code (a function, a type, `file.ts:42`) or to an external standard is permitted.
+`Cast to StoredRecord` fails the admission test because it restates the code.
+
+## Final comment review
+
+Inspect only comments that the patch added or changed. Remove each comment that fails the admission test or duplicates adjacent code.
 
 ## Escape hatches per language
 

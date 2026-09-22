@@ -160,9 +160,13 @@ function buildHarness(harness: string, stage: string): Rendered[] {
   // into one file for them. Claude Code reads the rules directory.
   const ruleFiles = readdirSync(join(stage, "rules")).filter((f) => f.endsWith(".md")).sort();
   const parts = ruleFiles.map((f) => readFileSync(join(stage, "rules", f), "utf8").trim());
+  if (base.global_instructions) parts.push(base.global_instructions.trim());
+  const agentsSource = base.global_instructions
+    ? `llm-capabilities/rules and llm-capabilities/harnesses/${harness}.json`
+    : "llm-capabilities/rules";
   writeFileSync(
     join(stage, "AGENTS.md"),
-    `<!-- Generated for ${harness} from llm-capabilities/rules. Edit those files, then run scripts/llm-capabilities.sh. -->\n\n${parts.join("\n\n")}\n`,
+    `<!-- Generated for ${harness} from ${agentsSource}. Edit those sources, then run scripts/llm-capabilities.sh. -->\n\n${parts.join("\n\n")}\n`,
   );
   chmodSync(join(stage, "AGENTS.md"), 0o444);
   return rendered;

@@ -234,6 +234,53 @@ describe("Pi permission gate", () => {
     expect(promptCount).toBe(0);
   });
 
+  test("asks before a shell command changes files outside the active project", async () => {
+    const prompts: string[] = [];
+    const decision = await permissionHandler()(
+      {
+        toolName: "bash",
+        input: {
+          command:
+            "ln -s /opt/pi/lib/node_modules/@earendil-works/pi-coding-agent ~/.pi/agent/npm/node_modules/pi-subagents/node_modules/@earendil-works/pi-coding-agent",
+        },
+      },
+      {
+        cwd: "/workspace/project",
+        hasUI: true,
+        ui: {
+          async confirm(title, message) {
+            prompts.push(`${title}\n${message}`);
+            return true;
+          },
+        },
+      },
+    );
+
+    expect(decision).toBeUndefined();
+    expect(prompts[0]).toContain("filesystem command references a path outside the active project");
+    expect(prompts[0]).toContain("~/.pi/agent/npm");
+  });
+
+  test("leaves shell file changes inside the Pi temporary directory automatic", async () => {
+    let promptCount = 0;
+    const decision = await permissionHandler()(
+      { toolName: "bash", input: { command: "mkdir -p /tmp/pi/reviews" } },
+      {
+        cwd: "/workspace/project",
+        hasUI: true,
+        ui: {
+          async confirm() {
+            promptCount += 1;
+            return false;
+          },
+        },
+      },
+    );
+
+    expect(decision).toBeUndefined();
+    expect(promptCount).toBe(0);
+  });
+
   test("blocks inherited context for direct and scripted subagent launches", async () => {
     const ctx: ToolCallContext = {
       cwd: "/workspace/project",

@@ -51,6 +51,34 @@ while IFS= read -r pi_package; do
 done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
     "$DOTFILES/llm-capabilities/settings/pi/settings.json")
 
+# npm cannot find Pi's optional peer packages from this separate package store.
+# Links keep each extension on the same Pi runtime that starts it.
+global_pi_root="$(npm root -g)/@earendil-works/pi-coding-agent"
+if [[ ! -f $global_pi_root/package.json ]]; then
+    echo "pi setup: cannot find the Pi package under $(npm root -g)" >&2
+    exit 1
+fi
+pi_subagents_peer_root="$pi_npm_root/node_modules/pi-subagents/node_modules/@earendil-works"
+
+link_pi_peer() {
+    local name=$1 target=$2 path="$pi_subagents_peer_root/$1"
+    if [[ ! -f $target/package.json ]]; then
+        echo "pi setup: cannot find the $name peer at $target" >&2
+        exit 1
+    fi
+    if [[ -L $path ]]; then
+        [[ $(readlink "$path") == "$target" ]] || ln -sfn "$target" "$path"
+    elif [[ ! -e $path ]]; then
+        ln -s "$target" "$path"
+    fi
+}
+
+mkdir -p "$pi_subagents_peer_root"
+link_pi_peer pi-coding-agent "$global_pi_root"
+for pi_peer in pi-agent-core pi-ai pi-tui; do
+    link_pi_peer "$pi_peer" "$global_pi_root/node_modules/@earendil-works/$pi_peer"
+done
+
 # pi-web-access searches through the SearXNG container in compose.yaml, and
 # SearXNG refuses to start while its secret key is the default `ultrasecretkey`.
 # The container entrypoint replaces that value with `sed -i`, but compose mounts

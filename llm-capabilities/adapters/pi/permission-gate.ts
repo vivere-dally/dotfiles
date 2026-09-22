@@ -5,6 +5,7 @@
  */
 
 import { mkdir } from "node:fs/promises";
+import { homedir } from "node:os";
 import { relative, resolve, sep } from "node:path";
 
 export type ToolCallEvent = {
@@ -65,6 +66,10 @@ const commandRules: CommandRule[] = [
   { pattern: /\bgit\s+push\b[^\n]*(?:--force(?:-with-lease)?|-f)\b/, reason: "forced Git push" },
 ];
 
+const filesystemMutation =
+  /(?:^|[;&|\n]\s*)(?:command\s+|env(?:\s+-[^\s]+|\s+[A-Za-z_][A-Za-z0-9_]*=[^\s]+)*\s+)?(?:chmod|chown|cp|dd|install|ln|mkdir|mktemp|mv|rm|tee|touch|truncate)\b/;
+const pathLiteral = /(?:^|[\s="'`])((?:\/|~\/|\$HOME\/|\$\{HOME\}\/|\.\.?\/)[^\s"'`;|<>]*)/g;
+
 const PREVIEW_LIMIT = 500;
 const PI_TEMP_DIR = "/tmp/pi";
 const PI_TEMP_GUIDELINE =
@@ -76,6 +81,26 @@ const preview = (text: string): string =>
 const inside = (cwd: string, path: string): boolean => {
   const pathFromCwd = relative(resolve(cwd), resolve(cwd, path));
   return pathFromCwd === "" || (pathFromCwd !== ".." && !pathFromCwd.startsWith(`..${sep}`));
+};
+
+const expandHome = (path: string): string => {
+  if (path.startsWith("~/")) return resolve(homedir(), path.slice(2));
+  if (path.startsWith("$HOME/")) return resolve(homedir(), path.slice(6));
+  if (path.startsWith("${HOME}/")) return resolve(homedir(), path.slice(8));
+  return path;
+};
+
+const externalMutationPath = (cwd: string, command: string): string | undefined => {
+  if (!filesystemMutation.test(command)) return undefined;
+
+  // This is an accident guard for common shell file commands. The shell can hide
+  // a path behind arbitrary code, so operating-system isolation remains the security boundary.
+  let externalPath: string | undefined;
+  for (const match of command.matchAll(pathLiteral)) {
+    const path = expandHome(match[1]);
+    if (!inside(cwd, path) && !inside(PI_TEMP_DIR, path)) externalPath = match[1];
+  }
+  return externalPath;
 };
 
 const inheritedContextInScript = /\b(?:context|defaultContext)\b["'`]?\s*:\s*(["'`])(?:fork|profile)\1/;
@@ -133,6 +158,14 @@ export default function registerPermissionGate(
 
     if (event.toolName === "bash") {
       const command = typeof event.input?.command === "string" ? event.input.command : "";
+      const externalPath = externalMutationPath(ctx.cwd, command);
+      if (externalPath) {
+        return request(
+          ctx,
+          "Confirm host command",
+          `filesystem command references a path outside the active project (${externalPath}):\n\n${preview(command)}`,
+        );
+      }
       const matched = commandRules.find((rule) => rule.pattern.test(command));
       if (matched) return request(ctx, "Confirm host command", `${matched.reason}:\n\n${preview(command)}`);
     }

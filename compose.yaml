@@ -4,6 +4,10 @@ services:
   searxng:
     image: docker.io/searxng/searxng:latest@sha256:76f9ec5b3832921c8734c06c34248c9538d94a6cae0cf5e579fa5b41c8479789
     restart: always
+    environment:
+      # The entrypoint replaces the default key with `sed -i`, which cannot work
+      # on the read-only settings mount below. scripts/pi.sh writes .env.
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?run scripts/pi.sh to generate it}
     ports:
       - "127.0.0.1:16767:8080"
     volumes:

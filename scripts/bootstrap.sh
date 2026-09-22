@@ -134,19 +134,7 @@ uv pip install --python "$(pyenv which python)" --upgrade libtmux
 
 "$DOTFILES/scripts/stow.sh"
 
-# Offline mode blocks installation of missing packages. Install only a missing or
-# changed pin, because `pi update --extensions` intentionally skips exact versions.
-while IFS= read -r pi_package; do
-    package_spec=${pi_package#npm:}
-    package_name=${package_spec%@*}
-    package_version=${package_spec##*@}
-    package_file="$HOME/.pi/agent/npm/node_modules/$package_name/package.json"
-    installed_version=$(jq -r '.version // empty' "$package_file" 2>/dev/null || true)
-    if [[ $installed_version != "$package_version" ]]; then
-        env -u PI_OFFLINE pi install "$pi_package"
-    fi
-done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
-    "$DOTFILES/llm-capabilities/settings/pi/settings.json")
+"$DOTFILES/scripts/pi.sh"
 
 TPM_ROOT="$HOME/.tmux/plugins"
 TPM_DIR="$TPM_ROOT/tpm"

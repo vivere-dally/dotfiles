@@ -1,4 +1,6 @@
 .DS_Store
+# docker compose reads this. scripts/pi.sh writes the SearXNG secret into it.
+/.env
 /.nvimlog
 /nvim.log
 /bootstrap.log

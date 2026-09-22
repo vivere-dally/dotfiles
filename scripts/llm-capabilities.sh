@@ -135,6 +135,7 @@ link "$STABLE/pi/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
 link "$STABLE/src/adapters/codex/hooks.json" "$HOME/.codex/hooks.json"
 link "$STABLE/src/adapters/opencode/ste-gate.ts" "$HOME/.config/opencode/plugins/ste-gate.ts"
 link "$STABLE/src/adapters/pi/ask-user.ts" "$HOME/.pi/agent/extensions/ask-user.ts"
+link "$STABLE/src/adapters/pi/cliproxy-provider.ts" "$HOME/.pi/agent/extensions/cliproxy-provider.ts"
 link "$STABLE/src/adapters/pi/permission-gate.ts" "$HOME/.pi/agent/extensions/permission-gate.ts"
 link "$STABLE/src/adapters/pi/ste-gate.ts" "$HOME/.pi/agent/extensions/ste-gate.ts"
 
@@ -182,6 +183,22 @@ if [[ -d $PI_SETTINGS.lock ]]; then
 fi
 merge_json_file "$PI_SETTINGS" "$SRC/settings/pi/settings.json" pi
 merge_json_file "$HOME/.pi/agent/web-search.json" "$SRC/settings/pi/web-search.json" pi-web-access
+
+# The endpoint and the key of CLIProxyAPI, for adapters/pi/cliproxy-provider.ts.
+# The key is a secret, thus this repository never holds it and the file gets mode
+# 600. The environment writes the file, and the extension also reads the same two
+# variables directly, so an export alone is enough for one session.
+CLIPROXY_CONFIG="$HOME/.pi/agent/cliproxy.json"
+if [[ -n ${CLIPROXY_API_KEY:-} ]]; then
+    cliproxy_tmp=$(mktemp "$CLIPROXY_CONFIG.XXXXXX")
+    chmod 600 "$cliproxy_tmp"
+    jq -n --arg baseUrl "${CLIPROXY_BASE_URL:-http://127.0.0.1:8317}" \
+        --arg apiKey "$CLIPROXY_API_KEY" \
+        '{baseUrl: $baseUrl, apiKey: $apiKey}' >"$cliproxy_tmp"
+    mv "$cliproxy_tmp" "$CLIPROXY_CONFIG"
+elif [[ ! -e $CLIPROXY_CONFIG ]]; then
+    echo "pi: to use CLIProxyAPI, set CLIPROXY_API_KEY and CLIPROXY_BASE_URL, then run this script again."
+fi
 
 # Codex reads /etc/codex/config.toml as its system layer and never writes it. The
 # link needs root one time, thus the script only prints the command.

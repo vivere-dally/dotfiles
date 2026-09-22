@@ -1,7 +1,7 @@
 ---
 name: viv-issue-reviewer-expert
 description: Reviews OpenSpec artifacts and implementation for the expert-effort viv-handle-issue workflow.
-model: claude-opus-5
+model: claude-opus-5-5
 effort: xhigh
 permissionMode: auto
 disallowedTools:

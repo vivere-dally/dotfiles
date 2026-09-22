@@ -1,7 +1,7 @@
 ---
 name: viv-issue-reviewer-medium
 description: Reviews OpenSpec artifacts and implementation for the medium-effort viv-handle-issue workflow.
-model: claude-opus-5
+model: claude-opus-5-5
 effort: high
 permissionMode: auto
 disallowedTools:

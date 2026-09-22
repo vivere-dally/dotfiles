@@ -1,7 +1,7 @@
 ---
 name: viv-issue-implementor-expert
 description: Implements an approved OpenSpec change for the expert-effort viv-handle-issue workflow.
-model: claude-opus-5
+model: claude-opus-5-5
 effort: xhigh
 permissionMode: auto
 disallowedTools:

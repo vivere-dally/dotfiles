@@ -1,7 +1,7 @@
 ---
 name: viv-issue-coordinator-medium
 description: Coordinates the medium-effort viv-handle-issue workflow from issue intake through OpenSpec archive.
-model: claude-opus-5
+model: claude-opus-5-5
 effort: xhigh
 permissionMode: auto
 color: purple

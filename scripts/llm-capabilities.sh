@@ -183,6 +183,11 @@ if [[ -d $PI_SETTINGS.lock ]]; then
 fi
 merge_json_file "$PI_SETTINGS" "$SRC/settings/pi/settings.json" pi
 merge_json_file "$HOME/.pi/agent/web-search.json" "$SRC/settings/pi/web-search.json" pi-web-access
+# pi-subagents reads its workflow policy beside the extension instead of from
+# Pi's settings file.
+SUBAGENT_CONFIG="$HOME/.pi/agent/extensions/subagent/config.json"
+mkdir -p "$(dirname "$SUBAGENT_CONFIG")"
+merge_json_file "$SUBAGENT_CONFIG" "$SRC/settings/pi/subagent.json" pi-subagents
 
 # The endpoint and the key of CLIProxyAPI, for adapters/pi/cliproxy-provider.ts.
 # The key is a secret, thus this repository never holds it and the file gets mode

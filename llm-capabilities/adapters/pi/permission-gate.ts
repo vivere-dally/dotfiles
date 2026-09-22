@@ -1,7 +1,7 @@
 /**
- * Pi project trust controls project extensions, not tool calls. This gate catches
- * destructive host commands and built-in tool writes outside the active project.
- * It is a guard against accidents, not an operating-system sandbox.
+ * Pi project trust controls project extensions, not tool calls. This gate adds
+ * user-level boundaries for risky host access and parent conversation disclosure.
+ * It is an accident and privacy guard, not an operating-system sandbox.
  */
 
 import { relative, resolve, sep } from "node:path";
@@ -53,6 +53,26 @@ const inside = (cwd: string, path: string): boolean => {
   return pathFromCwd === "" || (pathFromCwd !== ".." && !pathFromCwd.startsWith(`..${sep}`));
 };
 
+const inheritedContextInScript = /\b(?:context|defaultContext)\b["'`]?\s*:\s*(["'`])(?:fork|profile)\1/;
+
+const requestsParentTranscript = (value: unknown, key?: string): boolean => {
+  if (key === "workflowScript" && typeof value === "string") {
+    return inheritedContextInScript.test(value);
+  }
+  if (Array.isArray(value)) return value.some((item) => requestsParentTranscript(item));
+  if (typeof value !== "object" || value === null) return false;
+
+  return Object.entries(value).some(([childKey, child]) => {
+    if (
+      (childKey === "context" || childKey === "defaultContext") &&
+      (child === "fork" || child === "profile")
+    ) {
+      return true;
+    }
+    return requestsParentTranscript(child, childKey);
+  });
+};
+
 const request = async (
   ctx: ToolCallContext,
   title: string,
@@ -64,6 +84,13 @@ const request = async (
 
 export default function registerPermissionGate(pi: Pi) {
   pi.on("tool_call", async (event, ctx) => {
+    if (event.toolName === "subagent" && requestsParentTranscript(event.input)) {
+      return {
+        block: true,
+        reason: "Forked subagent context is disabled; send the child an explicit task instead",
+      };
+    }
+
     if (event.toolName === "bash") {
       const command = typeof event.input?.command === "string" ? event.input.command : "";
       const matched = commandRules.find((rule) => rule.pattern.test(command));

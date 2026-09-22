@@ -40,5 +40,6 @@ if ! grep -q '^SEARXNG_SECRET=' "$ENV_FILE" 2>/dev/null; then
     umask 077
     printf 'SEARXNG_SECRET=%s\n' \
         "$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9')" >>"$ENV_FILE"
-    echo "pi setup: wrote SEARXNG_SECRET to $ENV_FILE. Run: docker compose up -d searxng"
+    echo "pi setup: wrote SEARXNG_SECRET to $ENV_FILE."
+    printf 'pi setup: run: podman compose -f %q up -d searxng\n' "$DOTFILES/compose.yaml"
 fi

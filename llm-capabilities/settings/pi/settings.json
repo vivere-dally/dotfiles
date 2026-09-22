@@ -6,6 +6,22 @@
   "compaction": {
     "enabled": false
   },
+  "subagents": {
+    "agentOverrides": {
+      "scout": {
+        "inheritProjectContext": true,
+        "inheritGlobalContext": true
+      },
+      "delegate": {
+        "inheritProjectContext": true,
+        "inheritGlobalContext": true
+      },
+      "researcher": {
+        "inheritProjectContext": true,
+        "inheritGlobalContext": true
+      }
+    }
+  },
   "packages": [
     {
       "source": "npm:pi-subagents@0.70.0",

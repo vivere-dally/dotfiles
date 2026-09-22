@@ -170,4 +170,45 @@ describe("Pi permission gate", () => {
     expect(decision).toBeUndefined();
     expect(prompts[0]).toContain("Confirm external write");
   });
+
+  test("blocks inherited context for direct and scripted subagent launches", async () => {
+    const ctx: ToolCallContext = {
+      cwd: "/workspace/project",
+      hasUI: true,
+      ui: {
+        async confirm() {
+          throw new Error("forked context must not reach a confirmation prompt");
+        },
+      },
+    };
+
+    for (const input of [
+      { action: "run", context: "fork" },
+      { action: "run", context: "profile" },
+      { action: "workflow", workflowScript: 'await runs.run({ context: "fork", task: "review" })' },
+    ]) {
+      const decision = await permissionHandler()({ toolName: "subagent", input }, ctx);
+      expect(decision).toEqual({
+        block: true,
+        reason: "Forked subagent context is disabled; send the child an explicit task instead",
+      });
+    }
+  });
+
+  test("permits a fresh subagent with an explicit task", async () => {
+    const decision = await permissionHandler()(
+      { toolName: "subagent", input: { action: "run", context: "fresh", task: "Review the parser" } },
+      {
+        cwd: "/workspace/project",
+        hasUI: true,
+        ui: {
+          async confirm() {
+            throw new Error("fresh context must not reach a confirmation prompt");
+          },
+        },
+      },
+    );
+
+    expect(decision).toBeUndefined();
+  });
 });

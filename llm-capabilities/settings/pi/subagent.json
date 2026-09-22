@@ -1,0 +1,12 @@
+{
+  "defaultSubagentContext": "fresh",
+  "scheduledRuns": {
+    "enabled": false
+  },
+  "missions": {
+    "enabled": false
+  },
+  "authorityPolicy": {
+    "scheduleCreate": "forbid"
+  }
+}

@@ -8,6 +8,7 @@ import registerPermissionGate, {
   type ToolCallDecision,
   type ToolCallEvent,
 } from "../adapters/pi/permission-gate.ts";
+import registerTmuxStatus from "../adapters/pi/tmux-status.ts";
 
 const askTool = (): AskUserTool => {
   let registered: AskUserTool | undefined;
@@ -210,5 +211,68 @@ describe("Pi permission gate", () => {
     );
 
     expect(decision).toBeUndefined();
+  });
+});
+
+describe("Pi tmux status", () => {
+  test("names the window and marks the final settled state", async () => {
+    const previousPane = process.env.TMUX_PANE;
+    process.env.TMUX_PANE = "%42";
+    const handlers = new Map<string, () => Promise<void>>();
+    const calls: string[][] = [];
+
+    registerTmuxStatus({
+      on(event, handler) {
+        handlers.set(event, handler);
+      },
+      async exec(command, args) {
+        calls.push([command, ...args]);
+      },
+    });
+
+    try {
+      await handlers.get("session_start")?.();
+      await handlers.get("agent_start")?.();
+      await handlers.get("agent_settled")?.();
+      await handlers.get("session_shutdown")?.();
+    } finally {
+      if (previousPane === undefined) delete process.env.TMUX_PANE;
+      else process.env.TMUX_PANE = previousPane;
+    }
+
+    expect(calls).toEqual([
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_name", "pi"],
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "0"],
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "0"],
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "1"],
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "-u", "@llm_agent_name"],
+      ["tmux", "set-option", "-w", "-t", "%42", "-q", "-u", "@llm_agent_waiting"],
+    ]);
+  });
+
+  test("does not let a detached subagent change the parent window", () => {
+    const previousPane = process.env.TMUX_PANE;
+    const previousChild = process.env.PI_SUBAGENT_CHILD;
+    process.env.TMUX_PANE = "%42";
+    process.env.PI_SUBAGENT_CHILD = "1";
+    let handlerCount = 0;
+
+    try {
+      registerTmuxStatus({
+        on() {
+          handlerCount += 1;
+        },
+        async exec() {
+          throw new Error("a child must not reach tmux");
+        },
+      });
+    } finally {
+      if (previousPane === undefined) delete process.env.TMUX_PANE;
+      else process.env.TMUX_PANE = previousPane;
+      if (previousChild === undefined) delete process.env.PI_SUBAGENT_CHILD;
+      else process.env.PI_SUBAGENT_CHILD = previousChild;
+    }
+
+    expect(handlerCount).toBe(0);
   });
 });

@@ -1,0 +1,27 @@
+{
+  "defaultFlavor": "zai",
+  "flavors": {
+    "zai": {
+      "coordinator": {
+        "medium": { "model": "zai/glm-5.3", "thinking": "high" },
+        "high": { "model": "zai/glm-5.3", "thinking": "high" },
+        "expert": { "model": "zai/glm-5.3", "thinking": "max" }
+      },
+      "implementor": {
+        "medium": { "model": "zai/glm-5.3", "thinking": "low" },
+        "high": { "model": "zai/glm-5.3", "thinking": "high" },
+        "expert": { "model": "zai/glm-5.3", "thinking": "max" }
+      },
+      "reviewer": {
+        "medium": { "model": "zai/glm-5.3", "thinking": "high" },
+        "high": { "model": "zai/glm-5.3", "thinking": "high" },
+        "expert": { "model": "zai/glm-5.3", "thinking": "max" }
+      },
+      "secondReviewer": {
+        "medium": { "model": "zai/glm-5.3-flash", "thinking": "high" },
+        "high": { "model": "zai/glm-5.3-flash", "thinking": "high" },
+        "expert": { "model": "zai/glm-5.3-flash", "thinking": "max" }
+      }
+    }
+  }
+}

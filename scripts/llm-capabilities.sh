@@ -36,7 +36,8 @@ HARNESSES=(
 # skills/synced, Codex writes skills/.system and config.toml, and opencode writes
 # package.json and node_modules into its config directory.
 mkdir -p "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.config/opencode/skills" \
-    "$HOME/.config/opencode/plugins" "$HOME/.pi/agent/skills" "$HOME/.pi/agent/extensions"
+    "$HOME/.config/opencode/plugins" "$HOME/.pi/agent/skills" "$HOME/.pi/agent/agents" \
+    "$HOME/.pi/agent/extensions"
 
 # Print the absolute, lexically normalized target of a link. This also works for
 # a broken link, where realpath cannot resolve the target.
@@ -127,6 +128,13 @@ for entry in "${HARNESSES[@]}"; do
     done
 done
 
+# This workflow uses pi-subagents directly, so its skill and role definitions do
+# not belong in the shared harness build.
+link "$SRC/pi/skills/viv-handle-issue" "$HOME/.pi/agent/skills/viv-handle-issue"
+for agent in "$SRC/pi/agents"/*.md; do
+    link "$agent" "$HOME/.pi/agent/agents/$(basename "$agent")"
+done
+
 link "$STABLE/claude/rules" "$HOME/.claude/rules"
 link "$STABLE/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
 link "$STABLE/opencode/AGENTS.md" "$HOME/.config/opencode/AGENTS.md"
@@ -138,6 +146,7 @@ link "$STABLE/src/adapters/pi/ask-user.ts" "$HOME/.pi/agent/extensions/ask-user.
 link "$STABLE/src/adapters/pi/cliproxy-provider.ts" "$HOME/.pi/agent/extensions/cliproxy-provider.ts"
 link "$STABLE/src/adapters/pi/permission-gate.ts" "$HOME/.pi/agent/extensions/permission-gate.ts"
 link "$STABLE/src/adapters/pi/ste-gate.ts" "$HOME/.pi/agent/extensions/ste-gate.ts"
+link "$STABLE/src/adapters/pi/tmux-status.ts" "$HOME/.pi/agent/extensions/tmux-status.ts"
 
 # Privacy settings. Claude Code gets them from settings.json of the claude stow
 # package. Each other harness writes into its own settings file, thus the dotfiles
@@ -221,7 +230,8 @@ fi
 # ~/.agents/skills, the old claude stow package), and so on.
 for dir in "$HOME/.claude" "$HOME/.claude/skills" "$HOME/.claude/hooks" "$HOME/.agents/skills" \
     "$HOME/.codex" "$HOME/.codex/skills" "$HOME/.config/opencode" "$HOME/.config/opencode/skills" \
-    "$HOME/.config/opencode/plugins" "$HOME/.pi/agent" "$HOME/.pi/agent/skills" "$HOME/.pi/agent/extensions"; do
+    "$HOME/.config/opencode/plugins" "$HOME/.pi/agent" "$HOME/.pi/agent/skills" \
+    "$HOME/.pi/agent/agents" "$HOME/.pi/agent/extensions"; do
     [[ -d $dir ]] || continue
     for entry in "$dir"/* "$dir"/.[!.]*; do
         [[ -L $entry && ! -e $entry ]] || continue

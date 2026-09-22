@@ -13,5 +13,6 @@
   "skill_dir": "<skill-dir>",
   "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The `skill` tool gives it when the skill loads.",
   "worktree_isolation_clause": "",
-  "scratch_dir": "tmp/opencode"
+  "scratch_dir": "tmp/opencode",
+  "long_command": "the `bash` tool and a timeout of at least 60 minutes"
 }

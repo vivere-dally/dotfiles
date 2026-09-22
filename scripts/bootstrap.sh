@@ -61,7 +61,7 @@ eval "$("$BREW" shellenv)"
 
 formulae=(
     stow neovim tree-sitter-cli jq pyenv uv zsh fzf git
-    ripgrep fd lazygit tmux
+    ripgrep fd lazygit tmux open-code-review
     go gopls delve golangci-lint goimports templ
 )
 [[ $PLATFORM == Linux ]] && formulae+=(rust)

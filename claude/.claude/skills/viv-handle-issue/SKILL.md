@@ -13,10 +13,6 @@ The issue can be a GitHub URL, `owner/repo#number`, or an issue number for the c
 The final argument can be `medium`, `high`, or `expert`. Use `medium` when the argument is absent. Reject a different effort value.
 The input can contain `--fast` before the effort.
 
-Set this session goal with `/goal` before the work starts:
-
-> The workflow reports a successful OpenSpec archive for the supplied issue. The required tests pass, and no blocking review finding remains. No commit, push, merge, or GitHub write occurs.
-
 ## With `--fast`
 
 Read `${CLAUDE_SKILL_DIR}/WORKFLOW.md` in full. Do its "Fast mode" section in this conversation. The effort selects the reviewer agent: `viv-issue-reviewer-<effort>`. This explicit invocation authorizes the branch action in the workflow.

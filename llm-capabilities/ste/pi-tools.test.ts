@@ -375,16 +375,71 @@ describe("Pi tmux status", () => {
       else process.env.TMUX_PANE = previousPane;
     }
 
+    const markUnlessViewed = [
+      "tmux",
+      "if-shell",
+      "-F",
+      "-t",
+      "%42",
+      "#{&&:#{window_active},#{session_attached}}",
+      "set-option -w -t %42 -q @llm_agent_waiting 0",
+      "set-option -w -t %42 -q @llm_agent_waiting 1",
+    ];
     expect(calls).toEqual([
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_name", "pi"],
-      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "1"],
+      markUnlessViewed,
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "0"],
-      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "1"],
+      markUnlessViewed,
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "0"],
-      ["tmux", "set-option", "-w", "-t", "%42", "-q", "@llm_agent_waiting", "1"],
+      markUnlessViewed,
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "-u", "@llm_agent_name"],
       ["tmux", "set-option", "-w", "-t", "%42", "-q", "-u", "@llm_agent_waiting"],
     ]);
+  });
+
+  // A real server, because the rule lives in a tmux format that only tmux evaluates.
+  // The control-mode client counts as attached, like a terminal that shows the session.
+  test.skipIf(!Bun.which("tmux"))("marks only a window that the user does not view", async () => {
+    const socket = `pi-status-test-${process.pid}`;
+    const tmuxCmd = (...args: string[]) => {
+      const run = Bun.spawnSync(["tmux", "-L", socket, "-f", "/dev/null", ...args]);
+      if (run.exitCode !== 0) throw new Error(`tmux ${args.join(" ")}: ${run.stderr.toString()}`);
+      return run.stdout.toString().trim();
+    };
+    const previousPane = process.env.TMUX_PANE;
+    tmuxCmd("new-session", "-d", "-s", "t", "-x", "80", "-y", "24");
+    const viewedPane = tmuxCmd("display-message", "-p", "-t", "t:0", "#{pane_id}");
+    const hiddenPane = tmuxCmd("new-window", "-d", "-P", "-F", "#{pane_id}", "-t", "t:1");
+    const client = Bun.spawn(["tmux", "-L", socket, "-C", "attach", "-t", "t"], { stdin: "pipe", stdout: "ignore" });
+
+    const settle = async (pane: string) => {
+      process.env.TMUX_PANE = pane;
+      const handlers = new Map<string, () => Promise<void>>();
+      registerTmuxStatus({
+        on(event, handler) {
+          handlers.set(event, handler);
+        },
+        async exec(command, args) {
+          Bun.spawnSync([command, "-L", socket, ...args]);
+        },
+      });
+      await handlers.get("agent_start")?.();
+      await handlers.get("agent_settled")?.();
+      return tmuxCmd("show-options", "-w", "-v", "-t", pane, "@llm_agent_waiting");
+    };
+
+    try {
+      for (let i = 0; i < 50 && tmuxCmd("display-message", "-p", "-t", "t", "#{session_attached}") === "0"; i++) {
+        await Bun.sleep(20);
+      }
+      expect(await settle(hiddenPane)).toBe("1");
+      expect(await settle(viewedPane)).toBe("0");
+    } finally {
+      if (previousPane === undefined) delete process.env.TMUX_PANE;
+      else process.env.TMUX_PANE = previousPane;
+      client.kill();
+      Bun.spawnSync(["tmux", "-L", socket, "kill-server"]);
+    }
   });
 
   test("does not let a detached subagent change the parent window", () => {

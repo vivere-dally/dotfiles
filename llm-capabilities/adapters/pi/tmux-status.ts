@@ -29,7 +29,7 @@ export default function registerTmuxStatus(pi: PiTmux) {
   let agentActive = false;
   const tmux = async (args: string[]) => {
     try {
-      await pi.exec("tmux", ["set-option", "-w", "-t", pane, "-q", ...args], { timeout: TIMEOUT_MS });
+      await pi.exec("tmux", args, { timeout: TIMEOUT_MS });
     } catch (error) {
       // Status integration must never interrupt the agent if the tmux server exits.
       if (!warned) {
@@ -39,10 +39,19 @@ export default function registerTmuxStatus(pi: PiTmux) {
     }
   };
 
-  const setWaiting = (waiting: boolean) => tmux(["@llm_agent_waiting", waiting ? "1" : "0"]);
+  const setOption = (args: string[]) => tmux(["set-option", "-w", "-t", pane, "-q", ...args]);
+  const setWaiting = (waiting: boolean) => {
+    if (!waiting) return setOption(["@llm_agent_waiting", "0"]);
+    // The focus hooks in tmux.conf clear the mark only when the user enters the
+    // window. A window that is active in an attached session is already in view,
+    // thus it gets no mark. tmux evaluates the check and the write as one command,
+    // so a window switch between them cannot leave a stale mark.
+    const mark = (value: string) => `set-option -w -t ${pane} -q @llm_agent_waiting ${value}`;
+    return tmux(["if-shell", "-F", "-t", pane, "#{&&:#{window_active},#{session_attached}}", mark("0"), mark("1")]);
+  };
 
   pi.on("session_start", async () => {
-    await tmux(["@llm_agent_name", "pi"]);
+    await setOption(["@llm_agent_name", "pi"]);
     await setWaiting(true);
   });
   pi.on("agent_start", async () => {
@@ -56,7 +65,7 @@ export default function registerTmuxStatus(pi: PiTmux) {
     await setWaiting(true);
   });
   pi.on("session_shutdown", async () => {
-    await tmux(["-u", "@llm_agent_name"]);
-    await tmux(["-u", "@llm_agent_waiting"]);
+    await setOption(["-u", "@llm_agent_name"]);
+    await setOption(["-u", "@llm_agent_waiting"]);
   });
 }

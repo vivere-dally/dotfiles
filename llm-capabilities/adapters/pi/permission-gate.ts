@@ -4,8 +4,11 @@
  * It is an accident and privacy guard, not an operating-system sandbox.
  */
 
+import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { relative, resolve, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import type { Node, Parser } from "web-tree-sitter";
 
 export type ToolCallEvent = {
   toolName: string;
@@ -56,7 +59,8 @@ const commandRules: CommandRule[] = [
 
 const filesystemMutation =
   /(?:^|[;&|\n]\s*)(?:command\s+|env(?:\s+-[^\s]+|\s+[A-Za-z_][A-Za-z0-9_]*=[^\s]+)*\s+)?(?:chmod|chown|cp|dd|install|ln|mkdir|mktemp|mv|rm|tee|touch|truncate)\b/;
-const pathLiteral = /(?:^|[\s="'`])((?:\/|~\/|\$HOME\/|\$\{HOME\}\/|\.\.?\/)[^\s"'`;|<>]*)/g;
+const mutationCommands = new Set(["chmod", "chown", "cp", "dd", "install", "ln", "mkdir", "mktemp", "mv", "rm", "tee", "touch", "truncate"]);
+const pathPrefix = /^(?:\/|~\/|\$HOME\/|\$\{HOME\}\/|\.\.?\/)/;
 
 const PREVIEW_LIMIT = 500;
 // The directory is inside the project, thus the write checks below let it without a
@@ -80,17 +84,80 @@ const expandHome = (path: string): string => {
   return path;
 };
 
-const externalMutationPath = (cwd: string, command: string): string | undefined => {
+// pi loads this file through a symlink in its extensions directory. The real path
+// finds the node_modules of llm-capabilities, whatever way jiti resolves a bare import.
+const nodeModules = join(dirname(realpathSync(fileURLToPath(import.meta.url))), "..", "..", "node_modules");
+let bashParser: Promise<Parser> | undefined;
+const loadBashParser = (): Promise<Parser> =>
+  (bashParser ??= (async () => {
+    const treeSitter: typeof import("web-tree-sitter") = await import(
+      pathToFileURL(join(nodeModules, "web-tree-sitter", "web-tree-sitter.js")).href
+    );
+    await treeSitter.Parser.init({ locateFile: () => join(nodeModules, "web-tree-sitter", "web-tree-sitter.wasm") });
+    const parser = new treeSitter.Parser();
+    parser.setLanguage(await treeSitter.Language.load(join(nodeModules, "tree-sitter-bash", "tree-sitter-bash.wasm")));
+    return parser;
+  })());
+
+/** The literal text of one shell word, without its quotes. */
+const wordText = (node: Node): string => {
+  if (node.type === "raw_string") return node.text.slice(1, -1);
+  if (node.type === "string") return node.text.slice(1, -1);
+  return node.text.replace(/['"]/g, "");
+};
+
+/**
+ * The words of each simple command in the script, commands inside `<(...)` and
+ * `$(...)` included. Only the words of a file-changing command are checked for
+ * paths, thus a sed script or a grep pattern elsewhere in the line is never read
+ * as a path.
+ */
+const simpleCommands = (root: Node): string[][] => {
+  const commands: string[][] = [];
+  const walk = (node: Node) => {
+    if (node.type === "command") {
+      const name = node.childForFieldName("name");
+      if (name) commands.push([wordText(name), ...node.childrenForFieldName("argument").map(wordText)]);
+    }
+    for (const child of node.namedChildren) if (child) walk(child);
+  };
+  walk(root);
+  return commands;
+};
+
+/** `env VAR=value` and `command` only start the real command. */
+const unwrap = (words: string[]): string[] => {
+  let rest = words;
+  for (;;) {
+    if (rest[0] === "command") rest = rest.slice(1);
+    else if (rest[0] === "env") {
+      rest = rest.slice(1);
+      while (rest[0] && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0]) || rest[0].startsWith("-"))) rest = rest.slice(1);
+    } else return rest;
+  }
+};
+
+type ShellFinding = { kind: "external"; path: string } | { kind: "unparsed" };
+
+const externalMutationPath = async (cwd: string, command: string): Promise<ShellFinding | undefined> => {
   if (!filesystemMutation.test(command)) return undefined;
 
   // This is an accident guard for common shell file commands. The shell can hide
   // a path behind arbitrary code, so operating-system isolation remains the security boundary.
+  const tree = (await loadBashParser()).parse(command);
+  if (!tree || tree.rootNode.hasError) return { kind: "unparsed" };
   let externalPath: string | undefined;
-  for (const match of command.matchAll(pathLiteral)) {
-    const path = expandHome(match[1]);
-    if (!inside(cwd, path)) externalPath = match[1];
+  for (const words of simpleCommands(tree.rootNode)) {
+    const [name, ...args] = unwrap(words);
+    if (!name || !mutationCommands.has(name)) continue;
+    for (const arg of args) {
+      // `dd of=/path` names its file after the equals sign.
+      for (const candidate of [arg, arg.slice(arg.indexOf("=") + 1)]) {
+        if (pathPrefix.test(candidate) && !inside(cwd, expandHome(candidate))) externalPath = candidate;
+      }
+    }
   }
-  return externalPath;
+  return externalPath === undefined ? undefined : { kind: "external", path: externalPath };
 };
 
 const inheritedContextInScript = /\b(?:context|defaultContext)\b["'`]?\s*:\s*(["'`])(?:fork|profile)\1/;
@@ -141,13 +208,16 @@ export default function registerPermissionGate(pi: Pi) {
 
     if (event.toolName === "bash") {
       const command = typeof event.input?.command === "string" ? event.input.command : "";
-      const externalPath = externalMutationPath(ctx.cwd, command);
-      if (externalPath) {
+      const finding = await externalMutationPath(ctx.cwd, command);
+      if (finding?.kind === "external") {
         return request(
           ctx,
           "Confirm host command",
-          `filesystem command references a path outside the active project (${externalPath}):\n\n${preview(command)}`,
+          `filesystem command references a path outside the active project (${finding.path}):\n\n${preview(command)}`,
         );
+      }
+      if (finding?.kind === "unparsed") {
+        return request(ctx, "Confirm host command", `filesystem command that the gate cannot parse:\n\n${preview(command)}`);
       }
       const matched = commandRules.find((rule) => rule.pattern.test(command));
       if (matched) return request(ctx, "Confirm host command", `${matched.reason}:\n\n${preview(command)}`);

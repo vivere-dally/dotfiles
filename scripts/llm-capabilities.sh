@@ -117,6 +117,11 @@ link() {
 mkdir -p "$STABLE"
 link "$SRC" "$STABLE/src"
 
+# The pi permission gate parses shell commands with tree-sitter-bash. Bun installs
+# the exact versions of bun.lock, and it does not run their install scripts, so the
+# native build of tree-sitter-bash never runs. The gate loads only its WebAssembly.
+"$HOME/.local/bin/bun" install --cwd "$SRC" --frozen-lockfile
+
 "$HOME/.local/bin/bun" "$SRC/render.ts" "$STABLE"
 
 for entry in "${HARNESSES[@]}"; do

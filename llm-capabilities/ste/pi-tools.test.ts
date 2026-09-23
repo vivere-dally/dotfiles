@@ -242,6 +242,35 @@ describe("Pi permission gate", () => {
     expect(promptCount).toBe(0);
   });
 
+  test("reads paths only from the arguments of the command that changes files", async () => {
+    const ask = async (command: string) => {
+      const prompts: string[] = [];
+      await permissionHandler()(
+        { toolName: "bash", input: { command } },
+        {
+          cwd: "/workspace/project",
+          hasUI: true,
+          ui: {
+            async confirm(title, message) {
+              prompts.push(`${title}\n${message}`);
+              return true;
+            },
+          },
+        },
+      );
+      return prompts;
+    };
+
+    // The sed script of the diff looks like an absolute path, but the mv moves files in the project.
+    expect(
+      await ask(
+        "diff <(sed -n '/### Requirement:/,$p' openspec/specs/a/spec.md) <(sed -n '/### Requirement:/,$p' openspec/changes/x/specs/a/spec.md) && mv openspec/changes/x openspec/changes/archive/x && openspec list --json",
+      ),
+    ).toEqual([]);
+    expect((await ask("grep -rn '/etc' src && mv build/out /etc/out"))[0]).toContain("(/etc/out)");
+    expect((await ask("mv 'unterminated"))[0]).toContain("cannot parse");
+  });
+
   test("asks before a shell command changes files outside the active project", async () => {
     const prompts: string[] = [];
     const decision = await permissionHandler()(

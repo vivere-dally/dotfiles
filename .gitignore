@@ -11,3 +11,6 @@
 # caches at runtime, or a Claude session started inside one, writes here
 __pycache__/
 settings.local.json
+
+# llm-capabilities installs its runtime packages from bun.lock.
+/llm-capabilities/node_modules/

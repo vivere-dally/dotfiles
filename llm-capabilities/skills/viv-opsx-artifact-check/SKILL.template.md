@@ -107,9 +107,9 @@ Artifacts audited: <count> files
 
 ## CRITICAL
 [C1] <category> | <path/to/artifact:line>
-Found: "<exact quote or ≤15-word paraphrase>"
-Concern: <one sentence, ≤25 words>
-Suggest: <one concrete question OR one precise edit, ≤25 words>
+Found: "<exact quote or short paraphrase>"
+Concern: <one sentence>
+Suggest: <one concrete question OR one precise edit>
 
 [C2] <category> | <path/to/artifact:line>
 Found: "..."
@@ -137,7 +137,7 @@ Verdict: <one of the three verdicts below>
 - `<category>` is one of: `unconsulted`, `ambiguity`, `scope-drift`, `inconsistency`, `deferred`, `edge-case` — exactly these tokens, lowercase, no synonyms.
 - `<path/to/artifact:line>` must be a real path with a line number or a `§<section-heading>` reference. Never "see design.md" without a locator.
 - `Found:` must be a quoted string (use `"..."`) or a paraphrase tagged with `(paraphrase)`. No mixed prose.
-- `Concern:` and `Suggest:` are each a single sentence. Hard cap 25 words. No semicolons used as sentence joiners.
+- `Concern:` and `Suggest:` are each a single sentence on one line. No semicolons used as sentence joiners.
 - Each finding is exactly the four lines shown — header line, `Found:`, `Concern:`, `Suggest:`. Separate findings with one blank line. No extra commentary between findings.
 - If a severity bucket is empty, write the section header followed by `(none)` on the next line. Do not omit the section.
 
@@ -170,7 +170,6 @@ The report's value depends on being machine-greppable and stable across runs. Tr
 - **Stable IDs.** Number findings in the order they appear under each severity, starting at 1. Never skip numbers, never reuse numbers, never use sub-IDs like `C1a`.
 - **Deterministic ordering.** Within each severity, order findings by `(artifact-path ASCII order, then line number ascending)`. Same inputs must produce the same IDs.
 - **Empty sections shown explicitly.** Always print all three severity headers. Use `(none)` when empty. This keeps IDs unambiguous when sections grow between runs.
-- **Word caps are hard caps.** If a `Concern:` or `Suggest:` exceeds 25 words, rewrite — do not let it bleed onto a second line.
 
 ## Guardrails
 

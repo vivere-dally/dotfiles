@@ -15,7 +15,7 @@ description: Create new agent skills with proper structure, progressive disclosu
 
 2. **Draft the skill** - make:
    - SKILL.md with concise instructions
-   - Additional reference files if content exceeds 500 lines
+   - Additional reference files for content that only some cases need
    - Utility scripts if deterministic operations needed
 
 3. **Review with user** - present draft and ask:
@@ -101,7 +101,7 @@ Scripts save tokens and improve reliability vs generated code.
 
 Split into separate files when:
 
-- SKILL.md exceeds 100 lines
+- Only some cases need a section
 - Content has distinct domains (finance vs sales schemas)
 - Advanced features are rarely needed
 
@@ -110,7 +110,7 @@ Split into separate files when:
 After drafting, make sure of these:
 
 - [ ] Description includes triggers ("Use when...")
-- [ ] SKILL.md under 100 lines
+- [ ] SKILL.md readable in one sitting
 - [ ] No time-sensitive info
 - [ ] Consistent terminology
 - [ ] Concrete examples included

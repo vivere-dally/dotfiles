@@ -132,15 +132,7 @@ Then scan changed files for stray markers that `git diff --check` might miss:
 grep -rnE '^(<{7}|={7}|>{7}|\|{7})( |$)' <resolved-paths>
 ```
 
-Run the project's type checker, linter, and tests:
-
-| Stack | Quick check | Build | Tests |
-|-------|------------|-------|-------|
-| TS/JS | `tsc --noEmit` | `npm run build` | `npm test` |
-| Python | `mypy . && ruff check` | — | `pytest` |
-| Rust | `cargo check` | `cargo build` | `cargo test` |
-| Go | `go vet ./...` | `go build ./...` | `go test ./...` |
-| Java | `mvn -q compile` | `mvn package` | `mvn test` |
+Run the type checker, linter, and tests that the project instruction file names.
 
 ### 7. Stage
 
@@ -275,26 +267,6 @@ git revert -m 1 <merge-sha>            # undo a public merge safely (no force-pu
 git reflog                              # find any prior state to recover
 ```
 
-`git merge --abort` does not always restore the working tree perfectly if there were uncommitted changes before the merge. Always commit or stash before starting a merge.
+`git merge --abort` does not always restore the working tree perfectly if there were uncommitted changes before the merge. If the tree has uncommitted changes, tell the user before a merge starts.
 
 To re-merge a branch after reverting a merge: revert the revert first (`git revert <revert-sha>`), then merge again.
-
-## Quick reference
-
-| Task | Command |
-|------|---------|
-| See conflict type | `git status -s` (look for `UU`, `AA`, `DU`, `UD`, etc.) |
-| Show merge base | `git merge-base HEAD MERGE_HEAD` |
-| Show base version | `git show :1:<path>` |
-| Show ours | `git show :2:<path>` |
-| Show theirs | `git show :3:<path>` |
-| What our side changed | `git diff --merge-base MERGE_HEAD HEAD` |
-| What their side changed | `git diff --merge-base HEAD MERGE_HEAD` |
-| Commits touching conflicts | `git log --merge -p` |
-| Re-render with base context | `git checkout --conflict=zdiff3 -- <path>` |
-| Check for leftover markers | `git diff --check` |
-| List still-unmerged paths | `git ls-files --unmerged` |
-| What you changed during resolution | `git diff AUTO_MERGE` (Git 2.30+) |
-| Finish merge | `git merge --continue` |
-| Finish rebase | `git rebase --continue` |
-| Abort everything | `git merge --abort` / `git rebase --abort` |

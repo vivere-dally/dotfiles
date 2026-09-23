@@ -55,7 +55,7 @@ Open questions before I act:
 - <gap or ambiguity>
 ```
 
-Keep it tight — 8 to 15 lines. The user reads this to decide whether to correct the model or hand off the task.
+Keep one line for each item. The user reads this to decide whether to correct the model or hand off the task.
 
 ## Anti-patterns
 

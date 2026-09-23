@@ -44,7 +44,7 @@ If the diff is huge (5000+ lines), filter to source code files only:
 PR=<number>; gh pr view $PR --json title,body,baseRefName,headRefName,headRefOid,author,labels,comments,reviews,reviewRequests && echo "---CHECKS---" && gh pr checks $PR && echo "---FILES---" && gh pr diff $PR --name-only && echo "---DIFF---" && gh pr diff $PR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' '*.rs' '*.java' '*.rb' '*.swift' '*.kt' '*.cs' '*.c' '*.cpp' '*.h'
 ```
 
-**Do NOT run these as separate commands. Chain them with `&&` in a single bash call.**
+Run them as one chained command, so that one tool call returns all the PR data.
 
 ---
 
@@ -193,7 +193,6 @@ With `--ocr` only. One line for each rejected `ocr` finding, with the `file:line
 ### Tone and Style Rules
 
 - Be direct and matter-of-fact. Not accusatory, not overly positive.
-- No flattery. No "Great job", "Thanks for", or similar.
 - Write so the reader can quickly skim — the tag + title must convey the gist.
 - Do not overstate severity. A potential issue under rare conditions is a Warning, not Critical.
 - The `Overlaps:` line creates a bidirectional link — the reader knows that fixing `#CRT-1` also addresses the PR comment, and vice versa. Only include it when there is an actual overlap. If your finding is net-new (not covered by any existing comment), omit the line.

@@ -8,6 +8,24 @@ Do not stage, commit, push, merge, rebase, tag, stash, reset, restore, or close 
 
 Only the implementor edits product code and tests. The coordinator edits OpenSpec artifacts and controls the workflow. Reviewers do not edit files.
 
+## Fast mode
+
+The `--fast` flag selects a shorter workflow for a small issue. The session that runs the skill does the work itself, thus no coordinator or implementor subagent starts. That session edits the OpenSpec artifacts, the product code, and the tests. Only the verification stays independent.
+
+Do these steps in order:
+
+1. Do the "Start" section.
+2. Do the "Explore and specify" section with the clarity gate. Ask the user with the `ask_user` tool.
+3. Load `viv-opsx-artifact-check` and audit the artifacts. Correct the supported critical findings in one pass.
+4. Obey the Apply instructions, complete the tasks, and do the applicable tests.
+5. Call the `subagent` tool with `action: "run"`, `agent: "viv-issue-reviewer"`, `context: "fresh"`, and the `reviewer` model settings for the selected flavor and effort. Wait for it. Tell it to obey the instruction file for `verify`. Give it the review packet, the change name, the artifact paths, and the baseline result. Keep its run identifier.
+6. Investigate each finding against the repository. Fix each supported correctness or acceptance finding, and do the affected tests.
+7. If step 6 changed the code, resume the same reviewer run. Ask it to check only the fixed findings and the changed code.
+8. If a supported critical finding remains after that check, stop and ask the user. Do not start a third review.
+9. Do the "Sync and archive" section.
+
+Do not do the `Audit the artifacts` or the `Apply and verify` section.
+
 ## OpenSpec instructions
 
 For each OpenSpec phase, read its instruction file in full. Use the first file that exists in this search order:

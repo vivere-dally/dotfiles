@@ -1,7 +1,7 @@
 ---
 name: viv-handle-issue
 description: Resolve a ready GitHub issue through OpenSpec with separate coordinator, implementor, and reviewer agents. Use only when the user invokes this skill with an issue and an optional effort level.
-argument-hint: "<issue> [medium|high|expert]"
+argument-hint: "<issue> [--fast] [medium|high|expert]"
 disable-model-invocation: true
 ---
 
@@ -11,6 +11,17 @@ Input: `$ARGUMENTS`
 
 The issue can be a GitHub URL, `owner/repo#number`, or an issue number for the current repository.
 The final argument can be `medium`, `high`, or `expert`. Use `medium` when the argument is absent. Reject a different effort value.
+The input can contain `--fast` before the effort.
+
+Set this session goal with `/goal` before the work starts:
+
+> The workflow reports a successful OpenSpec archive for the supplied issue. The required tests pass, and no blocking review finding remains. No commit, push, merge, or GitHub write occurs.
+
+## With `--fast`
+
+Read `${CLAUDE_SKILL_DIR}/WORKFLOW.md` in full. Do its "Fast mode" section in this conversation. The effort selects the reviewer agent: `viv-issue-reviewer-<effort>`. This explicit invocation authorizes the branch action in the workflow.
+
+## Without `--fast`
 
 Start one foreground agent with the `Agent` tool:
 
@@ -21,10 +32,6 @@ Start one foreground agent with the `Agent` tool:
 | `expert` | `viv-issue-coordinator-expert` |
 
 Give the agent the complete issue input and the selected effort. Tell the agent that this explicit invocation authorizes the branch action in its workflow.
-
-Set this session goal with `/goal` before the agent starts:
-
-> The coordinator reports a successful OpenSpec archive for the supplied issue. The required tests pass, and no blocking review finding remains. No commit, push, merge, or GitHub write occurs.
 
 Wait for the coordinator. Do not do its work in this conversation.
 

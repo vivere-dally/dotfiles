@@ -1,0 +1,5 @@
+{
+  "medium": "zai/glm-5.3-flash:high",
+  "high": "zai/glm-5.3:high",
+  "expert": "zai/glm-5.3:max"
+}

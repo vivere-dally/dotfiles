@@ -15,5 +15,6 @@
   "global_instructions": "Ask the user before you change a file outside the active project, including with a shell command.",
   "worktree_isolation_clause": "",
   "scratch_dir": "tmp/pi",
-  "long_command": "the `bash` tool and a timeout of at least 60 minutes"
+  "long_command": "the `bash` tool and a timeout of at least 60 minutes",
+  "start_fixer": "the `subagent` tool, `action: \"run\"`, `agent: \"viv-review-fixer\"`, `context: \"fresh\"`, and a `model` from the `<effort>` key of `<skill-dir>/fixer-models.json`"
 }

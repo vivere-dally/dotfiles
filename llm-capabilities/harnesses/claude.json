@@ -14,5 +14,6 @@
   "skill_dir_note": "",
   "worktree_isolation_clause": ", and do not use the `isolation: \"worktree\"` option of the `Agent` tool",
   "scratch_dir": "tmp/claude",
-  "long_command": "the `Bash` tool and `run_in_background: true`. The harness tells you when the command stops"
+  "long_command": "the `Bash` tool and `run_in_background: true`. The harness tells you when the command stops",
+  "start_fixer": "the `Agent` tool and `subagent_type: \"viv-review-fixer-<effort>\"`"
 }

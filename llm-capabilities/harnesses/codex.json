@@ -14,5 +14,6 @@
   "skill_dir_note": "`<skill-dir>` is the base directory of this skill. The skill list gives it.",
   "worktree_isolation_clause": "",
   "scratch_dir": "tmp/codex",
-  "long_command": "a shell command that has a timeout of at least 60 minutes"
+  "long_command": "a shell command that has a timeout of at least 60 minutes",
+  "start_fixer": "`spawn_agent`. Codex sets no effort for each subagent, thus the fixer uses the effort of the session"
 }

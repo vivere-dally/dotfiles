@@ -12,6 +12,11 @@ You are a code reviewer. Your job is to review a GitHub pull request and give ac
 
 Input: {{arguments}}
 
+The input can have these flags after the PR reference:
+
+- `--ocr`: also run an `ocr` review, and merge its findings. See "OCR review".
+- `--fix` or `--fix=<effort>`: after the report, a subagent fixes the findings. `<effort>` is `medium`, `high`, or `expert`, and the default is `medium`. Reject a different value. See "Fix".
+
 ---
 
 ## Step 0: Understand the Existing Conversation
@@ -30,16 +35,34 @@ Extract the PR number from the input (URL, `#123`, or bare number). If no input,
 Run ONE chained bash command to gather all PR data at once:
 
 ```
-PR=<number>; gh pr view $PR --json title,body,baseRefName,headRefName,author,labels,comments,reviews,reviewRequests && echo "---DIFF---" && gh pr diff $PR && echo "---CHECKS---" && gh pr checks $PR
+PR=<number>; gh pr view $PR --json title,body,baseRefName,headRefName,headRefOid,author,labels,comments,reviews,reviewRequests && echo "---DIFF---" && gh pr diff $PR && echo "---CHECKS---" && gh pr checks $PR
 ```
 
 If the diff is huge (5000+ lines), filter to source code files only:
 
 ```
-PR=<number>; gh pr view $PR --json title,body,baseRefName,headRefName,author,labels,comments,reviews,reviewRequests && echo "---CHECKS---" && gh pr checks $PR && echo "---FILES---" && gh pr diff $PR --name-only && echo "---DIFF---" && gh pr diff $PR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' '*.rs' '*.java' '*.rb' '*.swift' '*.kt' '*.cs' '*.c' '*.cpp' '*.h'
+PR=<number>; gh pr view $PR --json title,body,baseRefName,headRefName,headRefOid,author,labels,comments,reviews,reviewRequests && echo "---CHECKS---" && gh pr checks $PR && echo "---FILES---" && gh pr diff $PR --name-only && echo "---DIFF---" && gh pr diff $PR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' '*.rs' '*.java' '*.rb' '*.swift' '*.kt' '*.cs' '*.c' '*.cpp' '*.h'
 ```
 
 **Do NOT run these as separate commands. Chain them with `&&` in a single bash call.**
+
+---
+
+## OCR review (`--ocr`)
+
+Start `ocr` directly after Step 1, because it runs for a long time. Then do your own review while it runs.
+
+1. If `git cat-file -e <headRefOid>` fails, the head commit is not local. Ask the user before you run `git fetch origin pull/<number>/head`.
+2. {{load_skill:viv-ocr-review}}. Do its steps 2 and 3 with these values:
+   - The target is `--from origin/<baseRefName> --to <headRefOid>`.
+   - The background is the PR title and body from Step 1.
+3. Continue with Step 2 and your review.
+4. When `ocr` stops, do steps 4 and 5 of `viv-ocr-review`. This skill makes the report, thus skip its step 6.
+5. Merge the findings of `ocr` into your findings:
+   - A confirmed finding that you also found: add `ocr` to the source of your finding.
+   - A confirmed finding that is new: add it with the source `ocr`. Give it a severity from the definitions in "Output Format", not from the `ocr` label.
+   - An unsure finding: put it in "Unsure OCR Findings" with its question.
+   - A rejected finding: put it in "Rejected OCR Findings" in one line, with the `file:line` that disproves it.
 
 ---
 
@@ -116,6 +139,8 @@ Use this exact structure. Only include sections that have findings — skip empt
 
 One-line summary of what the PR does (your understanding, not just restating the title). If CI checks are failing, mention them here.
 
+With `--ocr`, add the `ocr` status, the path of its JSON file, and each file that it did not review.
+
 ### Existing PR Comments
 
 Analyze all existing review comments and group them. For each group:
@@ -138,6 +163,7 @@ Location: <file>:<line(s)>
 Issue: <what's wrong and the concrete scenario where it breaks>
 Fix: <how to address it>
 Overlaps: <PR comment by @author on file:line> (only if an existing comment covers this)
+Source: <review | ocr | review, ocr> (only with --ocr)
 ```
 
 ### Warning — `#WRN-<n>`
@@ -152,6 +178,14 @@ Improvements to structure, readability, or performance that are not bugs. Things
 
 Same format as Critical, with `#SGS-<n>` prefix.
 
+### Unsure OCR Findings
+
+With `--ocr` only. Each `ocr` finding that the code does not decide, with the question that decides it.
+
+### Rejected OCR Findings
+
+With `--ocr` only. One line for each rejected `ocr` finding, with the `file:line` that disproves it.
+
 ### Tone and Style Rules
 
 - Be direct and matter-of-fact. Not accusatory, not overly positive.
@@ -159,3 +193,19 @@ Same format as Critical, with `#SGS-<n>` prefix.
 - Write so the reader can quickly skim — the tag + title must convey the gist.
 - Do not overstate severity. A potential issue under rare conditions is a Warning, not Critical.
 - The `Overlaps:` line creates a bidirectional link — the reader knows that fixing `#CRT-1` also addresses the PR comment, and vice versa. Only include it when there is an actual overlap. If your finding is net-new (not covered by any existing comment), omit the line.
+
+---
+
+## Fix (`--fix`)
+
+The `--fix` flag is the approval of the user. Thus start the fixer after the report, and do not wait.
+
+1. Make sure that `git rev-parse HEAD` gives `headRefOid`. If not, ask the user before you run `gh pr checkout <number>`.
+2. If `git status --porcelain` shows changes, ask the user before you continue. The fixes would mix with those changes.
+3. Select each Critical and each Warning finding. Select a Suggestion only when the input names its ID.
+4. Start the fixer with {{start_fixer}}. Give it each selected finding with its ID, location, issue, and fix. Give it the path `{{skill_dir}}/FIXER.md`, and tell it to read and obey that file.
+5. When the fixer stops, read `git diff`. Make sure that each change fixes its finding and changes nothing else.
+6. Run the full test suite one time.
+7. Give the result of each finding: `fixed`, `rejected` with the evidence, or `question` with the question. For each Critical finding, give the failure output and the pass output of its test. Give the fixer effort and the result of the test suite.
+
+Do not stage or commit the fixes.

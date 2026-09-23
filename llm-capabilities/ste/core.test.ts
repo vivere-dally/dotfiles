@@ -49,3 +49,18 @@ test("extracts every destination from an apply_patch payload", () => {
   ].join("\n");
   expect(patchFiles(patch)).toEqual(["one.md", "two.md", "three.md"]);
 });
+
+describe("write gate", () => {
+  test("ignores a Markdown file in an openspec directory", () => {
+    const prose = "The value can be adjusted; e.g. it's done.";
+    const verdict = evaluate(
+      { kind: "wrote", paths: ["/repo/openspec/changes/add-x/proposal.md", "/repo/docs/guide.md"] },
+      { ...context, projectDir: "/repo", read: (path) => (path.startsWith("/repo/") ? prose : read(path)) },
+    );
+    expect(verdict.action).toBe("advise");
+    if (verdict.action === "advise") {
+      expect(verdict.text).toContain("docs/guide.md");
+      expect(verdict.text).not.toContain("openspec");
+    }
+  });
+});

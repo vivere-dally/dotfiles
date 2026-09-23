@@ -548,6 +548,9 @@ export function resolvePath(base: string, path: string): string {
   return `${base.replace(/\/+$/, "")}/${path.replace(/^\.\//, "")}`;
 }
 
+/** OpenSpec artifacts follow the OpenSpec format, and rules/ste.md exempts them. */
+const OPENSPEC_PATH = /(^|\/)openspec\//;
+
 /** The rules that the gate enforces, read one time for each call. */
 export type Rules = { dir: string; traps: Trap[] };
 
@@ -612,7 +615,7 @@ export function evaluate(event: GateEvent, ctx: GateContext): Verdict {
     // A write only advises: the file is already on disk, and the next edit fixes it.
     const reports: string[] = [];
     for (const path of event.paths) {
-      if (!path.endsWith(".md")) continue;
+      if (!path.endsWith(".md") || OPENSPEC_PATH.test(path)) continue;
       const source = ctx.read(path);
       if (source === null) continue;
       const where = shortPath(path);
@@ -698,6 +701,7 @@ export function evaluate(event: GateEvent, ctx: GateContext): Verdict {
 
 /** The `--file` entry: one document against the descriptive limits. */
 export function checkDocument(path: string, source: string, rules: Rules, projectDir: string): Finding[] {
+  if (OPENSPEC_PATH.test(path)) return [];
   const where = path.replace(`${projectDir.replace(/\/+$/, "")}/`, "");
   return checkText(where, rules.traps, MAX_WORDS_DESCRIPTIVE, markdownProse(source));
 }

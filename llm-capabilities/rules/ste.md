@@ -12,7 +12,8 @@ Use STE in:
 - each GitHub issue: the title, the body, and a comment
 - each document that you write
 
-STE does not apply to a chat reply, or to a comment in the code.
+STE does not apply to a chat reply, to a comment in the code, or to a file in an
+`openspec/` directory.
 
 STE controls prose only. It does not control code, an identifier, a command, a
 tool name, or text that you copy from a file. Keep the copied text as it is.

@@ -92,8 +92,12 @@ Also check for conventions files (CONVENTIONS.md, AGENTS.md, .editorconfig) if t
 - Are there established abstractions that it must use but does not?
 - Excessive nesting that could be flattened with early returns or extraction
 
-**Performance** - Only flag if obviously problematic.
-- O(n^2) on unbounded data, N+1 queries, blocking I/O on hot paths
+**Performance** - Flag each of these patterns on input that has no bound in production. Give the `file:line` and the input size that makes it slow. It is a Warning, unless it can take down production.
+- A membership test or a search on a list inside a loop
+- A query, an HTTP call, or a lazy relation access inside a loop over rows
+- A query without a limit on a table that grows
+- A sort or a copy inside a loop
+- Blocking I/O on a hot path
 
 **Behavior Changes** - If a behavioral change is introduced, raise it (especially if it is possibly unintentional).
 

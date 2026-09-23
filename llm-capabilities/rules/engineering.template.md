@@ -25,6 +25,10 @@
 - Bound each operation whose cost grows with an input that the code does not control (file size, tree size, row count). Stream, chunk, or page it.
 - Keep the throughput when you add a bound. Use a queue of fixed width, not a sequential loop.
 - If no bound is possible, tell the user in the same reply. A `TODO(perf)` is not a bound.
+- Match the data structure to the access. If a loop looks up items by key or tests membership, build a set or a map one time before the loop.
+- Keep queries and network calls out of loops over rows. Collect the keys first, and fetch the relation in one call (`select_related`, `includes`, `joinedload`, `selectinload`).
+- When the project has a query-count test or an N+1 detector, add an assertion for each new code path that returns a list. If a project with an ORM has neither, propose one to the user, and add it only after the user agrees.
+- Prove a claimed speedup with a measurement on an input large enough to show the complexity classes. Give the input sizes and the numbers.
 - Before you write a common operation, search for an existing helper by its verb. Extend a near match where it lives. Never copy it.
 - Normalize untrusted input one time, where it enters the system. Code past that boundary trusts it.
 - If a lint rule flags a sanctioned idiom at many sites, change the lint config. Do not add a disable at each site, and do not rewrite the sites into a form that is not canonical.

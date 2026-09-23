@@ -31,6 +31,8 @@ Get the intent from these sources, in this order:
 - the pull request of the head branch: `gh pr view <head> --json title,body`
 - the issue that the pull request or the branch name refers to
 
+If the change reads a database or loops over input that grows, add a request to the background. Ask for a check of lookups in loops, queries in loops, and queries without a limit.
+
 `ocr` rejects a background file above 1 MiB, or above 8000 characters after it removes the markup. Write a summary that fits, and keep each requirement and each acceptance criterion.
 
 ## 3. Run the review

@@ -1,7 +1,7 @@
 ---
 name: viv-issue-coordinator
 description: Coordinates a ready GitHub issue from intake through the OpenSpec archive.
-tools: read, grep, find, ls, bash, edit, write
+tools: subagent, read, grep, find, ls, bash, edit, write
 allowNestedSubagents: true
 allowedAgents: viv-issue-coordinator, viv-issue-implementor, viv-issue-reviewer
 inheritProjectContext: true

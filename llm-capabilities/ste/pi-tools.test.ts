@@ -345,6 +345,19 @@ describe("Pi issue workflow", () => {
       "Do not start a fresh viv-issue-coordinator. The parent resumes this role only from its retained run.",
     );
   });
+
+  // pi-subagents gives a child the nested `subagent` tool only when its explicit
+  // `tools` list names it. Without it, the coordinator relays each launch through
+  // the parent, one launch for each parent turn.
+  test("gives the coordinator the subagent tool for its reviewers and implementor", () => {
+    const coordinator = readFileSync(
+      new URL("../pi/agents/viv-issue-coordinator.md", import.meta.url),
+      "utf8",
+    );
+    const tools = /^tools: (.+)$/m.exec(coordinator)?.[1]?.split(/,\s*/) ?? [];
+
+    expect(tools).toContain("subagent");
+  });
 });
 
 describe("Pi tmux status", () => {

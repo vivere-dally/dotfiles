@@ -29,6 +29,7 @@
       "skills": [],
       "prompts": []
     },
-    "npm:pi-web-access@0.30.0"
+    "npm:pi-web-access@0.30.0",
+    "npm:@narumitw/pi-goal@0.54.8"
   ]
 }

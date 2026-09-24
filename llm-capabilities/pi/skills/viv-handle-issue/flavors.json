@@ -5,7 +5,7 @@
       "coordinator": {
         "medium": { "model": "zai/glm-5.3-flash", "thinking": "high" },
         "high": { "model": "zai/glm-5.3", "thinking": "high" },
-        "expert": { "model": "zai/glm-5.3", "thinking": "max" }
+        "expert": { "model": "zai/glm-5.3", "thinking": "high" }
       },
       "implementor": {
         "medium": { "model": "zai/glm-5.3-flash", "thinking": "high" },
@@ -15,12 +15,12 @@
       "reviewer": {
         "medium": { "model": "zai/glm-5.3-flash", "thinking": "high" },
         "high": { "model": "zai/glm-5.3", "thinking": "high" },
-        "expert": { "model": "zai/glm-5.3", "thinking": "max" }
+        "expert": { "model": "zai/glm-5.3", "thinking": "high" }
       },
       "secondReviewer": {
         "medium": { "model": "zai/glm-5.3-flash", "thinking": "high" },
         "high": { "model": "zai/glm-5.3-flash", "thinking": "high" },
-        "expert": { "model": "zai/glm-5.3-flash", "thinking": "max" }
+        "expert": { "model": "zai/glm-5.3", "thinking": "high" }
       }
     }
   }

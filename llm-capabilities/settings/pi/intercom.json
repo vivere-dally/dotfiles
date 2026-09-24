@@ -1,0 +1,5 @@
+{
+  "inboundTrigger": "never",
+  "busyDelivery": "human-first",
+  "confirmSend": true
+}

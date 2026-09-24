@@ -200,6 +200,12 @@ if [[ -d $PI_SETTINGS.lock ]]; then
 fi
 merge_json_file "$PI_SETTINGS" "$SRC/settings/pi/settings.json" pi
 merge_json_file "$HOME/.pi/agent/web-search.json" "$SRC/settings/pi/web-search.json" pi-web-access
+# The pi-intercom broker does not check which local process sends a message, and
+# by default a message starts or steers a turn with no user approval. The managed
+# keys make each message wait for the user, and each send ask for confirmation.
+# pi-intercom keeps its broker socket in this directory and wants mode 700.
+install -d -m 700 "$HOME/.pi/agent/intercom"
+merge_json_file "$HOME/.pi/agent/intercom/config.json" "$SRC/settings/pi/intercom.json" pi-intercom
 # pi-subagents reads its workflow policy beside the extension instead of from
 # Pi's settings file.
 SUBAGENT_CONFIG="$HOME/.pi/agent/extensions/subagent/config.json"

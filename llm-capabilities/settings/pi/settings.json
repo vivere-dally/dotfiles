@@ -29,6 +29,7 @@
       "prompts": []
     },
     "npm:pi-web-access@0.30.0",
-    "npm:@narumitw/pi-goal@0.54.8"
+    "npm:@narumitw/pi-goal@0.54.8",
+    "npm:pi-intercom@0.14.0"
   ]
 }

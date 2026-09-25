@@ -8,7 +8,6 @@ import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import type { Node, Parser } from "web-tree-sitter";
 
 export type ToolCallEvent = {
   toolName: string;
@@ -42,19 +41,67 @@ type Pi = {
   on(event: PermissionGateEventName, handler: PermissionGateHandler): void;
 };
 
+/**
+ * `pattern` is a cheap test on the raw text, so that most commands skip the parser.
+ * It is loose on purpose, because it also meets quoted text such as a grep pattern
+ * that holds `rm -f`. Only `matches`, which reads the parsed words of one simple
+ * command, decides.
+ */
 type CommandRule = {
   pattern: RegExp;
   reason: string;
+  matches: (name: string, args: string[], sh: Shell) => boolean;
+};
+
+type Shell = typeof import("../../ste/shell.ts");
+
+const hasShortFlag = (args: string[], letters: RegExp) => args.some((a) => /^-[^-]/.test(a) && letters.test(a.slice(1)));
+
+const git = (sub: string, test: (args: string[]) => boolean) => (name: string, args: string[], sh: Shell) => {
+  if (name !== "git") return false;
+  const [actual, rest] = sh.gitSubcommand(args);
+  return actual === sub && test(rest);
 };
 
 const commandRules: CommandRule[] = [
-  { pattern: /\brm\s+(?:-[^\s]*[rR][^\s]*\s+|--recursive\b)/, reason: "recursive file removal" },
-  { pattern: /(?:^|[;&|\n]\s*)sudo(?:\s|$)/, reason: "elevated command" },
-  { pattern: /\b(?:chmod|chown)\b[^\n]*(?:777|--recursive|-R)\b/, reason: "broad permission change" },
-  { pattern: /\bgit\s+reset\s+--hard\b/, reason: "destructive Git reset" },
-  { pattern: /\bgit\s+clean\b[^\n]*\s-[^\s]*f/, reason: "untracked-file removal" },
-  { pattern: /\bgit\s+(?:checkout\s+--|restore\b)/, reason: "working-tree restoration" },
-  { pattern: /\bgit\s+push\b[^\n]*(?:--force(?:-with-lease)?|-f)\b/, reason: "forced Git push" },
+  {
+    pattern: /\brm\b/,
+    reason: "recursive file removal",
+    matches: (name, args) => name === "rm" && (args.includes("--recursive") || hasShortFlag(args, /[rR]/)),
+  },
+  {
+    pattern: /\bsudo\b/,
+    reason: "elevated command",
+    matches: (name) => name === "sudo",
+  },
+  {
+    pattern: /\b(?:chmod|chown)\b/,
+    reason: "broad permission change",
+    matches: (name, args) =>
+      (name === "chmod" || name === "chown") &&
+      (args.includes("777") || args.includes("--recursive") || hasShortFlag(args, /R/)),
+  },
+  {
+    pattern: /\bgit\b[\s\S]*\breset\b/,
+    reason: "destructive Git reset",
+    matches: git("reset", (args) => args.includes("--hard")),
+  },
+  {
+    pattern: /\bgit\b[\s\S]*\bclean\b/,
+    reason: "untracked-file removal",
+    matches: git("clean", (args) => args.includes("--force") || hasShortFlag(args, /f/)),
+  },
+  {
+    pattern: /\bgit\b[\s\S]*\b(?:checkout|restore)\b/,
+    reason: "working-tree restoration",
+    matches: (name, args, sh) =>
+      git("checkout", (rest) => rest.includes("--"))(name, args, sh) || git("restore", () => true)(name, args, sh),
+  },
+  {
+    pattern: /\bgit\b[\s\S]*\bpush\b/,
+    reason: "forced Git push",
+    matches: git("push", (args) => args.some((a) => a.startsWith("--force")) || hasShortFlag(args, /f/)),
+  },
 ];
 
 const filesystemMutation =
@@ -85,56 +132,28 @@ const expandHome = (path: string): string => {
 };
 
 // pi loads this file through a symlink in its extensions directory. The real path
-// finds the node_modules of llm-capabilities, whatever way jiti resolves a bare import.
-const nodeModules = join(dirname(realpathSync(fileURLToPath(import.meta.url))), "..", "..", "node_modules");
-let bashParser: Promise<Parser> | undefined;
-const loadBashParser = (): Promise<Parser> =>
-  (bashParser ??= (async () => {
-    const treeSitter: typeof import("web-tree-sitter") = await import(
-      pathToFileURL(join(nodeModules, "web-tree-sitter", "web-tree-sitter.js")).href
-    );
-    await treeSitter.Parser.init({ locateFile: () => join(nodeModules, "web-tree-sitter", "web-tree-sitter.wasm") });
-    const parser = new treeSitter.Parser();
-    parser.setLanguage(await treeSitter.Language.load(join(nodeModules, "tree-sitter-bash", "tree-sitter-bash.wasm")));
-    return parser;
-  })());
+// finds ste/shell.ts, whatever way jiti resolves a relative import from a symlink.
+const shellPath = join(dirname(realpathSync(fileURLToPath(import.meta.url))), "..", "..", "ste", "shell.ts");
+let shellModule: Promise<typeof import("../../ste/shell.ts")> | undefined;
+const loadShell = () => (shellModule ??= import(pathToFileURL(shellPath).href));
 
-/** The literal text of one shell word, without its quotes. */
-const wordText = (node: Node): string => {
-  if (node.type === "raw_string") return node.text.slice(1, -1);
-  if (node.type === "string") return node.text.slice(1, -1);
-  return node.text.replace(/['"]/g, "");
-};
+/** The words of each simple command, or `undefined` when the parser cannot read the script. */
+const parseCommands = async (command: string) => (await loadShell()).parseCommands(command);
 
-/**
- * The words of each simple command in the script, commands inside `<(...)` and
- * `$(...)` included. Only the words of a file-changing command are checked for
- * paths, thus a sed script or a grep pattern elsewhere in the line is never read
- * as a path.
- */
-const simpleCommands = (root: Node): string[][] => {
-  const commands: string[][] = [];
-  const walk = (node: Node) => {
-    if (node.type === "command") {
-      const name = node.childForFieldName("name");
-      if (name) commands.push([wordText(name), ...node.childrenForFieldName("argument").map(wordText)]);
-    }
-    for (const child of node.namedChildren) if (child) walk(child);
-  };
-  walk(root);
-  return commands;
-};
-
-/** `env VAR=value` and `command` only start the real command. */
-const unwrap = (words: string[]): string[] => {
-  let rest = words;
-  for (;;) {
-    if (rest[0] === "command") rest = rest.slice(1);
-    else if (rest[0] === "env") {
-      rest = rest.slice(1);
-      while (rest[0] && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0]) || rest[0].startsWith("-"))) rest = rest.slice(1);
-    } else return rest;
+/** The reason of the first risky rule that a real command meets, not quoted text. */
+const riskyCommandReason = async (command: string): Promise<string | undefined> => {
+  const candidates = commandRules.filter((rule) => rule.pattern.test(command));
+  if (candidates.length === 0) return undefined;
+  const commands = await parseCommands(command);
+  // A script that the gate cannot read fails closed, with the reason of the text match.
+  if (!commands) return candidates[0].reason;
+  const sh = await loadShell();
+  for (const words of commands) {
+    const [name, ...args] = sh.unwrap(words);
+    const rule = name ? candidates.find((r) => r.matches(name, args, sh)) : undefined;
+    if (rule) return rule.reason;
   }
+  return undefined;
 };
 
 type ShellFinding = { kind: "external"; path: string } | { kind: "unparsed" };
@@ -144,10 +163,11 @@ const externalMutationPath = async (cwd: string, command: string): Promise<Shell
 
   // This is an accident guard for common shell file commands. The shell can hide
   // a path behind arbitrary code, so operating-system isolation remains the security boundary.
-  const tree = (await loadBashParser()).parse(command);
-  if (!tree || tree.rootNode.hasError) return { kind: "unparsed" };
+  const commands = await parseCommands(command);
+  if (!commands) return { kind: "unparsed" };
+  const { unwrap } = await loadShell();
   let externalPath: string | undefined;
-  for (const words of simpleCommands(tree.rootNode)) {
+  for (const words of commands) {
     const [name, ...args] = unwrap(words);
     if (!name || !mutationCommands.has(name)) continue;
     for (const arg of args) {
@@ -219,8 +239,8 @@ export default function registerPermissionGate(pi: Pi) {
       if (finding?.kind === "unparsed") {
         return request(ctx, "Confirm host command", `filesystem command that the gate cannot parse:\n\n${preview(command)}`);
       }
-      const matched = commandRules.find((rule) => rule.pattern.test(command));
-      if (matched) return request(ctx, "Confirm host command", `${matched.reason}:\n\n${preview(command)}`);
+      const reason = await riskyCommandReason(command);
+      if (reason) return request(ctx, "Confirm host command", `${reason}:\n\n${preview(command)}`);
     }
 
     if (event.toolName === "write" || event.toolName === "edit") {

@@ -41,6 +41,7 @@ type Pi = {
 
 export default async function (pi: Pi) {
   const core = await import(pathToFileURL(join(root, "ste", "core.ts")).href);
+  const shell = await import(pathToFileURL(join(root, "ste", "shell.ts")).href);
   const pending = new Map<string, string>();
 
   // The rules load for each call, so that an edit of a rule file applies at once.
@@ -49,11 +50,14 @@ export default async function (pi: Pi) {
 
   const failure = (err: unknown) => `STE gate did not run: ${err instanceof Error ? err.message : String(err)}`;
 
-  pi.on("tool_call", (event, ctx) => {
+  pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return;
     let verdict;
     try {
-      verdict = run({ kind: "shell", command: String(event.input?.command ?? "") }, ctx.cwd);
+      const command = String(event.input?.command ?? "");
+      // A parser failure leaves the text match in charge, which errs on the side of a check.
+      const commands = await shell.parseCommands(command).catch(() => undefined);
+      verdict = run({ kind: "shell", command, commands }, ctx.cwd);
     } catch (err) {
       // A broken gate must not stop the work, but a silent one is a fake gate: say so.
       pending.set(event.toolCallId, failure(err));

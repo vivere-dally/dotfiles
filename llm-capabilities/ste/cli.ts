@@ -28,6 +28,7 @@ import {
   type GateEvent,
   type ReadText,
 } from "./core.ts";
+import { parseCommands } from "./shell.ts";
 
 const read: ReadText = (path) => {
   try {
@@ -58,7 +59,7 @@ function checkFile(path: string): number {
 }
 
 /** Maps one hook payload of Claude Code or Codex to the event that the core knows. */
-function toGateEvent(input: any, event: string, projectDir: string): GateEvent | null {
+async function toGateEvent(input: any, event: string, projectDir: string): Promise<GateEvent | null> {
   if (event === "UserPromptSubmit") return { kind: "prompt" };
   if (event === "Stop") {
     // One correction for each turn. When the model already continues because of
@@ -72,7 +73,7 @@ function toGateEvent(input: any, event: string, projectDir: string): GateEvent |
   // Codex can give an exec command as an argument vector. The gate reads the words.
   const command = Array.isArray(toolInput.command) ? toolInput.command.join(" ") : String(toolInput.command ?? "");
 
-  if (tool === "Bash") return { kind: "shell", command };
+  if (tool === "Bash") return { kind: "shell", command, commands: await parseCommandsOrNothing(command) };
   if (tool === "Write" || tool === "Edit" || tool === "MultiEdit") {
     const file: string = toolInput.file_path ?? "";
     return file ? { kind: "wrote", paths: [file] } : null;
@@ -83,7 +84,16 @@ function toGateEvent(input: any, event: string, projectDir: string): GateEvent |
   return null;
 }
 
-function main(): number {
+/** A parser failure leaves the text match of `core.ts` in charge, which errs on the side of a check. */
+async function parseCommandsOrNothing(command: string): Promise<string[][] | undefined> {
+  try {
+    return await parseCommands(command);
+  } catch {
+    return undefined;
+  }
+}
+
+async function main(): Promise<number> {
   // The command entry answers before any read of standard input. With no hook to
   // close the stream, a read there waits on a terminal that never sends an end.
   const flag = process.argv[2] ?? "";
@@ -107,7 +117,7 @@ function main(): number {
   const event: string = input.hook_event_name ?? (input.tool_response ? "PostToolUse" : "PreToolUse");
   const projectDir: string = claudeProject ?? input.cwd ?? process.cwd();
 
-  const gateEvent = toGateEvent(input, event, projectDir);
+  const gateEvent = await toGateEvent(input, event, projectDir);
   if (!gateEvent) return 0;
   const verdict = evaluate(gateEvent, { rules: loadRules(rulesDir, read), projectDir, read });
 
@@ -136,7 +146,7 @@ function main(): number {
 }
 
 try {
-  process.exit(main());
+  process.exit(await main());
 } catch (err) {
   const message = err instanceof Error ? err.message : String(err);
   // Under the command entry a broken checker must fail loudly, because a CI job

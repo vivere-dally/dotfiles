@@ -32,6 +32,7 @@ const read = (path: string): string | null => {
 
 export const SteGate = async ({ directory }: { directory: string }) => {
   const core = await import(pathToFileURL(join(root, "ste", "core.ts")).href);
+  const shell = await import(pathToFileURL(join(root, "ste", "shell.ts")).href);
   const pending = new Map<string, string>();
 
   // The rules load for each call, so that an edit of a rule file applies at once.
@@ -53,7 +54,8 @@ export const SteGate = async ({ directory }: { directory: string }) => {
       if (input.tool !== "bash") return;
       let verdict;
       try {
-        verdict = run({ kind: "shell", command: String(output.args?.command ?? "") });
+        const command = String(output.args?.command ?? "");
+        verdict = run({ kind: "shell", command, commands: await shell.parseCommands(command).catch(() => undefined) });
       } catch (err) {
         // A broken gate must not stop the work, but a silent one is a fake gate: say so.
         pending.set(input.callID, `STE gate did not run: ${err instanceof Error ? err.message : String(err)}`);

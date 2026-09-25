@@ -19,6 +19,8 @@
  * set is deliberately the narrow one and grows only if a rule proves deterministic.
  */
 
+import { gitSubcommand, unwrap } from "./shell.ts";
+
 export type Severity = "hard" | "soft";
 
 export type Finding = {
@@ -566,7 +568,13 @@ export function loadRules(rulesDir: string, read: ReadText): Rules {
  * payload to this shape, thus the decisions below exist one time only.
  */
 export type GateEvent =
-  | { kind: "shell"; command: string }
+  /**
+   * `commands` holds the parsed words of each simple command (`parseCommands` in
+   * `shell.ts`). With them, only a real `git commit` or `gh` command counts, not the
+   * same text inside a quoted argument. Without them, a text match decides, which
+   * errs on the side of a check.
+   */
+  | { kind: "shell"; command: string; commands?: string[][] }
   | { kind: "wrote"; paths: string[] }
   | { kind: "prompt" }
   | { kind: "reply"; text: string };
@@ -628,8 +636,16 @@ export function evaluate(event: GateEvent, ctx: GateContext): Verdict {
   const command = event.command;
   let findings: Finding[] = [];
   let subject = "";
+  const real = event.commands?.map(unwrap);
+  const isCommit = real
+    ? real.some(([name, ...args]) => name === "git" && gitSubcommand(args)[0] === "commit")
+    : /\bgit\s+commit\b/.test(command);
+  const ghWords = real?.find(
+    ([name, kind, action]) =>
+      name === "gh" && (kind === "pr" || kind === "issue") && ["create", "edit", "comment", "review"].includes(action ?? ""),
+  );
 
-  if (/\bgit\s+commit\b/.test(command)) {
+  if (isCommit) {
     const message = flagValues(command, "-m").join("\n\n");
     subject = "the commit";
     // No -m means an editor or a file supplies the message; there is nothing to read.
@@ -657,7 +673,7 @@ export function evaluate(event: GateEvent, ctx: GateContext): Verdict {
       });
     }
   } else {
-    const gh = GH_TEXT_COMMAND.exec(command);
+    const gh = real ? (ghWords ? [ghWords.join(" "), ghWords[1], ghWords[2]] : null) : GH_TEXT_COMMAND.exec(command);
     if (!gh) return { action: "none" };
     subject = ghSubject(gh[1] ?? "", gh[2] ?? "");
     const { texts, unreadable } = ghPayload(command, ctx.projectDir, ctx.read);

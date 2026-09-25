@@ -242,6 +242,34 @@ describe("Pi permission gate", () => {
     expect(promptCount).toBe(0);
   });
 
+  test("reads risky commands from the parsed command, not from quoted text", async () => {
+    const ask = async (command: string) => {
+      const prompts: string[] = [];
+      await permissionHandler()(
+        { toolName: "bash", input: { command } },
+        {
+          cwd: "/workspace/project",
+          hasUI: true,
+          ui: {
+            async confirm(title, message) {
+              prompts.push(`${title}\n${message}`);
+              return true;
+            },
+          },
+        },
+      );
+      return prompts;
+    };
+
+    expect(
+      await ask('grep -rn "removes the container\\|rm -f\\|forceRemove\\|by its name" openspec/specs/ | head -20'),
+    ).toEqual([]);
+    expect(await ask("git log --grep 'git push --force' --oneline")).toEqual([]);
+    expect((await ask("cd build && rm -fr dist"))[0]).toContain("recursive file removal");
+    expect((await ask("git push -f origin main"))[0]).toContain("forced Git push");
+    expect((await ask("git -C ../other push --force-with-lease"))[0]).toContain("forced Git push");
+  });
+
   test("reads paths only from the arguments of the command that changes files", async () => {
     const ask = async (command: string) => {
       const prompts: string[] = [];

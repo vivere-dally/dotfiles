@@ -29,6 +29,44 @@ describe("command adapter", () => {
   });
 });
 
+describe("commit detection", () => {
+  // The text of a commit command inside a quoted argument is not a commit.
+  const quotedCommit = `grep -rn "${unsignedCommit.replace(/"/g, "'")}" docs`;
+
+  test("the command adapter lets a command that only quotes a commit run", async () => {
+    const input = JSON.stringify({
+      hook_event_name: "PreToolUse",
+      tool_name: "Bash",
+      tool_input: { command: quotedCommit },
+      cwd: projectDir,
+    });
+    const child = Bun.spawn({
+      cmd: [process.execPath, join(import.meta.dir, "cli.ts")],
+      cwd: projectDir,
+      stdin: "pipe",
+      stdout: "pipe",
+    });
+    child.stdin.write(input);
+    child.stdin.end();
+    expect(await child.exited).toBe(0);
+    expect((await new Response(child.stdout).text()).trim()).toBe("");
+  });
+
+  test("the pi adapter lets a command that only quotes a commit run", async () => {
+    const handlers: Record<string, (event: any, context: { cwd: string }) => unknown> = {};
+    await registerPi({
+      on(event, handler) {
+        handlers[event] = handler;
+      },
+    });
+    const verdict = await handlers.tool_call?.(
+      { toolName: "bash", toolCallId: "call-2", input: { command: quotedCommit } },
+      { cwd: projectDir },
+    );
+    expect(verdict).toBeUndefined();
+  });
+});
+
 describe("opencode adapter", () => {
   test("blocks an unsigned commit before execution", async () => {
     const hooks = await SteGate({ directory: projectDir });
@@ -49,7 +87,7 @@ describe("pi adapter", () => {
         handlers[event] = handler;
       },
     });
-    const verdict = handlers.tool_call?.(
+    const verdict = await handlers.tool_call?.(
       { toolName: "bash", toolCallId: "call-1", input: { command: unsignedCommit } },
       { cwd: projectDir },
     );

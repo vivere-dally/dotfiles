@@ -166,6 +166,7 @@ local lsp_servers = {
 
   -- Javascript ecosystem
   'ts_ls',
+  'tsc',
   -- 'biome', -- Does not currently work for me since I am working on projects with eslint/prettier. Maybe in the future
   'tailwindcss',
   'eslint',
@@ -197,7 +198,41 @@ local lsp_servers = {
 local external_lsp_servers = {
   gopls = true,
   templ = true,
+  -- The native TypeScript 7 compiler of the project, from node_modules/.bin.
+  tsc = true,
 }
+
+-- ts_ls wraps tsserver.js, which TypeScript 7 no longer ships, and the native
+-- `tsc --lsp` exists only from TypeScript 7. Each project gets the server that
+-- matches the TypeScript it resolves from node_modules.
+local function typescript_major(bufnr)
+  local manifest = vim.fs.find('node_modules/typescript/package.json', {
+    upward = true,
+    path = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr)),
+  })[1]
+  if not manifest then return nil end
+  local ok, package = pcall(function()
+    return vim.json.decode(table.concat(vim.fn.readfile(manifest), '\n'))
+  end)
+  if not ok then return nil end
+  local version = vim.version.parse(package.version or '')
+  return version and version.major
+end
+
+local function attach_for_typescript(server, accepts)
+  local root_dir = vim.lsp.config[server].root_dir
+  vim.lsp.config(server, {
+    root_dir = function(bufnr, on_dir)
+      if accepts(typescript_major(bufnr)) then root_dir(bufnr, on_dir) end
+    end,
+  })
+end
+attach_for_typescript('tsc', function(major)
+  return major ~= nil and major >= 7
+end)
+attach_for_typescript('ts_ls', function(major)
+  return major == nil or major < 7
+end)
 local mason_lsp_servers = {}
 for _, server in ipairs(lsp_servers) do
   if not external_lsp_servers[server] then table.insert(mason_lsp_servers, server) end

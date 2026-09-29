@@ -145,8 +145,12 @@ export PATH="$HOME/.mtplx/bin:$PATH"
 # `brew shellenv` exports it; asking brew covers shells that skipped that.
 if command -v brew >/dev/null 2>&1; then
     : ${HOMEBREW_PREFIX:=$(brew --prefix)}
-    _openjdk_prefix=$(brew --prefix openjdk 2>/dev/null)
-    if [[ -n $_openjdk_prefix ]]; then
+    # Homebrew JDKs are keg-only, and `brew --prefix openjdk` prints a path even
+    # when the formula is not installed. Use the newest installed keg: the
+    # floating `openjdk` first, then `openjdk@N` from the highest N.
+    _openjdk_prefixes=("$HOMEBREW_PREFIX"/opt/openjdk(N-/) "$HOMEBREW_PREFIX"/opt/openjdk@<->(N-/nOn))
+    if (( $#_openjdk_prefixes )); then
+        _openjdk_prefix=$_openjdk_prefixes[1]
         export PATH="$_openjdk_prefix/bin:$PATH"
         if [[ -d $_openjdk_prefix/libexec/openjdk.jdk/Contents/Home ]]; then
             export JAVA_HOME="$_openjdk_prefix/libexec/openjdk.jdk/Contents/Home"
@@ -154,7 +158,7 @@ if command -v brew >/dev/null 2>&1; then
             export JAVA_HOME="$_openjdk_prefix"
         fi
     fi
-    unset _openjdk_prefix
+    unset _openjdk_prefix _openjdk_prefixes
 
     export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/icu4c/lib/pkgconfig:$PKG_CONFIG_PATH"
 fi

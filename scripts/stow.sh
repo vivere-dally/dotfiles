@@ -48,6 +48,23 @@ make_way() {
 }
 make_way .claude
 
+# Karabiner saves karabiner.json as a new file, which replaces a link to the
+# file. Only a link to the whole directory survives, and stow makes one only
+# when ~/.config/karabiner does not exist.
+karabiner="$HOME/.config/karabiner"
+if [[ -d $karabiner && ! -L $karabiner ]]; then
+    mkdir -p "$BACKUP/.config"
+    mv "$karabiner" "$BACKUP/.config/karabiner"
+    echo "moved aside: ~/.config/karabiner -> $BACKUP/.config/karabiner"
+    restart_karabiner=1
+fi
+
 stow --dir="$DOTFILES" --target="$HOME" --restow . claude
+
+# The running Karabiner watches the directory that was moved aside.
+if [[ -n ${restart_karabiner:-} ]] && command -v launchctl >/dev/null; then
+    launchctl kickstart -k "gui/$(id -u)/org.pqrs.service.agent.karabiner_console_user_server" ||
+        echo "restart Karabiner-Elements to load ~/.config/karabiner"
+fi
 
 "$DOTFILES/scripts/llm-capabilities.sh"

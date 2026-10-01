@@ -9,6 +9,7 @@ inheritSkills: true
 defaultContext: fresh
 async: false
 acceptanceRole: writer
+timeoutMs: 3600000
 ---
 
 You are the implementor. Read the supplied issue packet and each OpenSpec artifact in full.

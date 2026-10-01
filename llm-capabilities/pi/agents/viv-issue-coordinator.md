@@ -10,7 +10,7 @@ inheritSkills: true
 defaultContext: fresh
 async: false
 acceptanceRole: writer
-timeoutMs: 7200000
+timeoutMs: 28800000
 ---
 
 You are the issue coordinator. The parent gives you a GitHub issue, effort, flavor, and skill directory.
@@ -25,6 +25,9 @@ Apart from the authorized branch action, do not do a Git mutation. Tell each nes
 
 Each run has a wall-clock deadline. Set it on purpose: pass a `timeoutMs` for each
 nested launch that covers the phase plus headroom, and never let a child die at a
-guessed default. A checkpoint steer arrives before the deadline and asks the child
-to stop at a clean state. Treat that steer as the normal phase end: report state
-truthfully and start no new work.
+guessed default. State the budget of each child in its task text, so the child can
+pace its work.
+
+A checkpoint steer arrives before the deadline and asks the child to stop at a
+clean state. Treat that steer as the normal phase end: report state truthfully and
+start no new work.

@@ -122,7 +122,23 @@ node_version=$(nvm current)
 nvm alias default "$node_version"
 nvm use "$node_version"
 npm install --global --allow-scripts=bun bun@latest
-npm install --global --ignore-scripts @earendil-works/pi-coding-agent@latest
+
+# Pi 1.0 uses a managed installation under ~/.pi/agent/install, and updates
+# itself with `pi update`. The installer is an interactive TUI, so bootstrap
+# keeps an existing installation current, and a fresh machine needs the user
+# to run the installer one time before the rest of this script can go on.
+if [[ -f $HOME/.pi/agent/install/managed-install.json ]]; then
+    "$HOME/.pi/agent/bin/pi" update
+elif command -v pi >/dev/null 2>&1; then
+    echo "bootstrap: the npm copy of pi is installed. Remove it, then run:" >&2
+    echo "bootstrap:   curl -fsSL https://pi.dev/install.sh | sh" >&2
+    echo "bootstrap: and run scripts/bootstrap.sh again." >&2
+    exit 1
+else
+    echo "bootstrap: install Pi one time with: curl -fsSL https://pi.dev/install.sh | sh" >&2
+    echo "bootstrap: then run scripts/bootstrap.sh again." >&2
+    exit 1
+fi
 
 export PYENV_ROOT="${PYENV_ROOT:-$HOME/.pyenv}"
 export PATH="$PYENV_ROOT/bin:$PATH"

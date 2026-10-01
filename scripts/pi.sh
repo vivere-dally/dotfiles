@@ -52,10 +52,21 @@ done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
     "$DOTFILES/llm-capabilities/settings/pi/settings.json")
 
 # npm cannot find Pi's optional peer packages from this separate package store.
-# Links keep each extension on the same Pi runtime that starts it.
-global_pi_root="$(npm root -g)/@earendil-works/pi-coding-agent"
-if [[ ! -f $global_pi_root/package.json ]]; then
-    echo "pi setup: cannot find the Pi package under $(npm root -g)" >&2
+# Links keep each extension on the same Pi runtime that starts it. The managed
+# install holds one runtime per release, so resolve the release that the
+# current-version pointer names. A `pi update` moves the pointer, thus run
+# this script again after each update to re-point the links.
+managed_install="$HOME/.pi/agent/install"
+if [[ -f $managed_install/current-version ]]; then
+    pi_version=$(cat "$managed_install/current-version")
+    global_pi_root="$managed_install/releases/$pi_version/node_modules/@earendil-works/pi-coding-agent"
+elif command -v npm >/dev/null 2>&1; then
+    global_pi_root="$(npm root -g)/@earendil-works/pi-coding-agent"
+else
+    global_pi_root=""
+fi
+if [[ -z $global_pi_root || ! -f $global_pi_root/package.json ]]; then
+    echo "pi setup: cannot find the Pi runtime under $managed_install or npm" >&2
     exit 1
 fi
 pi_subagents_peer_root="$pi_npm_root/node_modules/pi-subagents/node_modules/@earendil-works"

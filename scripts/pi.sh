@@ -59,7 +59,7 @@ done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
 managed_install="$HOME/.pi/agent/install"
 if [[ -f $managed_install/current-version ]]; then
     pi_version=$(cat "$managed_install/current-version")
-    global_pi_root="$managed_install/releases/$pi_version/node_modules/@earendil-works/pi-coding-agent"
+    global_pi_root="$managed_install/releases/$pi_version"
 elif command -v npm >/dev/null 2>&1; then
     global_pi_root="$(npm root -g)/@earendil-works/pi-coding-agent"
 else

@@ -37,8 +37,18 @@ export type PermissionGateHandler = (
   ctx: ToolCallContext,
 ) => Promise<ToolCallDecision | void> | ToolCallDecision | void;
 
+type GateCommandContext = {
+  ui: {
+    notify(message: string, level?: string): void;
+  };
+};
+
 type Pi = {
   on(event: PermissionGateEventName, handler: PermissionGateHandler): void;
+  registerCommand(
+    name: string,
+    command: { description: string; handler(args: string, ctx: GateCommandContext): Promise<void> | void },
+  ): void;
 };
 
 /**
@@ -50,7 +60,7 @@ type Pi = {
 type CommandRule = {
   pattern: RegExp;
   reason: string;
-  matches: (name: string, args: string[], sh: Shell) => boolean;
+  matches: (name: string, args: string[], sh: Shell, cwd: string) => boolean;
 };
 
 type Shell = typeof import("../../ste/shell.ts");
@@ -67,7 +77,10 @@ const commandRules: CommandRule[] = [
   {
     pattern: /\brm\b/,
     reason: "recursive file removal",
-    matches: (name, args) => name === "rm" && (args.includes("--recursive") || hasShortFlag(args, /[rR]/)),
+    matches: (name, args, _sh, cwd) =>
+      name === "rm" &&
+      (args.includes("--recursive") || hasShortFlag(args, /[rR]/)) &&
+      !recursiveRmTargetsInsideProject(cwd, args),
   },
   {
     pattern: /\bsudo\b/,
@@ -131,6 +144,14 @@ const expandHome = (path: string): string => {
   return path;
 };
 
+// `rm -r` on in-project targets is routine agent work, so only a target that resolves
+// outside the project keeps the gate. Options never name targets.
+const recursiveRmTargetsInsideProject = (cwd: string, args: string[]): boolean => {
+  const tail = args.includes("--") ? args.slice(args.indexOf("--") + 1) : args;
+  const targets = tail.filter((arg) => !arg.startsWith("-"));
+  return targets.length > 0 && targets.every((target) => inside(cwd, expandHome(target)));
+};
+
 // pi loads this file through a symlink in its extensions directory. The real path
 // finds ste/shell.ts, whatever way jiti resolves a relative import from a symlink.
 const shellPath = join(dirname(realpathSync(fileURLToPath(import.meta.url))), "..", "..", "ste", "shell.ts");
@@ -141,7 +162,7 @@ const loadShell = () => (shellModule ??= import(pathToFileURL(shellPath).href));
 const parseCommands = async (command: string) => (await loadShell()).parseCommands(command);
 
 /** The reason of the first risky rule that a real command meets, not quoted text. */
-const riskyCommandReason = async (command: string): Promise<string | undefined> => {
+const riskyCommandReason = async (cwd: string, command: string): Promise<string | undefined> => {
   const candidates = commandRules.filter((rule) => rule.pattern.test(command));
   if (candidates.length === 0) return undefined;
   const commands = await parseCommands(command);
@@ -150,7 +171,7 @@ const riskyCommandReason = async (command: string): Promise<string | undefined> 
   const sh = await loadShell();
   for (const words of commands) {
     const [name, ...args] = sh.unwrap(words);
-    const rule = name ? candidates.find((r) => r.matches(name, args, sh)) : undefined;
+    const rule = name ? candidates.find((r) => r.matches(name, args, sh, cwd)) : undefined;
     if (rule) return rule.reason;
   }
   return undefined;
@@ -209,12 +230,52 @@ const request = async (
   return (await ctx.ui.confirm(title, message)) ? undefined : { block: true, reason: "Blocked by user" };
 };
 
+export type GateMode = "strict" | "unattended";
+
+// `/gate` overrides PI_GATE_MODE for the rest of this Pi process. Registration seeds
+// the mode from the environment again.
+let mode: GateMode = "strict";
+
+// Unattended mode answers each confirmation on its own, so an overnight run never
+// stalls: the fact that would prompt becomes a denial the agent can route around.
+const confirmOrDeny = async (
+  ctx: ToolCallContext,
+  title: string,
+  fact: string,
+  detail: string,
+): Promise<ToolCallDecision> =>
+  mode === "unattended"
+    ? { block: true, reason: `Unattended mode denied: ${fact}` }
+    : request(ctx, title, `${fact}:\n\n${detail}`);
+
 export default function registerPermissionGate(pi: Pi) {
+  mode = process.env.PI_GATE_MODE === "unattended" ? "unattended" : "strict";
+
   pi.on("before_agent_start", (event) => {
     if (!("systemPromptOptions" in event)) return;
     if (!event.systemPromptOptions.promptGuidelines.includes(PI_TEMP_GUIDELINE)) {
       event.systemPromptOptions.promptGuidelines.push(PI_TEMP_GUIDELINE);
     }
+  });
+
+  pi.registerCommand("gate", {
+    description: "Show or set the permission gate mode: /gate strict or /gate unattended",
+    handler: async (args, ctx) => {
+      const requested = args.trim().toLowerCase();
+      if (requested === "strict" || requested === "unattended") {
+        mode = requested;
+        ctx.ui.notify(`Permission gate mode: ${mode}`, "info");
+      } else if (requested === "") {
+        ctx.ui.notify(
+          mode === "unattended"
+            ? "Permission gate mode: unattended (in-project work runs; gated actions are denied without asking)"
+            : "Permission gate mode: strict (gated actions ask for confirmation)",
+          "info",
+        );
+      } else {
+        ctx.ui.notify(`Unknown permission gate mode "${requested}"; use strict or unattended`, "error");
+      }
+    },
   });
 
   pi.on("tool_call", async (event, ctx) => {
@@ -230,23 +291,24 @@ export default function registerPermissionGate(pi: Pi) {
       const command = typeof event.input?.command === "string" ? event.input.command : "";
       const finding = await externalMutationPath(ctx.cwd, command);
       if (finding?.kind === "external") {
-        return request(
+        return confirmOrDeny(
           ctx,
           "Confirm host command",
-          `filesystem command references a path outside the active project (${finding.path}):\n\n${preview(command)}`,
+          `filesystem command references a path outside the active project (${finding.path})`,
+          preview(command),
         );
       }
       if (finding?.kind === "unparsed") {
-        return request(ctx, "Confirm host command", `filesystem command that the gate cannot parse:\n\n${preview(command)}`);
+        return confirmOrDeny(ctx, "Confirm host command", "filesystem command that the gate cannot parse", preview(command));
       }
-      const reason = await riskyCommandReason(command);
-      if (reason) return request(ctx, "Confirm host command", `${reason}:\n\n${preview(command)}`);
+      const reason = await riskyCommandReason(ctx.cwd, command);
+      if (reason) return confirmOrDeny(ctx, "Confirm host command", reason, preview(command));
     }
 
     if (event.toolName === "write" || event.toolName === "edit") {
       const path = typeof event.input?.path === "string" ? event.input.path : "";
       if (path && !inside(ctx.cwd, path)) {
-        return request(ctx, "Confirm external write", `Write outside the active project:\n\n${preview(path)}`);
+        return confirmOrDeny(ctx, "Confirm external write", `write outside the active project (${path})`, preview(path));
       }
     }
 

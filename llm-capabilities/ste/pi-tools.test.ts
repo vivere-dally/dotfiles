@@ -24,18 +24,40 @@ const askTool = (): AskUserTool => {
   return registered;
 };
 
-const permissionHandlers = (): Map<PermissionGateEventName, PermissionGateHandler> => {
+type GateCommandHandler = (
+  args: string,
+  ctx: { ui: { notify(message: string, level?: string): void } },
+) => Promise<void> | void;
+
+const permissionHandlers = (): {
+  handlers: Map<PermissionGateEventName, PermissionGateHandler>;
+  gateCommand: (args: string, notify?: string[]) => Promise<void>;
+} => {
   const handlers = new Map<PermissionGateEventName, PermissionGateHandler>();
+  const registered: { gate?: GateCommandHandler } = {};
   registerPermissionGate({
     on(event, handler) {
       handlers.set(event, handler);
     },
+    registerCommand(name, command) {
+      if (name === "gate") registered.gate = command.handler;
+    },
   });
-  return handlers;
+  const gateCommand = (args: string, notify: string[] = []): Promise<void> => {
+    if (!registered.gate) throw new Error("gate command was not registered");
+    return registered.gate(args, {
+      ui: {
+        notify(message) {
+          notify.push(message);
+        },
+      },
+    });
+  };
+  return { handlers, gateCommand };
 };
 
 const permissionHandler = (): ((event: ToolCallEvent, ctx: ToolCallContext) => Promise<ToolCallDecision | void>) => {
-  const registered = permissionHandlers().get("tool_call");
+  const registered = permissionHandlers().handlers.get("tool_call");
   if (!registered) throw new Error("permission handler was not registered");
   return async (event, ctx) => registered(event, ctx);
 };
@@ -123,8 +145,18 @@ describe("Pi ask_user tool", () => {
 });
 
 describe("Pi permission gate", () => {
+  const contextWithoutPrompts = (cwd = "/workspace/project"): ToolCallContext => ({
+    cwd,
+    hasUI: true,
+    ui: {
+      async confirm() {
+        throw new Error("this decision must not reach a confirmation prompt");
+      },
+    },
+  });
+
   test("points the Pi temporary directory into the project", async () => {
-    const handlers = permissionHandlers();
+    const handlers = permissionHandlers().handlers;
     const ctx: ToolCallContext = {
       cwd: "/workspace/project",
       hasUI: true,
@@ -167,7 +199,7 @@ describe("Pi permission gate", () => {
 
   test("blocks a destructive command when the user rejects it", async () => {
     const decision = await permissionHandler()(
-      { toolName: "bash", input: { command: "rm -rf build" } },
+      { toolName: "bash", input: { command: "git reset --hard HEAD~1" } },
       {
         cwd: "/workspace/project",
         hasUI: true,
@@ -180,6 +212,164 @@ describe("Pi permission gate", () => {
     );
 
     expect(decision).toEqual({ block: true, reason: "Blocked by user" });
+  });
+
+  test("runs recursive removal inside the project without a prompt", async () => {
+    let promptCount = 0;
+    for (const command of ["rm -rf build", "rm -fr tmp/pi/scratch", "rm --recursive -f dist"]) {
+      const decision = await permissionHandler()(
+        { toolName: "bash", input: { command } },
+        {
+          cwd: "/workspace/project",
+          hasUI: true,
+          ui: {
+            async confirm() {
+              promptCount += 1;
+              return false;
+            },
+          },
+        },
+      );
+
+      expect(decision).toBeUndefined();
+    }
+    expect(promptCount).toBe(0);
+  });
+
+  test("keeps the gate on recursive removal that reaches outside the project", async () => {
+    for (const [command, path] of [
+      ["rm -rf ../sibling", "(../sibling)"],
+      ["rm -rf /tmp/scratch", "(/tmp/scratch)"],
+      ["rm -rf ~/notes", "(~/notes)"],
+    ] as const) {
+      const prompts: string[] = [];
+      const decision = await permissionHandler()(
+        { toolName: "bash", input: { command } },
+        {
+          cwd: "/workspace/project",
+          hasUI: true,
+          ui: {
+            async confirm(title, message) {
+              prompts.push(`${title}\n${message}`);
+              return false;
+            },
+          },
+        },
+      );
+
+      expect(decision).toEqual({ block: true, reason: "Blocked by user" });
+      expect(prompts[0]).toContain(`filesystem command references a path outside the active project ${path}`);
+    }
+  });
+
+  test("seeds unattended mode from PI_GATE_MODE", async () => {
+    process.env.PI_GATE_MODE = "unattended";
+    try {
+      const { handlers } = permissionHandlers();
+      const toolCall = handlers.get("tool_call");
+      if (!toolCall) throw new Error("permission handler was not registered");
+
+      const decision = await toolCall({ toolName: "write", input: { path: "/tmp/report.md" } }, contextWithoutPrompts());
+
+      expect(decision).toEqual({
+        block: true,
+        reason: "Unattended mode denied: write outside the active project (/tmp/report.md)",
+      });
+    } finally {
+      delete process.env.PI_GATE_MODE;
+    }
+  });
+
+  describe("in unattended mode", () => {
+    const unattended = async () => {
+      const { handlers, gateCommand } = permissionHandlers();
+      await gateCommand("unattended");
+      const toolCall = handlers.get("tool_call");
+      if (!toolCall) throw new Error("permission handler was not registered");
+      return { toolCall, gateCommand };
+    };
+
+    test("answers each confirmation on its own", async () => {
+      const { toolCall } = await unattended();
+      const ctx = contextWithoutPrompts();
+
+      expect(
+        await toolCall({ toolName: "bash", input: { command: "rm -rf tmp/pi/scratch" } }, ctx),
+      ).toBeUndefined();
+
+      const denied = async (event: ToolCallEvent): Promise<ToolCallDecision> => {
+        const decision = await toolCall(event, ctx);
+        if (!decision) throw new Error(`expected a denial for ${JSON.stringify(event.input)}`);
+        return decision;
+      };
+
+      expect(await denied({ toolName: "bash", input: { command: "git push -f origin main" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: forced Git push",
+      });
+      expect(await denied({ toolName: "bash", input: { command: "git reset --hard HEAD~1" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: destructive Git reset",
+      });
+      expect(await denied({ toolName: "bash", input: { command: "git clean -fd" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: untracked-file removal",
+      });
+      expect(await denied({ toolName: "bash", input: { command: "git restore src/a.ts" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: working-tree restoration",
+      });
+      expect(await denied({ toolName: "bash", input: { command: "sudo rm -rf build" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: elevated command",
+      });
+      expect(await denied({ toolName: "bash", input: { command: "mv 'unterminated" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: filesystem command that the gate cannot parse",
+      });
+      expect(await denied({ toolName: "bash", input: { command: "touch /tmp/notes.md" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: filesystem command references a path outside the active project (/tmp/notes.md)",
+      });
+      expect(await denied({ toolName: "write", input: { path: "/tmp/report.md" } })).toEqual({
+        block: true,
+        reason: "Unattended mode denied: write outside the active project (/tmp/report.md)",
+      });
+    });
+
+    test("returns to strict mode on command", async () => {
+      const { toolCall, gateCommand } = await unattended();
+      await gateCommand("strict");
+      const prompts: string[] = [];
+      const decision = await toolCall(
+        { toolName: "write", input: { path: "/tmp/report.md" } },
+        {
+          cwd: "/workspace/project",
+          hasUI: true,
+          ui: {
+            async confirm(title) {
+              prompts.push(title);
+              return true;
+            },
+          },
+        },
+      );
+
+      expect(decision).toBeUndefined();
+      expect(prompts).toEqual(["Confirm external write"]);
+    });
+
+    test("reports the current mode and rejects an unknown one", async () => {
+      const { gateCommand } = permissionHandlers();
+      const messages: string[] = [];
+      await gateCommand("off", messages);
+      await gateCommand("", messages);
+
+      expect(messages).toEqual([
+        'Unknown permission gate mode "off"; use strict or unattended',
+        "Permission gate mode: strict (gated actions ask for confirmation)",
+      ]);
+    });
   });
 
   test("asks before a write outside the active project", async () => {
@@ -265,7 +455,7 @@ describe("Pi permission gate", () => {
       await ask('grep -rn "removes the container\\|rm -f\\|forceRemove\\|by its name" openspec/specs/ | head -20'),
     ).toEqual([]);
     expect(await ask("git log --grep 'git push --force' --oneline")).toEqual([]);
-    expect((await ask("cd build && rm -fr dist"))[0]).toContain("recursive file removal");
+    expect((await ask("rm -fr foo/../.."))[0]).toContain("recursive file removal");
     expect((await ask("git push -f origin main"))[0]).toContain("forced Git push");
     expect((await ask("git -C ../other push --force-with-lease"))[0]).toContain("forced Git push");
   });

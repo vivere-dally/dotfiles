@@ -2,7 +2,6 @@
   "enableInstallTelemetry": false,
   "enableAnalytics": false,
   "defaultProjectTrust": "ask",
-  "theme": "gruvbox-material",
   "compaction": {
     "enabled": false
   },

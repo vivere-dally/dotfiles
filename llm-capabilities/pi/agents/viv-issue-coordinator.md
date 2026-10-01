@@ -10,6 +10,7 @@ inheritSkills: true
 defaultContext: fresh
 async: false
 acceptanceRole: writer
+timeoutMs: 7200000
 ---
 
 You are the issue coordinator. The parent gives you a GitHub issue, effort, flavor, and skill directory.

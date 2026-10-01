@@ -102,7 +102,8 @@ local function bar(percent, width)
 end
 
 local function duration(seconds)
-  if not seconds then return 'reset time unavailable' end
+  -- JSON null decodes to vim.NIL, a truthy userdata, so only a number counts as present.
+  if type(seconds) ~= 'number' then return 'reset time unavailable' end
   local days = math.floor(seconds / 86400)
   local hours = math.floor((seconds % 86400) / 3600)
   local minutes = math.floor((seconds % 3600) / 60)

@@ -81,6 +81,21 @@ First, inspect the repository for facts that can answer the question. If the que
 
 Do not select an unfamiliar design through inference. Do not write more artifacts until the user answers. Resume after the parent supplies the answer.
 
+## Choose the track
+
+The invocation selects the track. `--mechanical` selects the mechanical track. Any other invocation selects the standard track.
+
+- Standard track: the change carries a product or architecture decision. Use the full workflow below.
+- Mechanical track: the issue asks for one transformation repeated across many sites, and the artifacts carry no design decision. Examples: clone or dedup sweeps, mechanical renames, dependency or API migrations, deprecation cleanups.
+
+On the mechanical track:
+
+1. Keep Start, the clarity gate, Explore and specify, the Apply phase, and Sync and archive.
+2. Replace the artifact audit with one coordinator audit of the artifacts. Do not start artifact reviewers for it.
+3. Do the apply phase as scripted batch passes. The implementor writes one repeatable edit script or batch plan per cluster of sites, and runs it across the cluster in one pass. It runs the repository tests after each cluster. Prefer few large passes over many small passes: each pass reloads the full context, so slices multiply the cost.
+4. Keep the closing reviews of the Apply phase in full. The track removes artifact ceremony only, never verification.
+5. When the evidence shows a design decision at any point, stop, return to the standard track, and tell the user.
+
 ## Explore and specify
 
 1. Obey the Explore instructions for the issue.

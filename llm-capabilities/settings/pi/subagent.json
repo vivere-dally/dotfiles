@@ -1,6 +1,7 @@
 {
   "defaultSubagentContext": "fresh",
   "timeoutMs": 3600000,
+  "checkpointBeforeDeadlineMs": 300000,
   "scheduledRuns": {
     "enabled": false
   },

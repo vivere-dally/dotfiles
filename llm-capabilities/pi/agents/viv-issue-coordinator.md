@@ -22,3 +22,9 @@ Do not start a fresh viv-issue-coordinator. The parent resumes this role only fr
 Run the workflow until the OpenSpec change has a successful archive. Return early only for a user decision or a blocker that repository evidence cannot resolve.
 
 Apart from the authorized branch action, do not do a Git mutation. Tell each nested agent that it cannot do a Git mutation.
+
+Each run has a wall-clock deadline. Set it on purpose: pass a `timeoutMs` for each
+nested launch that covers the phase plus headroom, and never let a child die at a
+guessed default. A checkpoint steer arrives before the deadline and asks the child
+to stop at a clean state. Treat that steer as the normal phase end: report state
+truthfully and start no new work.

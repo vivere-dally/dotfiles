@@ -51,30 +51,6 @@ while IFS= read -r pi_package; do
 done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
     "$DOTFILES/llm-capabilities/settings/pi/settings.json")
 
-# pi-subagents 0.74 requires the host to provide @earendil-works/pi-agent-core/node,
-# which Pi 1.0 no longer ships, and that blocks every background child. Upstream
-# main marks the alias optional; apply the same patch to the pinned 0.74 store.
-# Remove this block when the pin moves past 0.74.0.
-subagents_root="$pi_npm_root/node_modules/pi-subagents"
-aliases_file="$subagents_root/src/runs/background/runner-aliases.js"
-if grep -q '"version": "0.74.0"' "$subagents_root/package.json" \
-    && ! grep -q 'optional: true' "$aliases_file"; then
-    python3 - "$aliases_file" <<'PYEOF'
-import sys
-p = sys.argv[1]
-s = open(p).read()
-a = '{ specifier: "@earendil-works/pi-agent-core/node", pkg: "@earendil-works/pi-agent-core", subpath: "./node" },'
-assert a in s, "pi-subagents alias entry not found; upstream changed the file"
-s = s.replace(a, a[:-2] + ", optional: true },")
-s = s.replace("for (const { specifier, pkg, subpath } of required) {",
-              "for (const { specifier, pkg, subpath, optional } of required) {")
-s = s.replace("        else\n            missing.push(specifier);",
-              "        else if (!optional)\n            missing.push(specifier);")
-open(p, "w").write(s)
-PYEOF
-    echo "pi setup: patched pi-subagents 0.74 for the Pi 1.0 host (optional /node alias)."
-fi
-
 # npm cannot find Pi's optional peer packages from this separate package store.
 # Links keep each extension on the same Pi runtime that starts it. The managed
 # install holds one runtime per release, so resolve the release that the

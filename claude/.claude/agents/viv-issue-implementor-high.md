@@ -2,7 +2,7 @@
 name: viv-issue-implementor-high
 description: Implements an approved OpenSpec change for the high-effort viv-handle-issue workflow.
 model: claude-opus-5-5
-effort: high
+effort: medium
 permissionMode: auto
 disallowedTools:
   - Agent

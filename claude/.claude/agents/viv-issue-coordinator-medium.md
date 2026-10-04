@@ -11,7 +11,7 @@ You are the issue coordinator. The parent gives you a GitHub issue and confirms 
 
 Before work, run `cat "$HOME/.claude/skills/viv-handle-issue/WORKFLOW.md"` and obey the complete workflow.
 
-Use `viv-issue-implementor-medium` for implementation. Use `viv-issue-reviewer-medium` for each Claude review. Pass `medium` to the Codex review script.
+Use `viv-issue-implementor-medium` for implementation. Use `viv-issue-reviewer-medium` for each reviewer review and `viv-issue-second-reviewer-medium` for each second-reviewer review. Pass `medium` to the Codex and Pi review scripts.
 
 Run the workflow until the OpenSpec change has a successful archive. Return early only for a user decision or a blocker that repository evidence cannot resolve.
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-    echo "usage: pi-review.sh <artifacts|implementation> <medium|high|expert> <context-file>" >&2
+    echo "usage: pi-review.sh <artifacts|implementation|recheck> <medium|high|expert> <context-file>" >&2
     exit 2
 }
 
@@ -12,7 +12,7 @@ effort=$2
 context_file=$3
 
 case $phase in
-    artifacts | implementation) ;;
+    artifacts | implementation | recheck) ;;
     *) usage ;;
 esac
 
@@ -40,17 +40,17 @@ reviewer_agent=$HOME/.pi/agent/agents/viv-issue-reviewer.md
     exit 10
 }
 
-model=$(jq -er --arg effort "$effort" '.flavors.zai.reviewer[$effort].model' "$flavors_file")
-thinking=$(jq -er --arg effort "$effort" '.flavors.zai.reviewer[$effort].thinking' "$flavors_file")
+model=$(jq -er --arg effort "$effort" '.flavors[.defaultFlavor].reviewer[$effort].model' "$flavors_file")
+thinking=$(jq -er --arg effort "$effort" '.flavors[.defaultFlavor].reviewer[$effort].thinking' "$flavors_file")
 
 prompt_file=$(mktemp "${TMPDIR:-/tmp}/viv-handle-issue-pi-prompt.XXXXXX")
 trap 'rm -f "$prompt_file"' EXIT
 
-if [[ $phase == artifacts ]]; then
-    task='Audit the named OpenSpec change with viv-opsx-artifact-check.'
-else
-    task='Verify the implementation against the GitHub issue and all OpenSpec artifacts.'
-fi
+case $phase in
+    artifacts) task='Audit the named OpenSpec change with viv-opsx-artifact-check.' ;;
+    implementation) task='Verify the implementation against the GitHub issue and all OpenSpec artifacts.' ;;
+    recheck) task='Check only the corrected findings that the context lists, and the code changed for them. Report a finding as open when the correction does not resolve it. Report a new finding only when the correction directly caused it.' ;;
+esac
 
 {
     echo "$task"
@@ -113,7 +113,12 @@ try:
             for part in result.get("content", [])
             if part.get("type") == "text"
         ]
-        output = "\n".join(text_parts).strip()
+        final_outputs = [
+            row["finalOutput"].strip()
+            for row in details.get("results", [])
+            if row.get("finalOutput")
+        ]
+        output = "\n\n".join(final_outputs) or "\n".join(text_parts).strip()
         failed = result.get("isError", False) or any(
             row.get("exitCode", 0) != 0 for row in details.get("results", [])
         )

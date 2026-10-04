@@ -1,8 +1,8 @@
 ---
 name: viv-issue-implementor-medium
 description: Implements an approved OpenSpec change for the medium-effort viv-handle-issue workflow.
-model: claude-opus-5-5
-effort: medium
+model: claude-sonnet-5-5
+effort: high
 permissionMode: auto
 disallowedTools:
   - Agent

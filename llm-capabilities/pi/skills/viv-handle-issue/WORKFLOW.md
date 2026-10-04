@@ -24,7 +24,18 @@ Do these steps in order:
 8. If a supported critical finding remains after that check, stop and ask the user. Do not start a third review.
 9. Do the "Sync and archive" section.
 
-Do not do the `Audit the artifacts` or the `Apply and verify` section.
+Do not do the `Audit the artifacts` or the `Apply and verify` section. Do not run the second reviewer or the external reviews.
+
+## External reviews
+
+The external reviews give second opinions from different vendors. Run each with the `bash` tool and a timeout of at least 60 minutes:
+
+```bash
+"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" <artifacts|implementation|recheck> <effort> <packet>
+"$HOME/.pi/agent/skills/viv-handle-issue/scripts/claude-review.sh" <artifacts|implementation|recheck> <effort> <packet>
+```
+
+Start them in parallel with the `viv-issue-reviewer` subagents of the same phase. If an external reviewer is unavailable, continue with the other reviews and record that fact. Do not substitute a different model.
 
 ## OpenSpec instructions
 
@@ -108,11 +119,11 @@ The skill invocation authorizes the OpenSpec artifacts for this issue. Ask again
 
 ## Audit the artifacts
 
-Do the coordinator audit with `viv-opsx-artifact-check`. Then start two `viv-issue-reviewer` subagents in parallel with fresh context. Use the `reviewer` and `secondReviewer` model settings for the selected flavor and effort.
+Do the coordinator audit with `viv-opsx-artifact-check`. Then start two `viv-issue-reviewer` subagents in parallel with fresh context. Use the `reviewer` and `secondReviewer` model settings for the selected flavor and effort. Run the external reviews with the `artifacts` phase at the same time.
 
 Give each reviewer the same review packet. Tell each reviewer to do an artifact audit and to return findings without file edits.
 
-Merge equivalent findings by location and concern. Investigate conflicting findings against the repository and issue. Keep only findings that the evidence supports.
+Merge equivalent findings by location and concern. Investigate conflicting findings against the repository and issue. Keep only findings that the evidence supports. Record in the review packet which reviewer raised each finding, and whether the evidence supported it.
 
 Warnings and suggestions do not block the Apply phase. Record them in the review packet for the implementor and implementation reviewers.
 
@@ -128,11 +139,16 @@ Start `viv-issue-implementor` with fresh context. Use the `implementor` model se
 
 The implementor obeys the Apply instructions, completes the tasks, and does the applicable tests.
 
-After the implementor returns, start two `viv-issue-reviewer` subagents in parallel from the same repository state. Use the `reviewer` and `secondReviewer` model settings again. Tell both reviewers to obey the instruction file for `verify`.
+After the implementor returns, start two `viv-issue-reviewer` subagents in parallel from the same repository state. Use the `reviewer` and `secondReviewer` model settings again. Tell both reviewers to obey the instruction file for `verify`. Run the external reviews with the `implementation` phase at the same time. Keep the run identifier of each reviewer.
 
-Merge equivalent findings. Send each supported correctness or acceptance finding to the same implementor run. Also send each failure in the required test suite. Resume that run to make corrections and do the affected tests.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. Send each supported correctness or acceptance finding to the same implementor run. Also send each failure in the required test suite. Resume that run to make corrections and do the affected tests.
 
-Run the independent reviews again after a correction. Continue until no blocking finding remains and the required test results are successful. Ask the user if repository evidence cannot resolve a reviewer conflict.
+After a correction, do a targeted re-review. Do not run the full reviews again. Re-review only with each reviewer that raised a supported blocking finding:
+
+- Resume the same reviewer run.
+- Run an external script again with the `recheck` phase. Add the corrected findings and the changed files to the packet first.
+
+Each reviewer checks only its corrected findings and the code changed for them. A new finding blocks progress only when the correction directly caused it. Continue until no blocking finding remains and the required test results are successful. Ask the user if repository evidence cannot resolve a reviewer conflict.
 
 ## Sync and archive
 
@@ -140,6 +156,6 @@ Obey the Sync instructions after the review passes. Then obey the Archive instru
 
 Do not archive incomplete artifacts or tasks. Do not skip a necessary specification sync. If the Archive phase finds a conflict, resolve it or ask one focused question.
 
-Make sure that the archive exists and the active change no longer exists. Remove the temporary review packet.
+Make sure that the archive exists and the active change no longer exists. Collect the reviewer record from the review packet. Then remove the temporary review packet.
 
-Report the issue, branch, change name, results of tests, review result, and archive path. Stop. Leave all other Git work and GitHub state to the user.
+Report the issue, branch, change name, results of tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all other Git work and GitHub state to the user.

@@ -1,7 +1,7 @@
 ---
 name: viv-handle-issue
 description: Resolve a ready GitHub issue through OpenSpec with separate coordinator, implementor, and reviewer agents. Use only when the user invokes this skill with an issue and an optional effort level.
-argument-hint: "<issue> [--fast] [medium|high|expert]"
+argument-hint: "<issue> [--fast] [--mechanical] [medium|high|expert]"
 disable-model-invocation: true
 ---
 
@@ -11,11 +11,15 @@ Input: `$ARGUMENTS`
 
 The issue can be a GitHub URL, `owner/repo#number`, or an issue number for the current repository.
 The final argument can be `medium`, `high`, or `expert`. Use `medium` when the argument is absent. Reject a different effort value.
-The input can contain `--fast` before the effort.
+The input can contain `--fast` or `--mechanical` before the effort, never both.
 
 ## With `--fast`
 
 Read `${CLAUDE_SKILL_DIR}/WORKFLOW.md` in full. Do its "Fast mode" section in this conversation. The effort selects the reviewer agent: `viv-issue-reviewer-<effort>`. This explicit invocation authorizes the branch action in the workflow.
+
+## With `--mechanical`
+
+Start the coordinator as in the next section. State in the task that the invocation selects the mechanical track. Tell the coordinator to obey the mechanical track section of `WORKFLOW.md` for the artifact audit and the apply phase.
 
 ## Without `--fast`
 

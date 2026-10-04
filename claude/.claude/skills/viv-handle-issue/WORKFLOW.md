@@ -24,7 +24,7 @@ Do these steps in order:
 8. If a supported critical finding remains after that check, stop and ask the user. Do not start a third review.
 9. Do the "Sync and archive" section.
 
-Do not do the `Audit the artifacts` or the `Apply and verify` section. Do not run the external reviews.
+Do not do the `Audit the artifacts` or the `Apply and verify` section. Do not run the second reviewer or the external reviews.
 
 ## Start
 
@@ -58,6 +58,21 @@ First, inspect the repository for facts that can answer the question. If the que
 
 Do not select an unfamiliar design through inference. Do not write more artifacts until the user answers. Use `AskUserQuestion` when available. Otherwise, return the question to the parent for relay and resume this agent after the answer.
 
+## Choose the track
+
+The invocation selects the track. `--mechanical` selects the mechanical track. Any other invocation selects the standard track.
+
+- Standard track: the change carries a product or architecture decision. Use the full workflow below.
+- Mechanical track: the issue asks for one transformation repeated across many sites, and the artifacts carry no design decision. Examples: clone or dedup sweeps, mechanical renames, dependency or API migrations, deprecation cleanups.
+
+On the mechanical track:
+
+1. Keep Start, the clarity gate, Explore and specify, the Apply phase, and Sync and archive.
+2. Replace the artifact audit with one coordinator audit of the artifacts. Do not start artifact reviewers for it.
+3. Do the apply phase as scripted batch passes. The implementor writes one repeatable edit script or batch plan per cluster of sites, and runs it across the cluster in one pass. It runs the repository tests after each cluster. Prefer few large passes over many small passes: each pass reloads the full context, so slices multiply the cost.
+4. Keep the closing reviews of the Apply phase in full. The track removes artifact ceremony only, never verification.
+5. When the evidence shows a design decision at any point, stop, return to the standard track, and tell the user.
+
 ## Explore and specify
 
 1. Invoke `/opsx:explore` for the issue with the `Skill` tool.
@@ -73,14 +88,15 @@ The skill invocation authorizes the OpenSpec artifacts for this issue. Ask again
 Run independent audits against the same review packet:
 
 1. Load `viv-opsx-artifact-check` and do the coordinator audit.
-2. Start the reviewer agent for the selected effort. Ask it to do the artifact audit.
-3. Run these external reviews in parallel:
+2. Run these reviews in parallel:
+   - the reviewer agent for the selected effort, asked to do the artifact audit
+   - the second reviewer agent for the selected effort, asked to do the artifact audit
    - `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" artifacts <effort> <packet>`
    - `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" artifacts <effort> <packet>`
 
 If an external reviewer is unavailable, continue with the other reviews and record that fact. Do not substitute a different model.
 
-Merge equivalent findings by location and concern. Investigate conflicting findings against the repository and issue. Keep only findings that the evidence supports.
+Merge equivalent findings by location and concern. Investigate conflicting findings against the repository and issue. Keep only findings that the evidence supports. Record in the review packet which reviewer raised each finding, and whether the evidence supported it.
 
 Warnings and suggestions do not block `/opsx:apply`. Record them in the review packet so the implementor and implementation reviewers can use them.
 
@@ -99,13 +115,20 @@ The implementor invokes `/opsx:apply`, completes the tasks, and runs the applica
 After the implementor returns, start these reviews from the same repository state:
 
 1. Ask the reviewer agent to invoke `/opsx:verify` for the change.
-2. Run these external reviews in parallel:
-   - `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`
-   - `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`
+2. Ask the second reviewer agent to invoke `/opsx:verify` for the change.
+3. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`.
+4. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`.
 
-Merge equivalent findings. Send each supported correctness or acceptance finding to the same implementor agent. Also send each failure in the suite. Resume that agent to make the corrections and run the affected tests.
+Run these reviews in parallel. Keep the agent ID of each reviewer agent.
 
-Do the independent reviews again after a correction. Continue until no blocking finding remains and the required tests pass. Ask the user if reviewers conflict and repository evidence cannot resolve the conflict.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. Send each supported correctness or acceptance finding to the same implementor agent. Also send each failure in the suite. Resume that agent to make the corrections and run the affected tests.
+
+After a correction, do a targeted re-review. Do not run the full reviews again. Re-review only with each reviewer that raised a supported blocking finding:
+
+- Resume a reviewer agent with `SendMessage`.
+- Run an external script again with the `recheck` phase. Add the corrected findings and the changed files to the packet first.
+
+Each reviewer checks only its corrected findings and the code changed for them. A new finding blocks progress only when the correction directly caused it. Continue until no blocking finding remains and the required tests pass. Ask the user if reviewers conflict and repository evidence cannot resolve the conflict.
 
 ## Sync and archive
 
@@ -113,6 +136,6 @@ The coordinator invokes `/opsx:sync` after verification passes. Then the coordin
 
 Do not archive incomplete artifacts or tasks. Do not skip a necessary spec sync. If the archive phase finds a conflict, resolve it or ask one focused question.
 
-Make sure that the archive exists and the active change no longer exists. Remove the temporary review packet.
+Make sure that the archive exists and the active change no longer exists. Collect the reviewer record from the review packet. Then remove the temporary review packet.
 
-Report the issue, branch, change name, result of the tests, review result, and archive path. Stop. Leave all Git work and GitHub state to the user.
+Report the issue, branch, change name, result of the tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all Git work and GitHub state to the user.

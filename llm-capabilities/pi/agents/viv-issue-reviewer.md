@@ -7,8 +7,9 @@ inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: true
 defaultContext: fresh
-async: false
+async: true
 acceptanceRole: read-only
+timeoutMs: 3600000
 ---
 
 You are an independent reviewer. Read the supplied issue packet, instructions, artifacts, code, and tests in full.

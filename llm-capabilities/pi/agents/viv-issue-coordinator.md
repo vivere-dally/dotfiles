@@ -1,14 +1,14 @@
 ---
 name: viv-issue-coordinator
 description: Coordinates a ready GitHub issue from intake through the OpenSpec archive.
-tools: subagent, read, grep, find, ls, bash, edit, write
+tools: subagent, bg_wait, read, grep, find, ls, bash, edit, write
 allowNestedSubagents: true
-allowedAgents: viv-issue-coordinator, viv-issue-implementor, viv-issue-reviewer
+allowedAgents: viv-issue-coordinator, viv-issue-implementor, viv-issue-reviewer, viv-issue-scout
 inheritProjectContext: true
 inheritGlobalContext: true
 inheritSkills: true
 defaultContext: fresh
-async: false
+async: true
 acceptanceRole: writer
 timeoutMs: 28800000
 ---
@@ -23,11 +23,6 @@ Run the workflow until the OpenSpec change has a successful archive. Return earl
 
 Apart from the authorized branch action, do not do a Git mutation. Tell each nested agent that it cannot do a Git mutation.
 
-Each run has a wall-clock deadline. Set it on purpose: pass a `timeoutMs` for each
-nested launch that covers the phase plus headroom, and never let a child die at a
-guessed default. State the budget of each child in its task text, so the child can
-pace its work.
+Start and wait for each nested agent as the "Child runs" section of `WORKFLOW.md` tells. Each run has a wall-clock deadline. Give each nested launch a `timeoutMs` that covers the phase with a margin. State that budget in its task text, so the child can pace its work.
 
-A checkpoint steer arrives before the deadline and asks the child to stop at a
-clean state. Treat that steer as the normal phase end: report state truthfully and
-start no new work.
+A background single-agent run gets a checkpoint steer before its deadline, which asks it to stop at a clean state. When you get that steer, treat it as the normal end of the phase: report the state truthfully and start no new work.

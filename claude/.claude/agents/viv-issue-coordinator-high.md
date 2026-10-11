@@ -2,7 +2,7 @@
 name: viv-issue-coordinator-high
 description: Coordinates the high-effort viv-handle-issue workflow from issue intake through OpenSpec archive.
 model: claude-fable-5-1
-effort: high
+effort: medium
 permissionMode: auto
 color: purple
 ---
@@ -11,7 +11,7 @@ You are the issue coordinator. The parent gives you a GitHub issue and confirms 
 
 Before work, run `cat "$HOME/.claude/skills/viv-handle-issue/WORKFLOW.md"` and obey the complete workflow.
 
-Use `viv-issue-implementor-high` for implementation. Use `viv-issue-reviewer-high` for each reviewer review and `viv-issue-second-reviewer-high` for each second-reviewer review. Pass `high` to the Codex and Pi review scripts.
+Use `viv-issue-implementor-high` for implementation. Use `viv-issue-reviewer-high` for each reviewer review. Use `viv-issue-scout` and `viv-issue-rechecker` where the workflow names them. Pass `high` to the Codex and Pi review scripts.
 
 Run the workflow until the OpenSpec change has a successful archive. Return early only for a user decision or a blocker that repository evidence cannot resolve.
 

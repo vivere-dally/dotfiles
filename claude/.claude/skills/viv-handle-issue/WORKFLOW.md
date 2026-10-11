@@ -20,11 +20,11 @@ Do these steps in order:
 4. Invoke `/opsx:apply`, complete the tasks, and run the applicable tests.
 5. Start the reviewer agent for the selected effort, and wait for it. Ask it to invoke `/opsx:verify` for the change. Give it the review packet, the change name, the artifact paths, and the baseline result. Keep its agent ID.
 6. Investigate each finding against the repository. Fix each supported correctness or acceptance finding, and run the affected tests.
-7. If step 6 changed the code, resume the same reviewer agent with `SendMessage`. Ask it to check only the fixed findings and the changed code.
+7. If step 6 changed the code, start `viv-issue-rechecker` as the "Recheck" section tells.
 8. If a supported critical finding remains after that check, stop and ask the user. Do not start a third review.
 9. Do the "Sync and archive" section.
 
-Do not do the `Audit the artifacts` or the `Apply and verify` section. Do not run the second reviewer or the external reviews.
+Do not do the `Size the issue`, `Audit the artifacts`, or `Apply and verify` section. Do not run the external reviews.
 
 ## Start
 
@@ -32,8 +32,9 @@ Do not do the `Audit the artifacts` or the `Apply and verify` section. Do not ru
 2. Use `gh issue view` to read the title, body, labels, comments, state, and repository.
 3. Stop if the current repository is not the issue repository.
 4. Read each applicable instruction file in full.
-5. Read the code, tests, configuration, and OpenSpec files that relate to the issue.
-6. Run the relevant baseline tests before an implementation change.
+5. Start `viv-issue-scout` with the issue facts. It returns a map of the related code, tests, configuration, and OpenSpec files, and a size recommendation.
+6. Read in full the files that the map marks as central. Read the other files only when a decision needs them.
+7. Run the relevant baseline tests before an implementation change.
 
 Run `git branch --show-current`. If the branch has no permitted prefix, make a branch from the current `HEAD`:
 
@@ -58,20 +59,21 @@ First, inspect the repository for facts that can answer the question. If the que
 
 Do not select an unfamiliar design through inference. Do not write more artifacts until the user answers. Use `AskUserQuestion` when available. Otherwise, return the question to the parent for relay and resume this agent after the answer.
 
-## Choose the track
+## Size the issue
 
-The invocation selects the track. `--mechanical` selects the mechanical track. Any other invocation selects the standard track.
+After the Explore phase, select the size of the issue. Use the scout recommendation and the exploration facts. The size controls the number of reviews and correction rounds. The effort controls the strength of each agent. The two are independent.
 
-- Standard track: the change carries a product or architecture decision. Use the full workflow below.
-- Mechanical track: the issue asks for one transformation repeated across many sites, and the artifacts carry no design decision. Examples: clone or dedup sweeps, mechanical renames, dependency or API migrations, deprecation cleanups.
+| Size | Use when | Artifact audit | Implementation reviews | Correction rounds |
+| --- | --- | --- | --- | --- |
+| Small | The change stays in one module, the clarity gate did not stop, and the change adds no design or public interface. | Coordinator audit | Reviewer agent and Codex | 1 |
+| Mechanical | The issue asks for one transformation repeated across many sites, and the artifacts carry no design decision. Examples: clone or dedup sweeps, mechanical renames, dependency or API migrations, deprecation cleanups. | Coordinator audit | All | 2 |
+| Standard | All other issues. | All | All | 2 |
 
-On the mechanical track:
+`--mechanical` selects the mechanical size. Without it, select the size yourself. If the size is not clear, select the larger size. Record the size in the review packet.
 
-1. Keep Start, the clarity gate, Explore and specify, the Apply phase, and Sync and archive.
-2. Replace the artifact audit with one coordinator audit of the artifacts. Do not start artifact reviewers for it.
-3. Do the apply phase as scripted batch passes. The implementor writes one repeatable edit script or batch plan per cluster of sites, and runs it across the cluster in one pass. It runs the repository tests after each cluster. Prefer few large passes over many small passes: each pass reloads the full context, so slices multiply the cost.
-4. Keep the closing reviews of the Apply phase in full. The track removes artifact ceremony only, never verification.
-5. When the evidence shows a design decision at any point, stop, return to the standard track, and tell the user.
+If the evidence shows a design decision or a larger scope at a later step, change to the standard size. Do the omitted reviews of the current phase. Record the change and its reason for the final report.
+
+On the mechanical size, do the Apply phase as scripted batch passes. The implementor writes one repeatable edit script or batch plan for each cluster of sites, and runs it across the cluster in one pass. It runs the repository tests after each cluster. Use a small number of large passes: each pass loads the full context again, so small slices multiply the cost.
 
 ## Explore and specify
 
@@ -85,14 +87,10 @@ The skill invocation authorizes the OpenSpec artifacts for this issue. Ask again
 
 ## Audit the artifacts
 
-Run independent audits against the same review packet:
+Load `viv-opsx-artifact-check` and do the coordinator audit. For the standard size, run these external audits against the same review packet, in parallel with the coordinator audit:
 
-1. Load `viv-opsx-artifact-check` and do the coordinator audit.
-2. Run these reviews in parallel:
-   - the reviewer agent for the selected effort, asked to do the artifact audit
-   - the second reviewer agent for the selected effort, asked to do the artifact audit
-   - `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" artifacts <effort> <packet>`
-   - `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" artifacts <effort> <packet>`
+- `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" artifacts <effort> <packet>`
+- `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" artifacts <effort> <packet>`
 
 If an external reviewer is unavailable, continue with the other reviews and record that fact. Do not substitute a different model.
 
@@ -112,23 +110,26 @@ Start the implementor agent for the selected effort. Give it the issue packet, c
 
 The implementor invokes `/opsx:apply`, completes the tasks, and runs the applicable tests.
 
-After the implementor returns, start these reviews from the same repository state:
+After the implementor returns, start these reviews in parallel from the same repository state:
 
 1. Ask the reviewer agent to invoke `/opsx:verify` for the change.
-2. Ask the second reviewer agent to invoke `/opsx:verify` for the change.
-3. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`.
-4. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`.
-
-Run these reviews in parallel. Keep the agent ID of each reviewer agent.
+2. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`.
+3. Except for the small size, run `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`.
 
 Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. Send each supported correctness or acceptance finding to the same implementor agent. Also send each failure in the suite. Resume that agent to make the corrections and run the affected tests.
 
-After a correction, do a targeted re-review. Do not run the full reviews again. Re-review only with each reviewer that raised a supported blocking finding:
+After a correction, do a targeted re-review as the "Recheck" section tells. Do not run the full reviews again. A new finding blocks progress only when the correction directly caused it.
 
-- Resume a reviewer agent with `SendMessage`.
-- Run an external script again with the `recheck` phase. Add the corrected findings and the changed files to the packet first.
+The size sets the maximum number of correction rounds. If a blocking finding remains after the last round, stop and ask the user. Ask the user also if reviewers conflict and repository evidence cannot resolve the conflict.
 
-Each reviewer checks only its corrected findings and the code changed for them. A new finding blocks progress only when the correction directly caused it. Continue until no blocking finding remains and the required tests pass. Ask the user if reviewers conflict and repository evidence cannot resolve the conflict.
+## Recheck
+
+Recheck only the supported blocking findings that a correction addressed. Add the corrected findings and the changed files to the review packet first.
+
+- For a finding from a reviewer agent, start `viv-issue-rechecker`. Give it the review packet, the corrected findings, and the changed files.
+- For a finding from an external reviewer, run its script again with the `recheck` phase.
+
+Each recheck examines only its corrected findings and the code changed for them.
 
 ## Sync and archive
 
@@ -138,4 +139,4 @@ Do not archive incomplete artifacts or tasks. Do not skip a necessary spec sync.
 
 Make sure that the archive exists and the active change no longer exists. Collect the reviewer record from the review packet. Then remove the temporary review packet.
 
-Report the issue, branch, change name, result of the tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all Git work and GitHub state to the user.
+Report the issue, branch, size, change name, result of the tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all Git work and GitHub state to the user.

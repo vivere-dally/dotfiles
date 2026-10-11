@@ -11,7 +11,7 @@ Input: `$ARGUMENTS`
 
 The issue can be a GitHub URL, `owner/repo#number`, or an issue number for the current repository.
 The final argument can be `medium`, `high`, or `expert`. Use `medium` when the argument is absent. Reject a different effort value.
-The input can contain `--fast` or `--mechanical` before the effort, never both.
+The input can contain `--fast` or `--mechanical` before the effort, never both. Without a flag, the coordinator selects the size of the issue itself.
 
 ## With `--fast`
 
@@ -19,7 +19,7 @@ Read `${CLAUDE_SKILL_DIR}/WORKFLOW.md` in full. Do its "Fast mode" section in th
 
 ## With `--mechanical`
 
-Start the coordinator as in the next section. State in the task that the invocation selects the mechanical track. Tell the coordinator to obey the mechanical track section of `WORKFLOW.md` for the artifact audit and the apply phase.
+Start the coordinator as in the next section. State in the task that the invocation selects the mechanical size.
 
 ## Without `--fast`
 

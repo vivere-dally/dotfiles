@@ -14,18 +14,18 @@ Use this form:
 <issue> [--fast] [--mechanical] [medium|high|expert] [flavor]
 ```
 
-Use `--fast` or `--mechanical`, never both.
+Use `--fast` or `--mechanical`, never both. Without a flag, the coordinator selects the size of the issue itself.
 
 The issue is a GitHub URL, `owner/repo#number`, or an issue number for the current repository. Use `medium` when the effort is absent. Read `flavors.json` and use its `defaultFlavor` when the flavor is absent. Reject an effort or flavor that the files do not define.
 
 With `--fast`, do not start a coordinator. Read `WORKFLOW.md` from this skill directory in full, and obey its "Fast mode" section in this session. The flavor and effort select the model of the reviewer. This explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
 
-With `--mechanical`, start the coordinator as usual. State in the task that the invocation selects the mechanical track. Tell the coordinator to obey the mechanical track section of `WORKFLOW.md` for the artifact audit and the apply phase. This explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
+With `--mechanical`, start the coordinator as usual. State in the task that the invocation selects the mechanical size. This explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
 
 Without `--fast`, read the coordinator model and thinking level from the selected flavor and effort. Join them as `<model>:<thinking>`.
 
-Call the `subagent` tool with `action: "run"`, `agent: "viv-issue-coordinator"`, and `context: "fresh"`. Do not start the coordinator with `bash`, `pi`, `pi -p`, or another shell command. Give the coordinator the complete issue input, effort, flavor, and this skill directory. State that this explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
+Call the `subagent` tool with `action: "run"`, `agent: "viv-issue-coordinator"`, `context: "fresh"`, and `async: true`. Do not start the coordinator with `bash`, `pi`, `pi -p`, or another shell command. Give the coordinator the complete issue input, effort, flavor, and this skill directory. State that this explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
 
-Wait for the coordinator. If it returns a user question, ask that question and resume the same coordinator with the answer. Continue until the coordinator reports a successful OpenSpec archive or a blocker that repository evidence cannot resolve.
+The coordinator runs in the background, and its completion notice wakes this session. Do not do its work in this session. If it returns a user question, ask that question and resume the same coordinator with the answer. Continue until the coordinator reports a successful OpenSpec archive or a blocker that repository evidence cannot resolve.
 
 The workflow stops after the successful archive. Do not stage, commit, push, merge, or close the GitHub issue.

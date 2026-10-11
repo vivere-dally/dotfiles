@@ -203,20 +203,22 @@ local external_lsp_servers = {
 }
 
 -- ts_ls wraps tsserver.js, which TypeScript 7 no longer ships, and the native
--- `tsc --lsp` exists only from TypeScript 7. Each project gets the server that
--- matches the TypeScript it resolves from node_modules.
+-- `tsc --lsp` exists only from TypeScript 7. A project can keep the TypeScript 6
+-- API as the `typescript` package and run TypeScript 7 as `tsc`, so the version
+-- of the project's `tsc` binary selects the server, not the package version.
+local tsc_majors = {} ---@type table<string, integer|false>
 local function typescript_major(bufnr)
-  local manifest = vim.fs.find('node_modules/typescript/package.json', {
+  local bin = vim.fs.find('node_modules/.bin/tsc', {
     upward = true,
     path = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr)),
   })[1]
-  if not manifest then return nil end
-  local ok, package = pcall(function()
-    return vim.json.decode(table.concat(vim.fn.readfile(manifest), '\n'))
-  end)
-  if not ok then return nil end
-  local version = vim.version.parse(package.version or '')
-  return version and version.major
+  if not bin then return nil end
+  if tsc_majors[bin] == nil then
+    local out = vim.system({ bin, '--version' }, { text = true }):wait()
+    local version = out.code == 0 and vim.version.parse(out.stdout or '') or nil
+    tsc_majors[bin] = version and version.major or false
+  end
+  return tsc_majors[bin] or nil
 end
 
 local function attach_for_typescript(server, accepts)

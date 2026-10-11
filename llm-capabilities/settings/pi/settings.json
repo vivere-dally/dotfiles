@@ -2,6 +2,9 @@
   "enableInstallTelemetry": false,
   "enableAnalytics": false,
   "defaultProjectTrust": "ask",
+  "defaultTools": [
+    "+codemode"
+  ],
   "compaction": {
     "enabled": false
   },

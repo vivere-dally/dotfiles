@@ -40,8 +40,13 @@ reviewer_agent=$HOME/.pi/agent/agents/viv-issue-reviewer.md
     exit 10
 }
 
-model=$(jq -er --arg effort "$effort" '.flavors[.defaultFlavor].reviewer[$effort].model' "$flavors_file")
-thinking=$(jq -er --arg effort "$effort" '.flavors[.defaultFlavor].reviewer[$effort].thinking' "$flavors_file")
+case $phase in
+    recheck) role=rechecker ;;
+    *) role=reviewer ;;
+esac
+
+model=$(jq -er --arg role "$role" --arg effort "$effort" '.flavors[.defaultFlavor][$role][$effort].model' "$flavors_file")
+thinking=$(jq -er --arg role "$role" --arg effort "$effort" '.flavors[.defaultFlavor][$role][$effort].thinking' "$flavors_file")
 
 prompt_file=$(mktemp "${TMPDIR:-/tmp}/viv-handle-issue-pi-prompt.XXXXXX")
 trap 'rm -f "$prompt_file"' EXIT

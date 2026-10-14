@@ -34,7 +34,7 @@ Give each run a `timeoutMs` that covers its phase with a margin. State that budg
 
 After you start the runs of a phase, wait with `bg_wait` and `stopOnAttention: false` until each run of the phase has finished. If `bg_wait` returns before then, answer a supervisor question if there is one, and then call `bg_wait` again. Do not end your turn while a child run is active, because the end of your turn ends your own run.
 
-A child that stops after the checkpoint steer returns a handoff. Treat the handoff as the normal end of the phase for that child: read the state that it reports, and resume the same run when work remains.
+A child that stops after the checkpoint steer returns a handoff. Treat the handoff as the normal end of the phase for that child: read the state that it reports. When an implementor has work left, start a new implementor run for its remaining tasks. When a different child has work left, resume the same run.
 
 ## External reviews
 
@@ -73,7 +73,7 @@ Treat the issue or change name as the input to the instruction file. Stop with a
 
 1. Parse the issue reference, effort, flavor, and skill directory.
 2. Read `flavors.json` from the skill directory.
-3. Use `gh issue view` to read the title, body, labels, comments, state, and repository.
+3. Read the title, body, labels, comments, state, and repository of the issue. Use the forge CLI that the repository instructions name, or `gh issue view` when they name none.
 4. Stop if the current repository is not the issue repository.
 5. Read each applicable instruction file in full.
 6. Start `viv-issue-scout` with the `scout` model settings and the issue facts. It returns a map of the related code, tests, configuration, and OpenSpec files, and a size recommendation.
@@ -147,18 +147,20 @@ A new finding blocks progress only when the correction directly caused it and it
 
 ## Apply and verify
 
-Start `viv-issue-implementor`. Use the `implementor` model settings, or the `mechanicalImplementor` settings for the mechanical size, for the selected flavor and effort. Give it the review packet, change name, artifact paths, baseline result, and resolved audit findings. Keep its run identifier.
+Start one `viv-issue-implementor` run for each task group of `tasks.md`, in order. Give small adjacent groups to one run together. Start the run for the next group only after the current run returns. Use the `implementor` model settings, or the `mechanicalImplementor` settings for the mechanical size, for the selected flavor and effort. Give each run the review packet, change name, artifact paths, baseline result, resolved audit findings, and the names of its task groups.
 
-The implementor obeys the Apply instructions, completes the tasks, and does the applicable tests.
+Each run obeys the Apply instructions for its task groups only, and does the tests of the files that it changed. The checkboxes in `tasks.md` are the record of progress. Tell the run for the last group to also do the full required test suite one time.
 
-After the implementor returns, start the implementation reviews in parallel from the same repository state:
+Each model call sends the complete context of the run again. Thus the cost of a run is approximately the number of calls multiplied by the size of the context. Short runs keep the context small, and large passes keep the number of calls small. A resume after a pause also sends the complete context again, at the price of input that is not in the cache. Thus, do not resume a finished implementor run.
+
+After the run for the last task group returns, start the implementation reviews in parallel from the same repository state:
 
 - For the small size, start one `viv-issue-reviewer` run with the `reviewer` model settings, and run only `codex-review.sh` with the `implementation` phase.
 - For the other sizes, start two `viv-issue-reviewer` runs with the `reviewer` and `secondReviewer` model settings, and run both external reviews with the `implementation` phase.
 
 Tell each reviewer to obey the instruction file for `verify`. Keep the run identifier of each reviewer.
 
-Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. Send each supported correctness or acceptance finding to the same implementor run. Also send each failure in the required test suite. Resume that run to make corrections and do the affected tests.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor run. Give it the review packet, each supported correctness or acceptance finding, each failure in the required test suite, and the changed files. It corrects the findings and does the affected tests.
 
 After a correction, do a targeted re-review as the "Recheck" section tells. Do not run the full reviews again. A new finding blocks progress only when the correction directly caused it.
 
@@ -181,4 +183,4 @@ Do not archive incomplete artifacts or tasks. Do not skip a necessary specificat
 
 Make sure that the archive exists and the active change no longer exists. Collect the reviewer record from the review packet. Then remove the temporary review packet.
 
-Report the issue, branch, size, change name, results of tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all other Git work and GitHub state to the user.
+Report the issue, branch, size, change name, results of tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each child run, report its model and the tokens that it used. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all other Git work and GitHub state to the user.

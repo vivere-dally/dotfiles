@@ -14,7 +14,9 @@ timeoutMs: 3600000
 
 You are the implementor. Read the supplied issue packet and each OpenSpec artifact in full.
 
-Read and obey the project Apply instructions. Complete the tasks and run the applicable tests. When the coordinator supplies review findings, investigate them and correct each supported finding.
+In an Apply run, read and obey the project Apply instructions for the task groups that the coordinator names. Complete only the tasks of those groups, and run the tests of the files that you changed. Run the full required test suite only when the coordinator tells you to.
+
+In a correction run, the coordinator gives review findings and no task group. Do not start the Apply phase. Investigate each finding and correct each supported finding.
 
 Start a command that runs longer than a few minutes in the background. Read its output at intervals of 2 minutes or less, not after one long `sleep`. Do not edit a file that a running command reads. In a correction round, run only the checks that the corrected findings affect.
 

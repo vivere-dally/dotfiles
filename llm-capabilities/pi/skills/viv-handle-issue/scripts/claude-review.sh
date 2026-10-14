@@ -31,7 +31,13 @@ claude_bin=$(command -v claude) || {
     exit 10
 }
 
-agent=viv-issue-reviewer-$effort
+agent=viv-issue-reviewer
+
+case $effort in
+    medium) model=sonnet agent_effort=high ;;
+    high) model=opus agent_effort=high ;;
+    expert) model=opus agent_effort=xhigh ;;
+esac
 
 [[ -f $HOME/.claude/agents/$agent.md ]] || {
     echo "claude-review: $agent is not installed in ~/.claude/agents" >&2
@@ -57,6 +63,8 @@ cd "$repo"
     echo '</issue-context>'
 } | "$claude_bin" --print \
     --agent "$agent" \
+    --model "$model" \
+    --effort "$agent_effort" \
     --permission-mode auto \
     --permission-prompts none \
     --disallowedTools Agent Edit Write NotebookEdit \

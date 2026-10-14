@@ -1,6 +1,7 @@
 ---
 name: viv-issue-coordinator
 description: Coordinates the viv-handle-issue workflow from issue intake through OpenSpec archive.
+model: opus
 permissionMode: auto
 color: purple
 ---

@@ -34,7 +34,7 @@ Give each run a `timeoutMs` that covers its phase with a margin. State that budg
 
 After you start the runs of a phase, wait with `bg_wait` and `stopOnAttention: false` until each run of the phase has finished. If `bg_wait` returns before then, answer a supervisor question if there is one, and then call `bg_wait` again. Do not end your turn while a child run is active, because the end of your turn ends your own run.
 
-A child that stops after the checkpoint steer returns a handoff. Treat the handoff as the normal end of the phase for that child: read the state that it reports. When an implementor has work left, start a new implementor run for its remaining tasks. When a different child has work left, resume the same run.
+A child that stops after the checkpoint steer, or after the soft limit of its tool budget, returns a handoff. Treat the handoff as the normal end of the phase for that child: read the state that it reports. When an implementor has work left, start a new implementor run for its remaining tasks. When a different child has work left, resume the same run.
 
 ## External reviews
 
@@ -147,7 +147,7 @@ A new finding blocks progress only when the correction directly caused it and it
 
 ## Apply and verify
 
-Start one `viv-issue-implementor` run for each task group of `tasks.md`, in order. Give small adjacent groups to one run together. Start the run for the next group only after the current run returns. Use the `implementor` model settings, or the `mechanicalImplementor` settings for the mechanical size, for the selected flavor and effort. Give each run the review packet, change name, artifact paths, baseline result, resolved audit findings, and the names of its task groups.
+Start one `viv-issue-implementor` run for each task group of `tasks.md`, in order. Give small adjacent groups to one run together. Start the run for the next group only after the current run returns. Use the `implementor` model settings, or the `mechanicalImplementor` settings for the mechanical size, for the selected flavor and effort. Give each run the review packet, change name, artifact paths, baseline result, resolved audit findings, and the names of its task groups. Start each implementor run with `options.toolBudget: { "soft": 150, "hard": 300 }`. At the soft limit, the run stops at a clean state and returns a handoff. The hard limit blocks only the read and search tools, thus it cannot stop an edit in progress.
 
 Each run obeys the Apply instructions for its task groups only, and does the tests of the files that it changed. The checkboxes in `tasks.md` are the record of progress. Tell the run for the last group to also do the full required test suite one time.
 

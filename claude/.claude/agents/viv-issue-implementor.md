@@ -1,6 +1,7 @@
 ---
 name: viv-issue-implementor
 description: Implements an approved OpenSpec change for the viv-handle-issue workflow.
+model: sonnet
 permissionMode: auto
 disallowedTools:
   - Agent

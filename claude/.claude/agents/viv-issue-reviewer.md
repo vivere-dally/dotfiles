@@ -1,6 +1,7 @@
 ---
 name: viv-issue-reviewer
 description: Reviews OpenSpec artifacts and implementation for the viv-handle-issue workflow.
+model: opus
 permissionMode: auto
 disallowedTools:
   - Agent

@@ -15,7 +15,7 @@ The input can contain `--fast` or `--mechanical` before the effort, never both. 
 
 ## With `--fast`
 
-Read `${CLAUDE_SKILL_DIR}/WORKFLOW.md` in full. Do its "Fast mode" section in this conversation. The effort selects the reviewer agent: `viv-issue-reviewer-<effort>`. This explicit invocation authorizes the branch action in the workflow.
+Read `${CLAUDE_SKILL_DIR}/WORKFLOW.md` in full. Do its "Fast mode" section in this conversation. Start the reviewer as the "Agents" section of the workflow tells. This explicit invocation authorizes the branch action in the workflow.
 
 ## With `--mechanical`
 
@@ -23,13 +23,13 @@ Start the coordinator as in the next section. State in the task that the invocat
 
 ## Without `--fast`
 
-Start one foreground agent with the `Agent` tool:
+Start `viv-issue-coordinator` as one foreground agent with the `Agent` tool. Set its `model` and `effort` parameters from this table:
 
-| Effort | Agent |
-| --- | --- |
-| `medium` | `viv-issue-coordinator-medium` |
-| `high` | `viv-issue-coordinator-high` |
-| `expert` | `viv-issue-coordinator-expert` |
+| Effort | `model` | `effort` |
+| --- | --- | --- |
+| `medium` | `opus` | `xhigh` |
+| `high` | `fable` | `medium` |
+| `expert` | `fable` | `xhigh` |
 
 Give the agent the complete issue input and the selected effort. Tell the agent that this explicit invocation authorizes the branch action in its workflow.
 

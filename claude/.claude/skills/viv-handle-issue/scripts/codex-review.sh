@@ -75,7 +75,7 @@ if ! {
     echo '</issue-context>'
 } | "$codex_bin" exec \
     --cd "$repo" \
-    --model gpt-5.6-sol \
+    --model gpt-6-sol \
     --config "model_reasoning_effort=\"$reasoning\"" \
     --sandbox read-only \
     --ephemeral \

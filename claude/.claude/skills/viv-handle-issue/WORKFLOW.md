@@ -8,6 +8,17 @@ Do not stage, commit, push, merge, rebase, tag, stash, reset, restore, or close 
 
 Only the implementor edits product code and tests. The coordinator edits OpenSpec artifacts and controls the workflow. Reviewers never edit files.
 
+## Agents
+
+Start each agent in this table with the `Agent` tool. Set its `model` and `effort` parameters from the column of the selected effort:
+
+| Agent | `medium` | `high` | `expert` |
+| --- | --- | --- | --- |
+| `viv-issue-implementor` | `sonnet`, `high` | `opus`, `medium` | `opus`, `xhigh` |
+| `viv-issue-reviewer` | `sonnet`, `high` | `opus`, `high` | `opus`, `xhigh` |
+
+Start `viv-issue-scout` and `viv-issue-rechecker` without these parameters. Their own definitions set the model.
+
 ## Fast mode
 
 The `--fast` flag selects a shorter workflow for a small issue. The agent that runs the skill does the work itself, thus no coordinator or implementor agent starts. That agent edits the OpenSpec artifacts, the product code, and the tests. Only the verification stays independent.
@@ -18,7 +29,7 @@ Do these steps in order:
 2. Do the "Explore and specify" section with the clarity gate. Ask the user with `AskUserQuestion`.
 3. Load `viv-opsx-artifact-check` and audit the artifacts. Correct the supported critical findings in one pass.
 4. Invoke `/opsx:apply`, complete the tasks, and run the applicable tests.
-5. Start the reviewer agent for the selected effort, and wait for it. Ask it to invoke `/opsx:verify` for the change. Give it the review packet, the change name, the artifact paths, and the baseline result. Keep its agent ID.
+5. Start `viv-issue-reviewer` as the "Agents" section tells, and wait for it. Ask it to invoke `/opsx:verify` for the change. Give it the review packet, the change name, the artifact paths, and the baseline result. Keep its agent ID.
 6. Investigate each finding against the repository. Fix each supported correctness or acceptance finding, and run the affected tests.
 7. If step 6 changed the code, start `viv-issue-rechecker` as the "Recheck" section tells.
 8. If a supported critical finding remains after that check, stop and ask the user. Do not start a third review.
@@ -29,7 +40,7 @@ Do not do the `Size the issue`, `Audit the artifacts`, or `Apply and verify` sec
 ## Start
 
 1. Parse the issue reference and effort.
-2. Use `gh issue view` to read the title, body, labels, comments, state, and repository.
+2. Read the title, body, labels, comments, state, and repository of the issue. Use the forge CLI that the repository instructions name, or `gh issue view` when they name none.
 3. Stop if the current repository is not the issue repository.
 4. Read each applicable instruction file in full.
 5. Start `viv-issue-scout` with the issue facts. It returns a map of the related code, tests, configuration, and OpenSpec files, and a size recommendation.
@@ -106,17 +117,19 @@ A new finding blocks progress only when the correction directly caused it and it
 
 ## Apply and verify
 
-Start the implementor agent for the selected effort. Give it the issue packet, change name, artifact paths, baseline result, and resolved audit findings. Keep its agent ID.
+Start one `viv-issue-implementor` agent for each task group of `tasks.md`, in order, as the "Agents" section tells. Give small adjacent groups to one agent together. Start the agent for the next group only after the current agent returns. Give each agent the issue packet, change name, artifact paths, baseline result, resolved audit findings, and the names of its task groups.
 
-The implementor invokes `/opsx:apply`, completes the tasks, and runs the applicable tests.
+Each agent invokes `/opsx:apply` for its task groups only, and runs the tests of the files that it changed. The checkboxes in `tasks.md` are the record of progress. Tell the agent for the last group to also run the full suite one time.
 
-After the implementor returns, start these reviews in parallel from the same repository state:
+Each model call sends the complete context of the agent again. Thus the cost of an agent is approximately the number of calls multiplied by the size of the context. Short agents keep the context small, and large passes keep the number of calls small. A resume after a pause also sends the complete context again, at the price of input that is not in the cache. Thus, do not resume a finished implementor agent.
 
-1. Ask the reviewer agent to invoke `/opsx:verify` for the change.
+After the agent for the last task group returns, start these reviews in parallel from the same repository state:
+
+1. Start `viv-issue-reviewer` as the "Agents" section tells, and ask it to invoke `/opsx:verify` for the change.
 2. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`.
 3. Except for the small size, run `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`.
 
-Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. Send each supported correctness or acceptance finding to the same implementor agent. Also send each failure in the suite. Resume that agent to make the corrections and run the affected tests.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor agent. Give it the review packet, each supported correctness or acceptance finding, each failure in the suite, and the changed files. It corrects the findings and runs the affected tests.
 
 After a correction, do a targeted re-review as the "Recheck" section tells. Do not run the full reviews again. A new finding blocks progress only when the correction directly caused it.
 
@@ -139,4 +152,4 @@ Do not archive incomplete artifacts or tasks. Do not skip a necessary spec sync.
 
 Make sure that the archive exists and the active change no longer exists. Collect the reviewer record from the review packet. Then remove the temporary review packet.
 
-Report the issue, branch, size, change name, result of the tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all Git work and GitHub state to the user.
+Report the issue, branch, size, change name, result of the tests, review result, and archive path. Report the number of correction rounds in the Apply phase. For each child run, report its model and the tokens that it used. For each reviewer, report its model and, for each phase, the number of supported and unsupported findings that it raised. Report an unavailable reviewer as unavailable. Stop. Leave all Git work and GitHub state to the user.

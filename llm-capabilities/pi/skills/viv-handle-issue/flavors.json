@@ -8,13 +8,13 @@
         "expert": { "model": "zai/glm-5.3", "thinking": "max" }
       },
       "implementor": {
-        "medium": { "model": "zai/glm-5.3", "thinking": "high" },
-        "high": { "model": "zai/glm-5.3", "thinking": "high" },
+        "medium": { "model": "zai/glm-5.3-flash", "thinking": "high" },
+        "high": { "model": "zai/glm-5.3-flash", "thinking": "high" },
         "expert": { "model": "zai/glm-5.3", "thinking": "high" }
       },
       "mechanicalImplementor": {
-        "medium": { "model": "zai/glm-5.3", "thinking": "low" },
-        "high": { "model": "zai/glm-5.3", "thinking": "low" },
+        "medium": { "model": "zai/glm-5.3-flash", "thinking": "low" },
+        "high": { "model": "zai/glm-5.3-flash", "thinking": "low" },
         "expert": { "model": "zai/glm-5.3", "thinking": "low" }
       },
       "reviewer": {

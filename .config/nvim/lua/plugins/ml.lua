@@ -5,8 +5,21 @@ pack.add({
   pack.gh('folke/sidekick.nvim'),
 })
 
+-- setup() also starts the Supermaven binary, so the first toggle calls it
+-- instead of startup. This keeps Supermaven off until it is turned on.
 -- https://github.com/supermaven-inc/supermaven-nvim/blob/main/README.md#configuration
-require('supermaven-nvim').setup({})
+local supermaven_set_up = false
+
+local function toggle_supermaven()
+  if supermaven_set_up then
+    require('supermaven-nvim.api').toggle()
+  else
+    require('supermaven-nvim').setup({})
+    supermaven_set_up = true
+  end
+  local running = require('supermaven-nvim.api').is_running()
+  vim.notify('Supermaven ' .. (running and 'on' or 'off'))
+end
 
 require('sidekick').setup({
   nes = { enabled = false },
@@ -88,6 +101,11 @@ pack.keys({
     end,
     desc = 'Sidekick Toggle',
     mode = { 'n', 't', 'i', 'x' },
+  },
+  {
+    '<leader>am',
+    toggle_supermaven,
+    desc = 'Toggle Supermaven',
   },
   {
     '<leader>al',

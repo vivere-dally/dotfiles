@@ -1,4 +1,5 @@
 local root = assert(vim.env.NVIM_TEST_ROOT, 'NVIM_TEST_ROOT is not set')
+package.path = root .. '/.config/nvim/lua/?.lua;' .. package.path
 vim.g.mapleader = ' '
 
 local function stub(name, value)
@@ -23,7 +24,7 @@ local function run()
   vim.bo[buffer].filetype = 'help'
   assert_buffer_map('q')
 
-  local lint = { try_lint = function() end }
+  local lint = { linters = {}, try_lint = function() end }
   local task = {
     await = function(_, callback)
       callback(nil)
@@ -177,6 +178,17 @@ local function run()
     assert_buffer_map(lhs)
   end
   assert(vim.deep_equal(lint.linters_by_ft.python, { 'bandit' }), 'Python linting must use Bandit without Ruff')
+  assert(vim.filetype.match({ filename = 'grammar.ebnf' }) == 'ebnf', 'EBNF files must have the ebnf filetype')
+
+  local grammar_dir = vim.fn.tempname()
+  vim.fn.mkdir(grammar_dir, 'p')
+  vim.fn.writefile({}, grammar_dir .. '/ExprLexer.g4')
+  vim.cmd.edit(grammar_dir .. '/ExprParser.g4')
+  local antlr4 = lint.linters.antlr4()
+  assert(vim.deep_equal(
+    vim.list_slice(antlr4.args, 4),
+    { grammar_dir .. '/ExprLexer.g4', grammar_dir .. '/ExprParser.g4' }
+  ), 'ANTLR must process the lexer grammar before its parser grammar')
 
   dofile(root .. '/.config/nvim/lua/plugins/git.lua')
   vim.bo[buffer].filetype = 'fugitive'

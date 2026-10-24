@@ -146,7 +146,7 @@ eval "$(pyenv init --path)"
 python_version=$(pyenv latest --known 3)
 pyenv install -s "$python_version"
 pyenv global "$python_version"
-uv pip install --python "$(pyenv which python)" --upgrade libtmux
+uv pip install --python "$(pyenv which python)" --upgrade libtmux antlr4-tools
 
 "$DOTFILES/scripts/stow.sh"
 

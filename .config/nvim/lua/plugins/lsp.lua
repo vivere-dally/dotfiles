@@ -109,8 +109,10 @@ lint.linters_by_ft = {
   python = { 'bandit' },
   go = { 'golangcilint' },
   sql = { 'sqruff' },
+  antlr4 = { 'antlr4' },
   -- php = { 'psalm', 'phpstan' },
 }
+lint.linters.antlr4 = require('core.antlr4').linter
 
 vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost' }, {
   callback = function()
@@ -382,11 +384,13 @@ vim.keymap.set('n', '<leader>cp', function()
   ts_swap.swap_previous('@parameter.inner')
 end, { desc = 'Swap with previous parameter' })
 
+vim.filetype.add({ extension = { ebnf = 'ebnf' } })
+
 -- Parsers to keep installed (replaces the old `ensure_installed`).
 -- `install()` only compiles parsers that are missing, so this is a cheap
 -- no-op on subsequent startups.
 local ensure = {
-  'bash', 'blade', 'c', 'comment', 'cpp', 'css', 'csv', 'diff', 'dockerfile',
+  'bash', 'blade', 'c', 'comment', 'cpp', 'css', 'csv', 'diff', 'dockerfile', 'ebnf',
   'git_config', 'git_rebase', 'gitattributes', 'gitcommit', 'gitignore',
   'html', 'ini', 'javascript', 'jsdoc', 'json', 'json5', 'lua',
   'luadoc', 'luap', 'markdown', 'markdown_inline', 'php', 'phpdoc',

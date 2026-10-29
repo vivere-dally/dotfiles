@@ -30,7 +30,9 @@ Start `viv-issue-coordinator` as one foreground agent with the `Agent` tool. Set
 | `high` | `fable` | `medium` |
 | `expert` | `fable` | `xhigh` |
 
-Give the agent the complete issue input and the selected effort. Tell the agent that this explicit invocation authorizes the branch action in its workflow.
+Give the agent the complete issue input and the selected effort. Tell the agent that this explicit invocation authorizes the branch action in its workflow. Do not give it a model for its subagents. The workflow sets them.
+
+Use one coordinator for one OpenSpec change. For more work after the archive, start a new coordinator, or use `--fast` for a small change. Do not give new work to a finished coordinator.
 
 Wait for the coordinator. Do not do its work in this conversation.
 

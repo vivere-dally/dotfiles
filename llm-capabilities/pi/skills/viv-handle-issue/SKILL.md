@@ -23,7 +23,9 @@ With `--mechanical`, start the coordinator as usual. State in the task that the 
 
 Without `--fast`, read the coordinator model and thinking level from the selected flavor and effort. Join them as `<model>:<thinking>`.
 
-Call the `subagent` tool with `action: "run"`, `agent: "viv-issue-coordinator"`, `context: "fresh"`, and `async: true`. Do not start the coordinator with `bash`, `pi`, `pi -p`, or another shell command. Give the coordinator the complete issue input, effort, flavor, and this skill directory. State that this explicit skill invocation authorizes the branch action in `WORKFLOW.md`.
+Call the `subagent` tool with `action: "run"`, `agent: "viv-issue-coordinator"`, `context: "fresh"`, and `async: true`. Do not start the coordinator with `bash`, `pi`, `pi -p`, or another shell command. Give the coordinator the complete issue input, effort, flavor, and this skill directory. State that this explicit skill invocation authorizes the branch action in `WORKFLOW.md`. Do not give it a model for its nested agents. The flavor sets them.
+
+Use one coordinator for one OpenSpec change. For more work after the archive, start a new coordinator, or use `--fast` for a small change. Do not give new work to a finished coordinator.
 
 The coordinator runs in the background, and its completion notice wakes this session. Do not do its work in this session. If it returns a user question, ask that question and resume the same coordinator with the answer. Continue until the coordinator reports a successful OpenSpec archive or a blocker that repository evidence cannot resolve.
 

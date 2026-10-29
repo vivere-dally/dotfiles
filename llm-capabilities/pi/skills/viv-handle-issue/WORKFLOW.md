@@ -30,6 +30,8 @@ Do not do the `Size the issue`, `Audit the artifacts`, or `Apply and verify` sec
 
 Start each child agent with the `subagent` tool as one single-agent run: `action: "run"`, `context: "fresh"`, `async: true`, and the model settings from `flavors.json` as `<model>:<thinking>`. Do not put more than one agent in one run. A single-agent background run is the only kind of run that gets the checkpoint steer before its deadline.
 
+The selected flavor sets the model of each child run. A memory or a parent instruction that names a different model does not apply to these runs.
+
 Give each run a `timeoutMs` that covers its phase with a margin. State that budget in the task text.
 
 After you start the runs of a phase, wait with `bg_wait` and `stopOnAttention: false` until each run of the phase has finished. If `bg_wait` returns before then, answer a supervisor question if there is one, and then call `bg_wait` again. Do not end your turn while a child run is active, because the end of your turn ends your own run.
@@ -125,7 +127,7 @@ On the mechanical size, start the implementor with the `mechanicalImplementor` m
 2. Apply the clarity gate throughout the exploration.
 3. Obey the Fast-forward instructions for the same change.
 4. Apply the clarity gate while the artifacts take shape.
-5. Write the issue facts, user answers, acceptance conditions, change name, and artifact paths to a temporary review packet.
+5. Write the issue facts, the user answers word for word, the acceptance conditions, change name, and artifact paths to a temporary review packet.
 
 The skill invocation authorizes the OpenSpec artifacts for this issue. Ask again only when a phase expands the issue scope.
 
@@ -153,14 +155,14 @@ Each run obeys the Apply instructions for its task groups only, and does the tes
 
 Each model call sends the complete context of the run again. Thus the cost of a run is approximately the number of calls multiplied by the size of the context. Short runs keep the context small, and large passes keep the number of calls small. A resume after a pause also sends the complete context again, at the price of input that is not in the cache. Thus, do not resume a finished implementor run.
 
-After the run for the last task group returns, do the full lint and then the full required test suite one time, one after the other. Give each failure to a new implementor run as a correction. Then start the implementation reviews in parallel from the same repository state:
+After the run for the last task group returns, do the full lint one time, and then the full required test suite one time. Give each failure to a new implementor run as a correction. Then start the implementation reviews in parallel from the same repository state:
 
 - For the small size, start one `viv-issue-reviewer` run with the `reviewer` model settings, and run only `codex-review.sh` with the `implementation` phase.
 - For the other sizes, start two `viv-issue-reviewer` runs with the `reviewer` and `secondReviewer` model settings, and run both external reviews with the `implementation` phase.
 
 Tell each reviewer to obey the instruction file for `verify`. Keep the run identifier of each reviewer.
 
-Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor run. Give it the review packet, each supported correctness or acceptance finding, each failure of the full lint and of the full required test suite, and the changed files. It corrects the findings and does the tests of the files that it changed.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor run. Give it the review packet, the supported correctness and acceptance findings, the failures of the full lint and the required suite, and the changed files. It corrects the findings and does the tests of the files that it changed.
 
 After a correction, do a targeted re-review as the "Recheck" section tells. Do not run the full reviews again. A new finding blocks progress only when the correction directly caused it.
 

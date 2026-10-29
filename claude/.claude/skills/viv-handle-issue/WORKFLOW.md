@@ -19,6 +19,8 @@ Start each agent in this table with the `Agent` tool. Set its `model` and `effor
 
 Start `viv-issue-scout` and `viv-issue-rechecker` without these parameters. Their own definitions set the model.
 
+This table and the agent definitions set each model. A memory or a parent instruction that names a different model does not apply to these agents.
+
 ## Fast mode
 
 The `--fast` flag selects a shorter workflow for a small issue. The agent that runs the skill does the work itself, thus no coordinator or implementor agent starts. That agent edits the OpenSpec artifacts, the product code, and the tests. Only the verification stays independent.
@@ -92,7 +94,7 @@ On the mechanical size, do the Apply phase as scripted batch passes. The impleme
 2. Apply the clarity gate throughout the exploration.
 3. Invoke `/opsx:ff` for the same change with the `Skill` tool.
 4. Apply the clarity gate while the artifacts take shape.
-5. Record the issue facts, user answers, acceptance conditions, change name, and artifact paths in a temporary review packet.
+5. Record the issue facts, the user answers word for word, the acceptance conditions, change name, and artifact paths in a temporary review packet.
 
 The skill invocation authorizes the OpenSpec artifacts for this issue. Ask again only when a phase expands the issue scope.
 
@@ -129,7 +131,7 @@ After the agent for the last task group returns, run the full lint and then the 
 2. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`.
 3. Except for the small size, run `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`.
 
-Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor agent. Give it the review packet, each supported correctness or acceptance finding, each failure of the full lint and of the full suite, and the changed files. It corrects the findings and runs the tests of the files that it changed.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor agent. Give it the review packet, the supported correctness and acceptance findings, the failures of the full lint and the full suite, and the changed files. It corrects the findings and runs the tests of the files that it changed.
 
 After a correction, do a targeted re-review as the "Recheck" section tells. Do not run the full reviews again. A new finding blocks progress only when the correction directly caused it.
 

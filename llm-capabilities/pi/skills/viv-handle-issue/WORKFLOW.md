@@ -117,7 +117,7 @@ After the Explore phase, select the size of the issue. Use the scout recommendat
 
 If the evidence shows a design decision or a larger scope at a later step, change to the standard size. Do the omitted reviews of the current phase. Record the change and its reason for the final report.
 
-On the mechanical size, start the implementor with the `mechanicalImplementor` model settings. It does the Apply phase as scripted batch passes. It writes one repeatable edit script or batch plan for each cluster of sites, and runs it across the cluster in one pass. It runs the repository tests after each cluster. Use a small number of large passes: each pass loads the full context again, so small slices multiply the cost.
+On the mechanical size, start the implementor with the `mechanicalImplementor` model settings. It does the Apply phase as scripted batch passes. It writes one repeatable edit script or batch plan for each cluster of sites, and runs it across the cluster in one pass. It runs the tests of the files that it changed after each cluster. Use a small number of large passes: each pass loads the full context again, so small slices multiply the cost.
 
 ## Explore and specify
 
@@ -149,18 +149,18 @@ A new finding blocks progress only when the correction directly caused it and it
 
 Start one `viv-issue-implementor` run for each task group of `tasks.md`, in order. Give small adjacent groups to one run together. Start the run for the next group only after the current run returns. Use the `implementor` model settings, or the `mechanicalImplementor` settings for the mechanical size, for the selected flavor and effort. Give each run the review packet, change name, artifact paths, baseline result, resolved audit findings, and the names of its task groups. Start each implementor run with `options.toolBudget: { "soft": 150, "hard": 300 }`. At the soft limit, the run stops at a clean state and returns a handoff. The hard limit blocks only the read and search tools, thus it cannot stop an edit in progress.
 
-Each run obeys the Apply instructions for its task groups only, and does the tests of the files that it changed. The checkboxes in `tasks.md` are the record of progress. Tell the run for the last group to also do the full required test suite one time.
+Each run obeys the Apply instructions for its task groups only, and does the tests of the files that it changed. The checkboxes in `tasks.md` are the record of progress. No implementor run does the full required test suite or the full lint, even when it is the run for the last group.
 
 Each model call sends the complete context of the run again. Thus the cost of a run is approximately the number of calls multiplied by the size of the context. Short runs keep the context small, and large passes keep the number of calls small. A resume after a pause also sends the complete context again, at the price of input that is not in the cache. Thus, do not resume a finished implementor run.
 
-After the run for the last task group returns, start the implementation reviews in parallel from the same repository state:
+After the run for the last task group returns, do the full lint and then the full required test suite one time, one after the other. Give each failure to a new implementor run as a correction. Then start the implementation reviews in parallel from the same repository state:
 
 - For the small size, start one `viv-issue-reviewer` run with the `reviewer` model settings, and run only `codex-review.sh` with the `implementation` phase.
 - For the other sizes, start two `viv-issue-reviewer` runs with the `reviewer` and `secondReviewer` model settings, and run both external reviews with the `implementation` phase.
 
 Tell each reviewer to obey the instruction file for `verify`. Keep the run identifier of each reviewer.
 
-Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor run. Give it the review packet, each supported correctness or acceptance finding, each failure in the required test suite, and the changed files. It corrects the findings and does the affected tests.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor run. Give it the review packet, each supported correctness or acceptance finding, each failure of the full lint and of the full required test suite, and the changed files. It corrects the findings and does the tests of the files that it changed.
 
 After a correction, do a targeted re-review as the "Recheck" section tells. Do not run the full reviews again. A new finding blocks progress only when the correction directly caused it.
 

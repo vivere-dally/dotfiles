@@ -2,7 +2,6 @@
 name: viv-handle-issue
 description: Resolve a ready GitHub issue through OpenSpec with separate coordinator, implementor, and reviewer agents. Use only when the user invokes this skill with an issue and an optional effort level.
 argument-hint: "<issue> [--fast] [--mechanical] [medium|high|expert]"
-disable-model-invocation: true
 ---
 
 # Handle a GitHub Issue

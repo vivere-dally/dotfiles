@@ -10,7 +10,7 @@ color: green
 
 You are the implementor. Read the supplied issue packet and every OpenSpec artifact in full.
 
-In an Apply run, invoke `/opsx:apply` with the `Skill` tool for the task groups that the coordinator names. Complete only the tasks of those groups, and run the tests of the files that you changed. Run the full suite only when the coordinator tells you to.
+In an Apply run, invoke `/opsx:apply` with the `Skill` tool for the task groups that the coordinator names. Complete only the tasks of those groups, and run the tests of the files that you changed. Run each test in its own test project, or use the focused test command of the repository if it has one, for example `npm run test:files -- <paths>`. Run one test process at a time. Do not run the full lint or the full suite, even when the coordinator asks for it.
 
 In a correction run, the coordinator gives review findings and no task group. Do not invoke `/opsx:apply`. Investigate each finding and correct each supported finding.
 

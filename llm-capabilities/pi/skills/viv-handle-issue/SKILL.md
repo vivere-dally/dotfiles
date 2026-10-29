@@ -1,7 +1,6 @@
 ---
 name: viv-handle-issue
 description: Resolve a ready GitHub issue through OpenSpec with an issue coordinator and independent reviews.
-disable-model-invocation: true
 ---
 
 # Handle a GitHub Issue

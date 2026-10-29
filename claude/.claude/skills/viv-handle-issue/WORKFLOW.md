@@ -84,7 +84,7 @@ After the Explore phase, select the size of the issue. Use the scout recommendat
 
 If the evidence shows a design decision or a larger scope at a later step, change to the standard size. Do the omitted reviews of the current phase. Record the change and its reason for the final report.
 
-On the mechanical size, do the Apply phase as scripted batch passes. The implementor writes one repeatable edit script or batch plan for each cluster of sites, and runs it across the cluster in one pass. It runs the repository tests after each cluster. Use a small number of large passes: each pass loads the full context again, so small slices multiply the cost.
+On the mechanical size, do the Apply phase as scripted batch passes. The implementor writes one repeatable edit script or batch plan for each cluster of sites, and runs it across the cluster in one pass. It runs the tests of the files that it changed after each cluster. Use a small number of large passes: each pass loads the full context again, so small slices multiply the cost.
 
 ## Explore and specify
 
@@ -119,17 +119,17 @@ A new finding blocks progress only when the correction directly caused it and it
 
 Start one `viv-issue-implementor` agent for each task group of `tasks.md`, in order, as the "Agents" section tells. Give small adjacent groups to one agent together. Start the agent for the next group only after the current agent returns. Give each agent the issue packet, change name, artifact paths, baseline result, resolved audit findings, and the names of its task groups.
 
-Each agent invokes `/opsx:apply` for its task groups only, and runs the tests of the files that it changed. The checkboxes in `tasks.md` are the record of progress. Tell the agent for the last group to also run the full suite one time.
+Each agent invokes `/opsx:apply` for its task groups only, and runs the tests of the files that it changed. The checkboxes in `tasks.md` are the record of progress. No implementor runs the full suite or the full lint, even when it is the agent for the last group.
 
 Each model call sends the complete context of the agent again. Thus the cost of an agent is approximately the number of calls multiplied by the size of the context. Short agents keep the context small, and large passes keep the number of calls small. A resume after a pause also sends the complete context again, at the price of input that is not in the cache. Thus, do not resume a finished implementor agent.
 
-After the agent for the last task group returns, start these reviews in parallel from the same repository state:
+After the agent for the last task group returns, run the full lint and then the full suite one time, one after the other. Give each failure to a new implementor agent as a correction. Then start these reviews in parallel from the same repository state:
 
 1. Start `viv-issue-reviewer` as the "Agents" section tells, and ask it to invoke `/opsx:verify` for the change.
 2. Run `"$HOME/.claude/skills/viv-handle-issue/scripts/codex-review.sh" implementation <effort> <packet>`.
 3. Except for the small size, run `"$HOME/.claude/skills/viv-handle-issue/scripts/pi-review.sh" implementation <effort> <packet>`.
 
-Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor agent. Give it the review packet, each supported correctness or acceptance finding, each failure in the suite, and the changed files. It corrects the findings and runs the affected tests.
+Merge equivalent findings. Record in the review packet which reviewer raised each finding, and whether the evidence supported it. For the corrections, start a new implementor agent. Give it the review packet, each supported correctness or acceptance finding, each failure of the full lint and of the full suite, and the changed files. It corrects the findings and runs the tests of the files that it changed.
 
 After a correction, do a targeted re-review as the "Recheck" section tells. Do not run the full reviews again. A new finding blocks progress only when the correction directly caused it.
 

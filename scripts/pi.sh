@@ -59,9 +59,11 @@ done < <(jq -r '.packages[] | if type == "string" then . else .source end' \
 managed_install="$HOME/.pi/agent/install"
 if [[ -f $managed_install/current-version ]]; then
     pi_version=$(cat "$managed_install/current-version")
-    global_pi_root="$managed_install/releases/$pi_version"
+    pi_peer_dir="$managed_install/releases/$pi_version/node_modules/@earendil-works"
+    global_pi_root="$pi_peer_dir/pi-coding-agent"
 elif command -v npm >/dev/null 2>&1; then
     global_pi_root="$(npm root -g)/@earendil-works/pi-coding-agent"
+    pi_peer_dir="$global_pi_root/node_modules/@earendil-works"
 else
     global_pi_root=""
 fi
@@ -87,7 +89,7 @@ link_pi_peer() {
 mkdir -p "$pi_subagents_peer_root"
 link_pi_peer pi-coding-agent "$global_pi_root"
 for pi_peer in pi-agent-core pi-ai pi-tui; do
-    link_pi_peer "$pi_peer" "$global_pi_root/node_modules/@earendil-works/$pi_peer"
+    link_pi_peer "$pi_peer" "$pi_peer_dir/$pi_peer"
 done
 
 # pi-web-access searches through the SearXNG container in compose.yaml, and
